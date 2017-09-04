@@ -3,9 +3,7 @@ accounts:
     secretAccessKey: HaJ95oHg9SPBatqCKBpkzMs3t21zPg+m4f8X1NOi
     bucket: wsqa-cloudtrail
     events:
-     - name: RunInstances
+     - name: RunInstancesConfig
        tags: [Owner]
-     - name: SecurityGradw
-       tags: [test]
     regions:
       - eu-west-1

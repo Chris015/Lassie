@@ -11,7 +11,7 @@ import java.util.List;
 
 public class RunInstances implements Event {
 
-    private String name = "RunInstances";
+    private String name = "RunInstancesConfig";
     private long launchTime;
     private String instanceId;
     private List<Tag> tags;
