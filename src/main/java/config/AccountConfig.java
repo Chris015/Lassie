@@ -1,11 +1,14 @@
 package config;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 
 public class AccountConfig {
     private String accessKeyId;
     private String secretAccessKey;
-    private String bucket;
+    @JsonProperty("cloudTrailRoot")
+    private S3Url s3Url;
     private List<String> regions;
     private List<EventConfig> events;
 
@@ -28,12 +31,12 @@ public class AccountConfig {
         this.secretAccessKey = secretAccessKey;
     }
 
-    public String getBucket() {
-        return bucket;
+    public S3Url getS3Url() {
+        return s3Url;
     }
 
-    public void setBucket(String bucket) {
-        this.bucket = bucket;
+    public void setS3Url(S3Url s3Url) {
+        this.s3Url = s3Url;
     }
 
     public List<String> getRegions() {
