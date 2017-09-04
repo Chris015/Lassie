@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.widespace</groupId>
-    <artifactId>awstagger</artifactId>
+    <artifactId>lassie</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <dependencyManagement>
@@ -30,16 +30,16 @@
             <artifactId>aws-java-sdk-ec2</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.json</groupId>
-            <artifactId>json</artifactId>
-            <version>LATEST</version>
-        </dependency>
-        <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-io</artifactId>
             <version>1.3.2</version>
         </dependency>
-    </dependencies>
+        <dependency>
+            <groupId>com.jayway.jsonpath</groupId>
+            <artifactId>json-path</artifactId>
+            <version>2.2.0</version>
+        </dependency></dependencies>
+    
 
     <build>
         <plugins>
