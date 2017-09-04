@@ -80,7 +80,7 @@ public class RunInstances implements Event {
                         instance.getNetworkInterfaces().get(0).getOwnerId()));
             }
         }
-        return null;
+        return untaggedEvents;
     }
 
     @Override
