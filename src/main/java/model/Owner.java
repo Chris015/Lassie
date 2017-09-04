@@ -22,4 +22,8 @@ public class Owner implements Tag {
     public String getName() {
         return null;
     }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 }

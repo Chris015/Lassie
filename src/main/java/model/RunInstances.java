@@ -9,25 +9,30 @@ import com.amazonaws.services.ec2.model.Reservation;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RunInstance implements Event {
+public class RunInstances implements Event {
 
-    private String name;
+    private String name = "RunInstances";
     private long launchTime;
     private String instanceId;
     private List<Tag> tags;
 
     private AmazonEC2 ec2;
 
-    public RunInstance() {
+    public RunInstances() {
     }
 
-    public RunInstance(String name, List<Tag> tags, AmazonEC2 ec2) {
+    public RunInstances(String name, List<Tag> tags, AmazonEC2 ec2) {
         this.name = name;
         this.tags = tags;
         this.ec2 = ec2;
     }
 
-    public RunInstance(String name, long launchTime, String instanceId) {
+    public RunInstances(List<Tag> tags, AmazonEC2 ec2) {
+        this.tags = tags;
+        this.ec2 = ec2;
+    }
+
+    public RunInstances(String name, long launchTime, String instanceId) {
         this.name = name;
         this.launchTime = launchTime;
         this.instanceId = instanceId;
@@ -47,7 +52,7 @@ public class RunInstance implements Event {
                 for (Instance instance : reservation.getInstances()) {
 
                     if (instance.getTags().stream().noneMatch(t -> t.getKey().equals(tag.getName()))) {
-                        untaggedEvents.add(new RunInstance(this.name, instance.getLaunchTime().getTime(), instance.getInstanceId()));
+                        untaggedEvents.add(new RunInstances(this.name, instance.getLaunchTime().getTime(), instance.getInstanceId()));
                     }
                 }
 
