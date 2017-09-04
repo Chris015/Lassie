@@ -23,7 +23,7 @@ public class EventInterpreter {
         List<Tag> tags = interpretTags(in_tags);
 
         switch (eventName) {
-            case "RunInstancesConfig": {
+            case "RunInstances": {
                 return new RunInstances(tags, ec2);
             }
             default: {

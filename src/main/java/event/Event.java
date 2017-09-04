@@ -10,6 +10,13 @@ public interface Event {
 
     List<Event> findEventsWithoutTag(Tag tag);
 
+    long getLaunchTime();
+
+    String getInstanceId();
+
+    List<Tag> getTags();
+
     void tagEvent();
+
 
 }

@@ -23,7 +23,7 @@ public class Owner implements Tag {
 
     @Override
     public String getName() {
-        return null;
+        return this.name;
     }
 
     public void setName(String name) {

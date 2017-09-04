@@ -19,6 +19,7 @@ public class Application {
     private TagInterpreter tagInterpreter;
     private EventInterpreter eventInterpreter;
     private DateFormatter dateFormatter;
+    private EventHandler eventHandler;
 
     public Application() {
         this.configReader = new ConfigReader();
@@ -29,7 +30,8 @@ public class Application {
         for (AccountConfig account : accounts) {
             for (String region : account.getRegions()) {
                 createAmazonClients(account, region);
-                instantiateClasses();
+                instantiateClasses(account);
+                eventHandler.fetchUntaggedEvents();
 
             }
 
@@ -37,10 +39,11 @@ public class Application {
 
     }
 
-    private void instantiateClasses() {
+    private void instantiateClasses(AccountConfig account) {
         this.tagInterpreter = new TagInterpreter(ec2);
         this.eventInterpreter = new EventInterpreter(ec2, tagInterpreter);
         this.dateFormatter = new DateFormatter();
+        this.eventHandler = new EventHandler(eventInterpreter, account.getEvents());
 
     }
 

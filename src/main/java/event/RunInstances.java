@@ -48,10 +48,8 @@ public class RunInstances implements Event {
         while (!done) {
             DescribeInstancesRequest request = new DescribeInstancesRequest();
             DescribeInstancesResult response = ec2.describeInstances(request);
-
             for (Reservation reservation : response.getReservations()) {
                 for (Instance instance : reservation.getInstances()) {
-
                     if (instance.getTags().stream().noneMatch(t -> t.getKey().equals(tag.getName()))) {
                         untaggedEvents.add(new RunInstances(this.name, instance.getLaunchTime().getTime(), instance.getInstanceId()));
                     }
@@ -64,8 +62,6 @@ public class RunInstances implements Event {
             if (response.getNextToken() == null) {
                 done = true;
             }
-
-            return null;
         }
         return untaggedEvents;
     }
@@ -77,6 +73,12 @@ public class RunInstances implements Event {
         }
     }
 
+    @Override
+    public String getInstanceId() {
+        return instanceId;
+    }
+
+    @Override
     public long getLaunchTime() {
         return launchTime;
     }
@@ -89,6 +91,7 @@ public class RunInstances implements Event {
         this.name = name;
     }
 
+    @Override
     public List<Tag> getTags() {
         return tags;
     }
