@@ -12,7 +12,7 @@ import java.util.List;
 
 public class RunInstances implements Event {
 
-    private String name = "RunInstancesConfig";
+    private String name = "RunInstances";
     private long launchTime;
     private String instanceId;
     private List<Tag> tags;
@@ -43,7 +43,13 @@ public class RunInstances implements Event {
 
     @Override
     public List<Event> findEventsWithoutTag(Tag tag) {
-        List<Event> untaggedEvents = new ArrayList<>();
+        List<Instance> instances = describeInstances();
+        return filterInstancesWithoutTag(instances, tag);
+    }
+
+    private List<Instance> describeInstances() {
+
+        List<Instance> instances = new ArrayList<>();
 
         boolean done = false;
 
@@ -51,16 +57,7 @@ public class RunInstances implements Event {
             DescribeInstancesRequest request = new DescribeInstancesRequest();
             DescribeInstancesResult response = ec2.describeInstances(request);
             for (Reservation reservation : response.getReservations()) {
-                for (Instance instance : reservation.getInstances()) {
-                    if (instance.getTags().stream().noneMatch(t -> t.getKey().equals(tag.getName()))) {
-                        untaggedEvents.add(new RunInstances(
-                                        this.name,
-                                        instance.getLaunchTime().getTime(),
-                                instance.getInstanceId(),
-                                instance.getNetworkInterfaces().get(0).getOwnerId()));
-                    }
-                }
-
+                instances.addAll(reservation.getInstances());
             }
 
             request.setNextToken(response.getNextToken());
@@ -69,7 +66,21 @@ public class RunInstances implements Event {
                 done = true;
             }
         }
-        return untaggedEvents;
+        return instances;
+    }
+
+    private List<Event> filterInstancesWithoutTag(List<Instance> instances, Tag tag) {
+        List<Event> untaggedEvents = new ArrayList<>();
+        for (Instance instance : instances) {
+            if (instance.getTags().stream().noneMatch(t -> t.getKey().equals(tag.getName()))) {
+                untaggedEvents.add(new RunInstances(
+                        this.name,
+                        instance.getLaunchTime().getTime(),
+                        instance.getInstanceId(),
+                        instance.getNetworkInterfaces().get(0).getOwnerId()));
+            }
+        }
+        return null;
     }
 
     @Override
@@ -94,8 +105,6 @@ public class RunInstances implements Event {
     public List<Tag> getTags() {
         return tags;
     }
-
-
 
     @Override
     public String getOwnerId() {
