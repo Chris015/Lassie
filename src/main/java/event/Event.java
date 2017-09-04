@@ -16,6 +16,8 @@ public interface Event {
 
     List<Tag> getTags();
 
+    String getOwnerId();
+
     void tagEvent();
 
 

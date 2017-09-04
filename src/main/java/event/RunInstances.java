@@ -16,6 +16,7 @@ public class RunInstances implements Event {
     private long launchTime;
     private String instanceId;
     private List<Tag> tags;
+    private String ownerId;
 
     private AmazonEC2 ec2;
 
@@ -33,10 +34,11 @@ public class RunInstances implements Event {
         this.ec2 = ec2;
     }
 
-    public RunInstances(String name, long launchTime, String instanceId) {
+    public RunInstances(String name, long launchTime, String instanceId, String ownerId) {
         this.name = name;
         this.launchTime = launchTime;
         this.instanceId = instanceId;
+        this.ownerId = ownerId;
     }
 
     @Override
@@ -51,7 +53,11 @@ public class RunInstances implements Event {
             for (Reservation reservation : response.getReservations()) {
                 for (Instance instance : reservation.getInstances()) {
                     if (instance.getTags().stream().noneMatch(t -> t.getKey().equals(tag.getName()))) {
-                        untaggedEvents.add(new RunInstances(this.name, instance.getLaunchTime().getTime(), instance.getInstanceId()));
+                        untaggedEvents.add(new RunInstances(
+                                        this.name,
+                                        instance.getLaunchTime().getTime(),
+                                instance.getInstanceId(),
+                                instance.getNetworkInterfaces().get(0).getOwnerId()));
                     }
                 }
 
@@ -83,20 +89,17 @@ public class RunInstances implements Event {
         return launchTime;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
 
     @Override
     public List<Tag> getTags() {
         return tags;
     }
 
-    public void setTags(List<Tag> tags) {
-        this.tags = tags;
+
+
+    @Override
+    public String getOwnerId() {
+        return ownerId;
     }
+
 }
