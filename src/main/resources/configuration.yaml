@@ -1,9 +1,0 @@
-accounts:
-  - accessKeyId: AKIAJU4GS5YEWF4DJITA
-    secretAccessKey: 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
-    bucket: wsqa-cloudtrail
-    events:
-     - name: RunInstancesConfig
-       tags: [Owner]
-    regions:
-      - eu-west-1
