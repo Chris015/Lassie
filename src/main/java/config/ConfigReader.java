@@ -17,7 +17,7 @@ public class ConfigReader {
     public List<AccountConfig> readConfig() {
         try {
             return objectMapper.readValue(
-                    new File("/Users/praktikant/Repos/aws-tagging-service/src/main/resources/configuration.yaml"),
+                    new File(ClassLoader.getSystemResource("configuration.yaml").getPath()),
                     AccountsConfig.class).getAccounts();
         } catch (IOException e) {
             e.printStackTrace();
