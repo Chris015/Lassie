@@ -1,7 +1,7 @@
 import com.amazonaws.services.ec2.AmazonEC2;
-import exceptions.UnsupportedTagException;
-import model.Owner;
-import model.Tag;
+import exception.UnsupportedTagException;
+import tag.Owner;
+import tag.Tag;
 
 
 public class TagInterpreter {

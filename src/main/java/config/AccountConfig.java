@@ -3,11 +3,11 @@ package config;
 import java.util.List;
 
 public class AccountConfig {
-    String accessKeyId;
-    String secretAccessKey;
-    String bucket;
-    List<String> regions;
-    List<EventConfig> events;
+    private String accessKeyId;
+    private String secretAccessKey;
+    private String bucket;
+    private List<String> regions;
+    private List<EventConfig> events;
 
     public AccountConfig() {
     }

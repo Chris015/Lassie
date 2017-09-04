@@ -1,4 +1,4 @@
-package model;
+package tag;
 
 public interface Tag {
 

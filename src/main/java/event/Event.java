@@ -1,5 +1,7 @@
-package model;
+package event;
 
+
+import tag.Tag;
 
 import java.util.List;
 

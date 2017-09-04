@@ -1,4 +1,4 @@
-package model;
+package tag;
 
 import com.amazonaws.services.ec2.AmazonEC2;
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;

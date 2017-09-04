@@ -1,9 +1,9 @@
 import com.amazonaws.services.ec2.AmazonEC2;
-import exceptions.UnsupportedEventException;
-import exceptions.UnsupportedTagException;
-import model.Event;
-import model.RunInstances;
-import model.Tag;
+import exception.UnsupportedEventException;
+import exception.UnsupportedTagException;
+import event.Event;
+import event.RunInstances;
+import tag.Tag;
 
 import java.util.ArrayList;
 import java.util.List;
