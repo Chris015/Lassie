@@ -18,6 +18,7 @@ public class Application {
     private AmazonEC2 ec2;
     private TagInterpreter tagInterpreter;
     private EventInterpreter eventInterpreter;
+    private DateFormatter dateFormatter;
 
     public Application() {
         this.configReader = new ConfigReader();
@@ -39,6 +40,7 @@ public class Application {
     private void instantiateClasses() {
         this.tagInterpreter = new TagInterpreter(ec2);
         this.eventInterpreter = new EventInterpreter(ec2, tagInterpreter);
+        this.dateFormatter = new DateFormatter();
 
     }
 
