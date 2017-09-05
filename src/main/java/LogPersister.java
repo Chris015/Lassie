@@ -30,21 +30,17 @@ public class LogPersister {
     }
 
     public void createTmpFolders() {
-        if (Files.isDirectory(Paths.get("tmp"))) {
-            try {
-                tmpFolderZipped = Files.createTempDirectory(Paths.get("tmp/"), null);
-                tmpFolderUnzipped = Files.createTempDirectory(Paths.get("tmp/"), null);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        } else {
-            try {
+        try {
+            if (!Files.isDirectory(Paths.get("tmp"))) {
                 Files.createDirectory(Paths.get("tmp"));
-                tmpFolderZipped = Files.createTempDirectory(Paths.get("tmp/"), null);
-                tmpFolderUnzipped = Files.createTempDirectory(Paths.get("tmp/"), null);
-            } catch (IOException e) {
-                e.printStackTrace();
             }
+
+            tmpFolderZipped = Files.createTempDirectory(Paths.get("tmp/"), null);
+            tmpFolderUnzipped = Files.createTempDirectory(Paths.get("tmp/"), null);
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
