@@ -41,6 +41,7 @@ public class RunInstances implements Event {
         this.ownerId = ownerId;
     }
 
+    //ToDo extract the logic to a different class?
     @Override
     public List<Event> findEventsWithoutTag(Tag tag) {
         List<Instance> instances = describeInstances();
@@ -48,7 +49,6 @@ public class RunInstances implements Event {
     }
 
     private List<Instance> describeInstances() {
-
         List<Instance> instances = new ArrayList<>();
 
         boolean done = false;

@@ -32,11 +32,8 @@ public class Application {
                 createAmazonClients(account, region);
                 instantiateClasses(account);
                 eventHandler.fetchUntaggedEvents();
-
             }
-
         }
-
     }
 
     private void instantiateClasses(AccountConfig account) {
