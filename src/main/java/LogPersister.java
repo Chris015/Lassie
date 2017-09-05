@@ -18,8 +18,6 @@ public class LogPersister {
 
     private Path tmpFolderZipped;
     private Path tmpFolderUnzipped;
-    private FileInputStream fileInputStream;
-    private GZIPInputStream gzipInputStream;
     private S3Object s3Object;
     private S3ObjectInputStream objectContent;
     private AmazonS3 amazonS3;
@@ -60,36 +58,21 @@ public class LogPersister {
         }
     }
 
-
     private void unzipObject(String filename) {
+        try (FileInputStream fileInputStream = new FileInputStream(tmpFolderZipped + "/" + filename);
+             GZIPInputStream gzipInputStream = new GZIPInputStream(fileInputStream);
+             FileOutputStream fileOutputStream = new FileOutputStream(
+                     tmpFolderUnzipped + "/" + filename.substring(0, filename.length() - 3))) {
 
-        try {
-            fileInputStream = new FileInputStream(tmpFolderZipped + "/" + filename);
-            gzipInputStream = new GZIPInputStream(fileInputStream);
-            FileOutputStream fileOutputStream = new FileOutputStream(tmpFolderUnzipped + "/" + filename.substring(0, filename.length() - 3));
             byte[] buffer = new byte[1024];
             int len;
+
             while ((len = gzipInputStream.read(buffer)) != -1) {
                 fileOutputStream.write(buffer, 0, len);
             }
 
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
-            if (gzipInputStream != null) {
-                try {
-                    gzipInputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (fileInputStream != null) {
-                try {
-                    fileInputStream.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
         }
     }
 
