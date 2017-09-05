@@ -1,4 +1,4 @@
-package exception;
+package lassie.exception;
 
 public class UnsupportedEventException extends Exception {
 

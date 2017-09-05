@@ -1,4 +1,4 @@
-package config;
+package lassie.config;
 
 import java.util.List;
 

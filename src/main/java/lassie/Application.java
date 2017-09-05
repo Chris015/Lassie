@@ -1,3 +1,5 @@
+package lassie;
+
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
@@ -6,9 +8,9 @@ import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
-import config.AccountConfig;
-import config.ConfigReader;
-import event.Event;
+import lassie.config.AccountConfig;
+import lassie.config.ConfigReader;
+import lassie.event.Event;
 
 import java.util.List;
 
@@ -38,15 +40,18 @@ public class Application {
             List<Event> events = eventHandler.fetchUntaggedEvents();
             List<S3ObjectSummary> objectSummaries = logPersister.listObjectsWithDate(events);
             logPersister.downloadObject(objectSummaries);
+            System.out.println("unzipped files:" + logPersister.fetchUnzippedFiles().size());
+            eventHandler.tagEvents();
+            logPersister.deleteFolders();
         }
     }
 
     private void instantiateClasses(AccountConfig account) {
-        this.tagInterpreter = new TagInterpreter(ec2);
-        this.eventInterpreter = new EventInterpreter(ec2, tagInterpreter);
         this.dateFormatter = new DateFormatter();
-        this.eventHandler = new EventHandler(eventInterpreter, account.getEvents());
         this.logPersister = new LogPersister(s3, account.getS3Url(), dateFormatter);
+        this.tagInterpreter = new TagInterpreter(ec2, logPersister);
+        this.eventInterpreter = new EventInterpreter(ec2, tagInterpreter);
+        this.eventHandler = new EventHandler(eventInterpreter, account.getEvents());
 
     }
 

@@ -1,14 +1,17 @@
-import config.EventConfig;
-import event.Event;
-import exception.UnsupportedEventException;
-import exception.UnsupportedTagException;
-import tag.Tag;
+package lassie;
+
+import lassie.config.EventConfig;
+import lassie.event.Event;
+import lassie.exception.UnsupportedEventException;
+import lassie.exception.UnsupportedTagException;
+import lassie.tag.Tag;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class EventHandler {
     private EventInterpreter eventInterpreter;
+    private List<Event> untaggedEvents;
     private List<EventConfig> configEvents;
 
     public EventHandler(EventInterpreter eventInterpreter, List<EventConfig> configEvents) {
@@ -17,18 +20,17 @@ public class EventHandler {
     }
 
     public List<Event> fetchUntaggedEvents() {
-        List<Event> untaggedEvents = new ArrayList<>();
         List<Event> events = interpretConfigEvents();
+        untaggedEvents = new ArrayList<>();
+
+
         for (Event event : events) {
             for (Tag tag : event.getTags()) {
                 List<Event> eventsWithoutTag = event.findEventsWithoutTag(tag);
-                if(eventsWithoutTag != null ) {
+                if (eventsWithoutTag != null) {
                     untaggedEvents.addAll(eventsWithoutTag);
                 }
             }
-        }
-        for (Event untaggedEvent : untaggedEvents) {
-            System.out.println(untaggedEvent.getLaunchTime() + " " + untaggedEvent.getInstanceId());
         }
         return untaggedEvents;
     }
@@ -45,4 +47,10 @@ public class EventHandler {
         return events;
     }
 
+    public void tagEvents() {
+        for (Event event : untaggedEvents) {
+            System.out.println("Untagged event: " + untaggedEvents.get(0).getTags());
+            event.tagEvent();
+        }
+    }
 }

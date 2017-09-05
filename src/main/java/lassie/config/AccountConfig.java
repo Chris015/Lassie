@@ -1,4 +1,4 @@
-package config;
+package lassie.config;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

@@ -1,7 +1,7 @@
-package event;
+package lassie.event;
 
 
-import tag.Tag;
+import lassie.tag.Tag;
 
 import java.util.List;
 

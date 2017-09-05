@@ -1,4 +1,4 @@
-package config;
+package lassie.config;
 
 public class S3Url {
     private String bucket;
@@ -13,6 +13,10 @@ public class S3Url {
 
     private void resolve(String theUrl) {
         if (theUrl == null || !theUrl.matches("s3://[a-zA-Z0-9-]+/([a-zA-Z0-9-=./_\\$]*)")) {
+            throw new IllegalArgumentException("Malformed URL: " + theUrl);
+        }
+
+        if (theUrl.substring(theUrl.length() - 1, theUrl.length()).equals("/")) {
             throw new IllegalArgumentException("Malformed URL: " + theUrl);
         }
 

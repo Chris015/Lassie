@@ -1,9 +1,11 @@
+package lassie;
+
 import com.amazonaws.services.ec2.AmazonEC2;
-import exception.UnsupportedEventException;
-import exception.UnsupportedTagException;
-import event.Event;
-import event.RunInstances;
-import tag.Tag;
+import lassie.exception.UnsupportedEventException;
+import lassie.exception.UnsupportedTagException;
+import lassie.event.Event;
+import lassie.event.RunInstances;
+import lassie.tag.Tag;
 
 import java.util.ArrayList;
 import java.util.List;

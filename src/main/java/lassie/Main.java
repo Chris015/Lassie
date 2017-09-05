@@ -1,3 +1,4 @@
+package lassie;
 
 public class Main {
 

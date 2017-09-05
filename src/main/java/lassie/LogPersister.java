@@ -1,18 +1,19 @@
+package lassie;
+
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.*;
-import config.S3Url;
-import event.Event;
+import lassie.config.S3Url;
+import lassie.event.Event;
 import org.apache.commons.io.FileUtils;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 import java.util.zip.GZIPInputStream;
 
 public class LogPersister {
@@ -30,8 +31,6 @@ public class LogPersister {
         this.s3Url = s3Url;
         this.dateFormatter = dateFormatter;
     }
-
-    //"cloudtrail/AWSLogs/343211807682/CloudTrail/"
 
     public List<S3ObjectSummary> listObjectsWithDate(List<Event> events) {
         for (Event event : events) {
@@ -71,7 +70,7 @@ public class LogPersister {
         }
     }
 
-    public void createTmpFolders() {
+    private void createTmpFolders() {
         try {
             if (!Files.isDirectory(Paths.get("tmp"))) {
                 Files.createDirectory(Paths.get("tmp"));
@@ -105,7 +104,30 @@ public class LogPersister {
         }
     }
 
-    private void deleteFolders() {
+    public List<String> fetchUnzippedFiles() {
+
+        List<String> jsonFiles = new ArrayList<>();
+
+        File dir = new File(tmpFolderUnzipped.toString());
+        File[] directoryListing = dir.listFiles();
+
+        try {
+            if (directoryListing != null) {
+                for (File child : directoryListing) {
+                    String json = new Scanner(child).useDelimiter("\\Z").next();
+                    if (!child.isHidden()) {
+                        jsonFiles.add(json);
+                    }
+                }
+            }
+            return jsonFiles;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        return new ArrayList<>();
+    }
+
+    public void deleteFolders() {
         try {
             if (Files.isDirectory(Paths.get("tmp"))) {
                 FileUtils.cleanDirectory(new File("tmp"));
