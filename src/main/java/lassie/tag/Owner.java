@@ -1,8 +1,11 @@
 package lassie.tag;
 
 import com.amazonaws.services.ec2.AmazonEC2;
+import com.amazonaws.services.ec2.model.CreateTagsRequest;
 import com.jayway.jsonpath.JsonPath;
 import lassie.LogPersister;
+import net.minidev.json.JSONArray;
+import net.minidev.json.JSONObject;
 
 import java.util.List;
 
@@ -21,19 +24,29 @@ public class Owner implements Tag {
     public void tagEvent(String eventName, String instanceId) {
         List<String> jsonFiles = logPersister.fetchUnzippedFiles();
         for (String json : jsonFiles) {
-            findRecordsWithEventName(eventName, json, instanceId);
+            String owner = findRecordsWithEventName(eventName, json, instanceId);
+
+            if (owner != null) {
+
+                CreateTagsRequest tagsRequest = new CreateTagsRequest()
+                        .withResources(instanceId)
+                        .withTags(new com.amazonaws.services.ec2.model.Tag(this.name, owner));
+                ec2.createTags(tagsRequest);
+            }
         }
     }
 
-    private void findRecordsWithEventName(String eventName, String json, String instanceId) {
+    private String findRecordsWithEventName(String eventName, String json, String instanceId) {
         String jsonExp =  "$..Records[?(@.responseElements.instancesSet.items[0].instanceId=="
                 + "\'" +instanceId + "\')].userIdentity.arn";
-        System.out.println(jsonExp);
-        System.out.println("Json: " + json);
-        String arn = JsonPath.read(jsonExp, json);
-        System.out.println(arn);
+        JSONArray result  = JsonPath.read(json, jsonExp);
 
+        if (result.size() == 0) {
+            return null;
+        }
 
+        String owner = String.valueOf(result.get(0));
+        return owner.substring(owner.lastIndexOf('/') + 1, owner.length());
     }
 
     @Override

@@ -39,8 +39,10 @@ public class Application {
             }
             List<Event> events = eventHandler.fetchUntaggedEvents();
             List<S3ObjectSummary> objectSummaries = logPersister.listObjectsWithDate(events);
+            if (objectSummaries == null) {
+               return;
+            }
             logPersister.downloadObject(objectSummaries);
-            System.out.println("unzipped files:" + logPersister.fetchUnzippedFiles().size());
             eventHandler.tagEvents();
             logPersister.deleteFolders();
         }

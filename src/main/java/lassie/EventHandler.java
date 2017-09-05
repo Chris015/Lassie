@@ -49,7 +49,6 @@ public class EventHandler {
 
     public void tagEvents() {
         for (Event event : untaggedEvents) {
-            System.out.println("Untagged event: " + untaggedEvents.get(0).getTags());
             event.tagEvent();
         }
     }
