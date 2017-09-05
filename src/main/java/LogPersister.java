@@ -14,7 +14,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.zip.GZIPInputStream;
 
-public class LogPersistor {
+public class LogPersister {
 
     private Path tmpFolderZipped;
     private Path tmpFolderUnzipped;
@@ -24,7 +24,7 @@ public class LogPersistor {
     private S3ObjectInputStream objectContent;
     private AmazonS3 amazonS3;
 
-    public LogPersistor(AmazonS3 amazonS3) {
+    public LogPersister(AmazonS3 amazonS3) {
         this.amazonS3 = amazonS3;
 
     }
