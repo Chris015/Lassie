@@ -2,7 +2,7 @@ package config;
 
 public class S3Url {
     private String bucket;
-    private String prefix;
+    private String key;
 
     public S3Url() {
     }
@@ -19,22 +19,22 @@ public class S3Url {
         int aPos = theUrl.indexOf("/", 5);
 
         this.bucket = theUrl.substring(5, aPos);
-        this.prefix = theUrl.substring(aPos+1);
+        this.key = theUrl.substring(aPos+1);
     }
 
     public void setBucket(String bucket) {
         this.bucket = bucket;
     }
 
-    public void setPrefix(String prefix) {
-        this.prefix = prefix;
+    public void setKey(String key) {
+        this.key = key;
     }
 
     public String getBucket() {
         return bucket;
     }
 
-    public String getPrefix() {
-        return prefix;
+    public String getKey() {
+        return key;
     }
 }

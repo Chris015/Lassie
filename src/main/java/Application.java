@@ -5,8 +5,10 @@ import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
 import config.AccountConfig;
 import config.ConfigReader;
+import event.Event;
 
 import java.util.List;
 
@@ -20,6 +22,7 @@ public class Application {
     private EventInterpreter eventInterpreter;
     private DateFormatter dateFormatter;
     private EventHandler eventHandler;
+    private LogPersister logPersister;
 
     public Application() {
         this.configReader = new ConfigReader();
@@ -31,8 +34,10 @@ public class Application {
             for (String region : account.getRegions()) {
                 createAmazonClients(account, region);
                 instantiateClasses(account);
-                eventHandler.fetchUntaggedEvents();
             }
+            List<Event> events = eventHandler.fetchUntaggedEvents();
+            List<S3ObjectSummary> objectSummaries = logPersister.listObjectsWithDate(events);
+            logPersister.downloadObject(objectSummaries);
         }
     }
 
@@ -41,6 +46,7 @@ public class Application {
         this.eventInterpreter = new EventInterpreter(ec2, tagInterpreter);
         this.dateFormatter = new DateFormatter();
         this.eventHandler = new EventHandler(eventInterpreter, account.getEvents());
+        this.logPersister = new LogPersister(s3, account.getS3Url(), dateFormatter);
 
     }
 
