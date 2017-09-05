@@ -24,7 +24,7 @@ public class Owner implements Tag {
     public void tagEvent(String eventName, String instanceId) {
         List<String> jsonFiles = logPersister.fetchUnzippedFiles();
         for (String json : jsonFiles) {
-            String owner = findRecordsWithEventName(eventName, json, instanceId);
+            String owner = findRecordsWithEventName(json, instanceId);
 
             if (owner != null) {
 
@@ -36,7 +36,7 @@ public class Owner implements Tag {
         }
     }
 
-    private String findRecordsWithEventName(String eventName, String json, String instanceId) {
+    private String findRecordsWithEventName(String json, String instanceId) {
         String jsonExp =  "$..Records[?(@.responseElements.instancesSet.items[0].instanceId=="
                 + "\'" +instanceId + "\')].userIdentity.arn";
         JSONArray result  = JsonPath.read(json, jsonExp);
