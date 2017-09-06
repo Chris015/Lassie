@@ -23,7 +23,6 @@ public class EventHandler {
         List<Event> events = interpretConfigEvents();
         untaggedEvents = new ArrayList<>();
 
-
         for (Event event : events) {
             for (Tag tag : event.getTags()) {
                 List<Event> eventsWithoutTag = event.findEventsWithoutTag(tag);

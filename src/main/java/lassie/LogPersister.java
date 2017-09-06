@@ -34,11 +34,11 @@ public class LogPersister {
 
     public List<S3ObjectSummary> listObjects(List<Event> events) {
         for (Event event : events) {
-            String date = "2017/08/31";
+            String date = "2017";
 
-            if (event.getLaunchTime() != 0) {
-                date = dateFormatter.format(event.getLaunchTime());
-            }
+            // if (event.getLaunchTime() != 0) {
+            //     date = dateFormatter.format(event.getLaunchTime());
+            // }
 
             ListObjectsV2Request req = new ListObjectsV2Request()
                     .withBucketName(s3Url.getBucket())
@@ -49,7 +49,6 @@ public class LogPersister {
                             + s3.getRegionName() + "/"
                             + date + "/");
             ListObjectsV2Result listing = s3.listObjectsV2(req);
-            System.out.println(listing.getObjectSummaries().size());
             return listing.getObjectSummaries();
         }
 

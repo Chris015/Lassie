@@ -17,8 +17,6 @@ public class RunInstances implements Event {
     private String instanceId;
     private List<Tag> tags;
     private String ownerId;
-    private String arnJsonPath = "$..Records[?(@.responseElements.instancesSet.items[0].instanceId=="
-            + "\'" +instanceId + "\')].userIdentity.arn";
 
     private AmazonEC2 ec2;
 
@@ -93,7 +91,8 @@ public class RunInstances implements Event {
 
     @Override
     public String getArnJsonPath() {
-        return this.arnJsonPath;
+        return "$..Records[?(@.responseElements.instancesSet.items[0].instanceId=="
+                + "\'" + instanceId + "\')].userIdentity.arn";
     }
 
     @Override
@@ -128,5 +127,5 @@ public class RunInstances implements Event {
     public String getOwnerId() {
         return ownerId;
     }
-
 }
+

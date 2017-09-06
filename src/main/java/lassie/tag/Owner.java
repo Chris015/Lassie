@@ -6,7 +6,6 @@ import com.jayway.jsonpath.JsonPath;
 import lassie.LogPersister;
 import lassie.event.Event;
 import net.minidev.json.JSONArray;
-import net.minidev.json.JSONObject;
 
 import java.util.List;
 
@@ -25,7 +24,7 @@ public class Owner implements Tag {
     public void tagEvent(Event event) {
         List<String> jsonFiles = logPersister.fetchUnzippedFiles();
         for (String json : jsonFiles) {
-            String owner = findRecordsWithEventName(event, json);
+            String owner = findRecordsWithEvent(event, json);
 
             if (owner != null) {
                 System.out.println(event.getName() + " " + event.getId());
@@ -37,10 +36,9 @@ public class Owner implements Tag {
         }
     }
 
-    private String findRecordsWithEventName(Event event, String json) {
-
+    private String findRecordsWithEvent(Event event, String json) {
         JSONArray result = JsonPath.read(json, event.getArnJsonPath());
-
+        System.out.println(event.getId());
         if (result.size() == 0) {
             return null;
         }

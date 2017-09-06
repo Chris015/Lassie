@@ -44,7 +44,7 @@ public class Application {
             }
             logPersister.downloadObject(objectSummaries);
             eventHandler.tagEvents();
-            logPersister.deleteFolders();
+           // logPersister.deleteFolders();
         }
     }
 

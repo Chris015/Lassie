@@ -16,7 +16,6 @@ public class CreateSecurityGroup implements Event {
     private String groupId;
     private List<Tag> tags;
     private String ownerId;
-    private String arnJsonPath = "$..Records[?(@.responseElements.groupId==" + "\'" + groupId + "\')].userIdentity.arn";
 
     private AmazonEC2 ec2;
 
@@ -106,6 +105,6 @@ public class CreateSecurityGroup implements Event {
 
     @Override
     public String getArnJsonPath() {
-        return this.arnJsonPath;
+        return "$..Records[?(@.responseElements.groupId==" + "\'" + this.groupId + "\')].userIdentity.arn";
     }
 }
