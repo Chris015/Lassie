@@ -12,7 +12,7 @@ public interface Event {
 
     long getLaunchTime();
 
-    String getInstanceId();
+    String getId();
 
     List<Tag> getTags();
 
@@ -20,5 +20,8 @@ public interface Event {
 
     void tagEvent();
 
+    String getName();
+
+    String getArnJsonPath();
 
 }

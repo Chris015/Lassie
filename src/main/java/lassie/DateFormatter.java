@@ -4,6 +4,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class DateFormatter {
+
     private SimpleDateFormat simpleDateFormat;
 
     public DateFormatter() {

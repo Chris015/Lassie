@@ -38,7 +38,7 @@ public class Application {
                 instantiateClasses(account);
             }
             List<Event> events = eventHandler.fetchUntaggedEvents();
-            List<S3ObjectSummary> objectSummaries = logPersister.listObjectsWithDate(events);
+            List<S3ObjectSummary> objectSummaries = logPersister.listObjects(events);
             if (objectSummaries == null) {
                return;
             }

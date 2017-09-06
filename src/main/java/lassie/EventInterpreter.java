@@ -1,6 +1,7 @@
 package lassie;
 
 import com.amazonaws.services.ec2.AmazonEC2;
+import lassie.event.CreateSecurityGroup;
 import lassie.exception.UnsupportedEventException;
 import lassie.exception.UnsupportedTagException;
 import lassie.event.Event;
@@ -27,6 +28,9 @@ public class EventInterpreter {
         switch (eventName) {
             case "RunInstances": {
                 return new RunInstances(tags, ec2);
+            }
+            case "CreateSecurityGroup": {
+                return new CreateSecurityGroup(tags, ec2);
             }
             default: {
                 throw new UnsupportedEventException(eventName + " is not supported");

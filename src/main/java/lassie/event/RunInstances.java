@@ -17,6 +17,8 @@ public class RunInstances implements Event {
     private String instanceId;
     private List<Tag> tags;
     private String ownerId;
+    private String arnJsonPath = "$..Records[?(@.responseElements.instancesSet.items[0].instanceId=="
+            + "\'" +instanceId + "\')].userIdentity.arn";
 
     private AmazonEC2 ec2;
 
@@ -84,21 +86,30 @@ public class RunInstances implements Event {
                         instance.getLaunchTime().getTime(),
                         instance.getInstanceId(),
                         instance.getNetworkInterfaces().get(0).getOwnerId()));
-                System.out.println(untaggedEvents.get(0).getTags().get(0).getName());
             }
         }
         return untaggedEvents;
     }
 
     @Override
+    public String getArnJsonPath() {
+        return this.arnJsonPath;
+    }
+
+    @Override
     public void tagEvent() {
         for (Tag tag : tags) {
-            tag.tagEvent(this.name, this.instanceId);
+            tag.tagEvent(this);
         }
     }
 
     @Override
-    public String getInstanceId() {
+    public String getName() {
+        return this.name;
+    }
+
+    @Override
+    public String getId() {
         return instanceId;
     }
 

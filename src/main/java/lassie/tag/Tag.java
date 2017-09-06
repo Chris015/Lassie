@@ -1,8 +1,10 @@
 package lassie.tag;
 
+import lassie.event.Event;
+
 public interface Tag {
 
-    void tagEvent(String eventName, String instanceId);
+    void tagEvent(Event event);
 
     String getName();
 
