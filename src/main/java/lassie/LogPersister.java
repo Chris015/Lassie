@@ -32,7 +32,8 @@ public class LogPersister {
         this.dateFormatter = dateFormatter;
     }
 
-    public List<S3ObjectSummary> listObjects(List<Event> events) {
+    public List<S3ObjectSummary> listObjects(List<Event> events, Region region) {
+        System.out.println("LIST OBJECTS");
         for (Event event : events) {
             String date = "2017";
 
@@ -46,8 +47,13 @@ public class LogPersister {
                             + "/AWSLogs/"
                             + event.getOwnerId() + "/"
                             + "CloudTrail/"
-                            + s3.getRegionName() + "/"
+                            + region + "/"
                             + date + "/");
+            System.out.println("/AWSLogs/"
+                    + event.getOwnerId() + "/"
+                    + "CloudTrail/"
+                    + region + "/"
+                    + date + "/");
             ListObjectsV2Result listing = s3.listObjectsV2(req);
             return listing.getObjectSummaries();
         }

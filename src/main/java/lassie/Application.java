@@ -2,6 +2,7 @@ package lassie;
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.regions.Region;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
@@ -31,20 +32,23 @@ public class Application {
         this.accounts = configReader.readConfig();
     }
 
-    public void run(){
+    public void run() {
         for (AccountConfig account : accounts) {
+
             for (String region : account.getRegions()) {
                 createAmazonClients(account, region);
                 instantiateClasses(account);
+                List<Event> events = eventHandler.fetchUntaggedEvents();
+                List<S3ObjectSummary> objectSummaries = logPersister.listObjects(events
+                        , com.amazonaws.services.s3.model.Region.fromValue(region));
+                if (objectSummaries == null) {
+                    return;
+                }
+
+                logPersister.downloadObject(objectSummaries);
+                eventHandler.tagEvents();
+                //logPersister.deleteFolders();
             }
-            List<Event> events = eventHandler.fetchUntaggedEvents();
-            List<S3ObjectSummary> objectSummaries = logPersister.listObjects(events);
-            if (objectSummaries == null) {
-               return;
-            }
-            logPersister.downloadObject(objectSummaries);
-            eventHandler.tagEvents();
-           // logPersister.deleteFolders();
         }
     }
 
@@ -63,7 +67,7 @@ public class Application {
 
         this.s3 = AmazonS3ClientBuilder.standard()
                 .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
-                .withRegion(Regions.fromName(region))
+                .withRegion(Regions.fromName(account.getBucketRegion()))
                 .build();
 
         this.ec2 = AmazonEC2ClientBuilder.standard()

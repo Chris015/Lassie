@@ -9,6 +9,7 @@ public class AccountConfig {
     private String secretAccessKey;
     @JsonProperty("cloudTrailRoot")
     private S3Url s3Url;
+    private String bucketRegion;
     private List<String> regions;
     private List<EventConfig> events;
 
@@ -37,6 +38,14 @@ public class AccountConfig {
 
     public void setS3Url(S3Url s3Url) {
         this.s3Url = s3Url;
+    }
+
+    public String getBucketRegion() {
+        return bucketRegion;
+    }
+
+    public void setBucketRegion(String bucketRegion) {
+        this.bucketRegion = bucketRegion;
     }
 
     public List<String> getRegions() {

@@ -31,10 +31,13 @@ public class EventHandler {
                 }
             }
         }
+        System.out.println("UNTAGGED EVENTS");
+        System.out.println(untaggedEvents.size());
         return untaggedEvents;
     }
 
     private List<Event> interpretConfigEvents() {
+        System.out.println("INTERPRET CONFIG EVENTS");
         List<Event> events = new ArrayList<>();
         try {
             for (EventConfig configEvent : configEvents) {
@@ -43,6 +46,7 @@ public class EventHandler {
         } catch (UnsupportedEventException | UnsupportedTagException e) {
             e.printStackTrace();
         }
+        System.out.println(events.get(0).getName());
         return events;
     }
 
