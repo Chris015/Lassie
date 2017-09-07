@@ -7,7 +7,9 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.*;
 import lassie.config.Account;
+import org.apache.commons.io.FileUtils;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -143,6 +145,14 @@ public class LogHandler {
             tmpFolderUnzipped = Files.createTempDirectory(Paths.get("tmp/"), null);
 
 
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void clearLogs() {
+        try {
+            FileUtils.cleanDirectory(new File("tmp"));
         } catch (IOException e) {
             e.printStackTrace();
         }

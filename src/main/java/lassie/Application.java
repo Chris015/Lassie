@@ -32,6 +32,7 @@ public class Application {
         List<Log> logs = logHandler.getLogs(fromDate, accounts);
         List<ResourceTagger> resourceTaggers = getResourceTaggers(accounts);
         resourceTaggers.forEach(resourceTagger -> resourceTagger.tagResources(logs));
+        logHandler.clearLogs();
 }
 
     private List<ResourceTagger> getResourceTaggers(List<Account> accounts) {
