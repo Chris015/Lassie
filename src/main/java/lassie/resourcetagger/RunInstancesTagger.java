@@ -40,19 +40,6 @@ public class RunInstancesTagger implements ResourceTagger {
                 .build();
     }
 
-    private void tag(Log log) {
-        for (Event event : events) {
-            CreateTagsRequest tagsRequest = new CreateTagsRequest()
-                    .withResources(event.getId())
-                    .withTags(new Tag(log.getAccount().getOwnerTag(), event.getOwner()));
-            ec2.createTags(tagsRequest);
-            System.out.println("Tagged: " + event.getId() +
-                    " with key: " + log.getAccount().getOwnerTag() +
-                    " value: " + event.getOwner());
-        }
-
-    }
-
     private void parseJson(Log log) {
         try {
             String json = JsonPath.parse(new File(log.getFilePath())).read("$..Records[?(@.eventName=='RunInstances')]").toString();
@@ -77,21 +64,6 @@ public class RunInstancesTagger implements ResourceTagger {
         }
     }
 
-    private void filterTaggedResources(Log log) {
-        List<Event> untaggedEvents = new ArrayList<>();
-        List<Instance> instancesWithoutTags = describeInstances(log);
-        for (Instance instancesWithoutTag : instancesWithoutTags) {
-            for (Event event : events) {
-                String instanceId = instancesWithoutTag.getInstanceId();
-                String eventId = event.getId();
-                if (instanceId.equals(eventId)) {
-                    untaggedEvents.add(event);
-                }
-            }
-        }
-        this.events = untaggedEvents;
-    }
-
     private List<Instance> describeInstances(Log log) {
         List<Instance> instances = new ArrayList<>();
         boolean done = false;
@@ -114,5 +86,33 @@ public class RunInstancesTagger implements ResourceTagger {
             }
         }
         return instances;
+    }
+
+    private void filterTaggedResources(Log log) {
+        List<Event> untaggedEvents = new ArrayList<>();
+        List<Instance> instancesWithoutTags = describeInstances(log);
+        for (Instance instancesWithoutTag : instancesWithoutTags) {
+            for (Event event : events) {
+                String instanceId = instancesWithoutTag.getInstanceId();
+                String eventId = event.getId();
+                if (instanceId.equals(eventId)) {
+                    untaggedEvents.add(event);
+                }
+            }
+        }
+        this.events = untaggedEvents;
+    }
+
+    private void tag(Log log) {
+        for (Event event : events) {
+            CreateTagsRequest tagsRequest = new CreateTagsRequest()
+                    .withResources(event.getId())
+                    .withTags(new Tag(log.getAccount().getOwnerTag(), event.getOwner()));
+            ec2.createTags(tagsRequest);
+            System.out.println("Tagged: " + event.getId() +
+                    " with key: " + log.getAccount().getOwnerTag() +
+                    " value: " + event.getOwner());
+        }
+
     }
 }
