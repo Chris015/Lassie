@@ -30,21 +30,25 @@ public class Application {
     public void run() {
         accounts = configReader.getAccounts();
         List<Log> logs = logHandler.getLogs(fromDate, accounts);
-        List<String> resourceTypes = new ArrayList<>();
-        accounts.forEach(account -> resourceTypes.addAll(account.getResourceTypes()));
-        List<ResourceTagger> resourceTaggers = new ArrayList<>();
-        resourceTypes.forEach(resourceType -> {
-            try {
-                resourceTaggers.add(resourceTaggerFactory.getResourceTagger(resourceType));
-            } catch (UnsupportedResourceTypeException e) {
-                e.printStackTrace();
-            }
-        });
+        List<ResourceTagger> resourceTaggers = getResourceTaggers(accounts);
+        resourceTaggers.forEach(resourceTagger -> resourceTagger.tagResources(logs));
+}
 
-        for (ResourceTagger resourceTagger : resourceTaggers) {
-            resourceTagger.tagResources(logs);
+    private List<ResourceTagger> getResourceTaggers(List<Account> accounts) {
+        List<ResourceTagger> resourceTaggers = new ArrayList<>();
+        List<String> resourceTypes = new ArrayList<>();
+
+        for (Account account : accounts) {
+            resourceTypes.addAll(account.getResourceTypes());
         }
 
-
+        try {
+            for (String resourceType : resourceTypes) {
+                resourceTaggers.add(resourceTaggerFactory.getResourceTagger(resourceType));
+            }
+        } catch (UnsupportedResourceTypeException e) {
+            e.printStackTrace();
+        }
+        return resourceTaggers;
     }
 }
