@@ -1,19 +1,11 @@
 package lassie.config;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class AccountsConfig {
-    List<AccountConfig> accounts = new ArrayList<>();
+    private List<Account> accounts;
 
-    public AccountsConfig() {
-    }
-
-    public List<AccountConfig> getAccounts() {
+    public List<Account> getAccounts() {
         return accounts;
-    }
-
-    public void setAccounts(List<AccountConfig> accounts) {
-        this.accounts = accounts;
     }
 }

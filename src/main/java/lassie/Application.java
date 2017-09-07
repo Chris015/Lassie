@@ -1,79 +1,32 @@
 package lassie;
 
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.regions.Region;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
-import lassie.config.AccountConfig;
+import lassie.config.Account;
 import lassie.config.ConfigReader;
-import lassie.event.Event;
 
+import java.util.Date;
 import java.util.List;
 
 public class Application {
-
     private ConfigReader configReader;
-    private List<AccountConfig> accounts;
-    private AmazonS3 s3;
-    private AmazonEC2 ec2;
-    private TagInterpreter tagInterpreter;
-    private EventInterpreter eventInterpreter;
+    private LogHandler logHandler;
+    private List<Account> accounts;
     private DateFormatter dateFormatter;
-    private EventHandler eventHandler;
-    private LogPersister logPersister;
+    private long dayInMilliseconds = 86400000;
+    private String fromDate;
 
     public Application() {
         this.configReader = new ConfigReader();
-        this.accounts = configReader.readConfig();
+        this.logHandler = new LogHandler();
+        this.dateFormatter = new DateFormatter();
+        this.fromDate = dateFormatter.format(new Date().getTime() - dayInMilliseconds * 2);
     }
 
     public void run() {
-        for (AccountConfig account : accounts) {
-
-            for (String region : account.getRegions()) {
-                createAmazonClients(account, region);
-                instantiateClasses(account);
-                List<Event> events = eventHandler.fetchUntaggedEvents();
-                List<S3ObjectSummary> objectSummaries = logPersister.listObjects(events
-                        , com.amazonaws.services.s3.model.Region.fromValue(region));
-                if (objectSummaries == null) {
-                    return;
-                }
-
-                logPersister.downloadObject(objectSummaries);
-                eventHandler.tagEvents();
-                //logPersister.deleteFolders();
-            }
+        accounts = configReader.getAccounts();
+        List<Log> logs = logHandler.getLogs(fromDate, accounts);
+        for (Log log : logs) {
+            System.out.println(log.getAccount().getRegions().get(0) + "\n" + log.getFilePath());
         }
-    }
-
-    private void instantiateClasses(AccountConfig account) {
-        this.dateFormatter = new DateFormatter();
-        this.logPersister = new LogPersister(s3, account.getS3Url(), dateFormatter);
-        this.tagInterpreter = new TagInterpreter(ec2, logPersister);
-        this.eventInterpreter = new EventInterpreter(ec2, tagInterpreter);
-        this.eventHandler = new EventHandler(eventInterpreter, account.getEvents());
 
     }
-
-    private void createAmazonClients(AccountConfig account, String region) {
-        BasicAWSCredentials awsCredentials = new BasicAWSCredentials(account.getAccessKeyId(),
-                account.getSecretAccessKey());
-
-        this.s3 = AmazonS3ClientBuilder.standard()
-                .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
-                .withRegion(Regions.fromName(account.getBucketRegion()))
-                .build();
-
-        this.ec2 = AmazonEC2ClientBuilder.standard()
-                .withRegion(region)
-                .build();
-    }
-
-
 }

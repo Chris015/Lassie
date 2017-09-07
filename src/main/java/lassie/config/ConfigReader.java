@@ -3,18 +3,19 @@ package lassie.config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ConfigReader {
-
-    ObjectMapper objectMapper;
+    private ObjectMapper objectMapper;
 
     public ConfigReader() {
-        objectMapper = new ObjectMapper(new YAMLFactory());
+        this.objectMapper = new ObjectMapper(new YAMLFactory());
     }
 
-    public List<AccountConfig> readConfig() {
+    public List<Account> getAccounts() {
         try {
             return objectMapper.readValue(
                     new File(ClassLoader.getSystemResource("configuration.yaml").getPath()),
@@ -22,6 +23,7 @@ public class ConfigReader {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return null;
+
+        return new ArrayList<Account>();
     }
 }

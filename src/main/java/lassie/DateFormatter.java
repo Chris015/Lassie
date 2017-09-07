@@ -4,7 +4,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class DateFormatter {
-
     private SimpleDateFormat simpleDateFormat;
 
     public DateFormatter() {
@@ -14,5 +13,4 @@ public class DateFormatter {
     public String format(long milliseconds){
         return simpleDateFormat.format(new Date(milliseconds));
     }
-
 }
