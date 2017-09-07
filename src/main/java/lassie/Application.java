@@ -6,6 +6,7 @@ import lassie.resourcetagger.ResourceTagger;
 import lassie.resourcetagger.ResourceTaggerFactory;
 import lassie.resourcetagger.UnsupportedResourceTypeException;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -13,27 +14,27 @@ import java.util.List;
 public class Application {
     private ConfigReader configReader;
     private LogHandler logHandler;
-    private List<Account> accounts;
-    private DateFormatter dateFormatter;
-    private long dayInMilliseconds = 86400000;
-    private String fromDate;
     private ResourceTaggerFactory resourceTaggerFactory;
+    private String fromDate;
 
     public Application() {
         this.configReader = new ConfigReader();
         this.logHandler = new LogHandler();
-        this.dateFormatter = new DateFormatter();
-        this.fromDate = dateFormatter.format(new Date().getTime() - dayInMilliseconds * 1);
         this.resourceTaggerFactory = new ResourceTaggerFactory();
     }
 
-    public void run() {
-        accounts = configReader.getAccounts();
+    public void run(String[] args) {
+        setFromDate(args);
+        List<Account> accounts = configReader.getAccounts();
         List<Log> logs = logHandler.getLogs(fromDate, accounts);
         List<ResourceTagger> resourceTaggers = getResourceTaggers(accounts);
         resourceTaggers.forEach(resourceTagger -> resourceTagger.tagResources(logs));
         logHandler.clearLogs();
-}
+    }
+
+    private void setFromDate(String[] args) {
+        this.fromDate = (args.length==1) ? args[0] : LocalDate.now().minusDays(2).toString();
+    }
 
     private List<ResourceTagger> getResourceTaggers(List<Account> accounts) {
         List<ResourceTagger> resourceTaggers = new ArrayList<>();
@@ -42,7 +43,6 @@ public class Application {
         for (Account account : accounts) {
             resourceTypes.addAll(account.getResourceTypes());
         }
-
         try {
             for (String resourceType : resourceTypes) {
                 resourceTaggers.add(resourceTaggerFactory.getResourceTagger(resourceType));
