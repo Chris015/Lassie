@@ -23,6 +23,7 @@ public class RunInstancesTagger implements ResourceTagger {
 
     @Override
     public void tagResources(List<Log> logs) {
+        System.out.println("Parsing and tagging logs...");
         for (Log log : logs) {
             instantiateEc2Client(log);
             parseJson(log);

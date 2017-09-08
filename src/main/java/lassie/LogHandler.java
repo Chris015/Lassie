@@ -36,6 +36,7 @@ public class LogHandler {
     }
 
     public List<Log> getLogs(String startDate, List<Account> accounts) {
+        System.out.println("Fetching logs...");
         List<Log> logs = new ArrayList<>();
         LocalDate end = LocalDate.now();
         LocalDate start = LocalDate.parse(startDate);
