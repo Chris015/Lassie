@@ -32,7 +32,7 @@ public class S3BucketTagger implements ResourceTagger {
         for (Log log : logs) {
             instantiateS3Client(log);
             parseJson(log);
-            filterBuckets(log);
+            filterTaggedResources(log);
             tag(log);
         }
     }
@@ -71,7 +71,7 @@ public class S3BucketTagger implements ResourceTagger {
         }
     }
 
-    private void filterBuckets(Log log) {
+    private void filterTaggedResources(Log log) {
         List<Event> untaggedBuckets = new ArrayList<>();
         for (Event event : events) {
             if (s3.getBucketTaggingConfiguration(event.getId()) == null) {
