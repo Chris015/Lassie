@@ -42,7 +42,8 @@ public class RunInstancesTagger implements ResourceTagger {
 
     private void parseJson(Log log) {
         try {
-            String json = JsonPath.parse(new File(log.getFilePath())).read("$..Records[?(@.eventName=='RunInstances')]").toString();
+            String json = JsonPath.parse(new File(log.getFilePath()))
+                    .read("$..Records[?(@.eventName == 'RunInstances' && @.responseElements != null)]").toString();
             GsonBuilder gsonBuilder = new GsonBuilder();
             JsonDeserializer<RunInstances> deserializer = (jsonElement, type, context) -> {
                 String id = jsonElement
@@ -50,7 +51,7 @@ public class RunInstancesTagger implements ResourceTagger {
                         .getAsJsonObject().get("instancesSet")
                         .getAsJsonObject().get("items")
                         .getAsJsonArray().get(0).getAsJsonObject().get("instanceId").getAsString();
-                String owner = jsonElement.getAsJsonObject().get("userIdentity").getAsJsonObject().get("userName").getAsString();
+                String owner = jsonElement.getAsJsonObject().get("userIdentity").getAsJsonObject().get("arn").getAsString();
                 return new RunInstances(id, owner);
             };
 

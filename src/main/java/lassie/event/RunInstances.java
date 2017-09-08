@@ -1,21 +1,25 @@
 package lassie.event;
 
 public class RunInstances implements Event{
-    private String instanceId;
-    private String userName;
+    private String id;
+    private String owner;
 
-    public RunInstances(String instanceId, String userName) {
-        this.instanceId = instanceId;
-        this.userName = userName;
+    public RunInstances(String id, String arn) {
+        this.id = id;
+        resolve(arn);
+    }
+
+    private void resolve(String arn) {
+        this.owner = arn.substring(arn.lastIndexOf('/') +1, arn.length());
     }
 
     @Override
     public String getId() {
-        return this.instanceId;
+        return this.id;
     }
 
     @Override
     public String getOwner() {
-        return this.userName;
+        return this.owner;
     }
 }
