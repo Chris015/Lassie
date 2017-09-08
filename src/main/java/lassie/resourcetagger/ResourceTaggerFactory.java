@@ -6,7 +6,7 @@ public class ResourceTaggerFactory {
         switch (resourceType.toUpperCase()) {
             case "RUNINSTANCES": return new RunInstancesTagger();
             case "CREATESECURITYGROUP": return new CreateSecurityGroupTagger();
-            case "S3BUCKET": return new S3BucketTagger();
+            case "CREATEBUCKET": return new S3BucketTagger();
         }
         throw new UnsupportedResourceTypeException(resourceType + " is not a supported");
     }
