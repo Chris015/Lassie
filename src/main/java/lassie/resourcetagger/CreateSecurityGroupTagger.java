@@ -5,25 +5,27 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.ec2.AmazonEC2;
 import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
 import com.amazonaws.services.ec2.model.*;
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
 import lassie.Log;
+import lassie.event.CreateSecurityGroup;
 import lassie.event.Event;
-import lassie.event.RunInstances;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RunInstancesTagger implements ResourceTagger {
+public class CreateSecurityGroupTagger implements ResourceTagger {
     private AmazonEC2 ec2;
     private List<Event> events = new ArrayList<>();
 
     @Override
     public void tagResources(List<Log> logs) {
-        System.out.println("Parsing logs and tagging resources...");
+        System.out.println("Parsing json");
         for (Log log : logs) {
             instantiateEc2Client(log);
             parseJson(log);
@@ -35,7 +37,7 @@ public class RunInstancesTagger implements ResourceTagger {
     private void instantiateEc2Client(Log log) {
         BasicAWSCredentials awsCreds = new BasicAWSCredentials(log.getAccount().getAccessKeyId(), log.getAccount().getSecretAccessKey());
         AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(awsCreds);
-        ec2 = AmazonEC2ClientBuilder.standard()
+        this.ec2 = AmazonEC2ClientBuilder.standard()
                 .withCredentials(awsCredentials)
                 .withRegion(log.getAccount().getRegions().get(0))
                 .build();
@@ -44,23 +46,23 @@ public class RunInstancesTagger implements ResourceTagger {
     private void parseJson(Log log) {
         try {
             String json = JsonPath.parse(new File(log.getFilePath()))
-                    .read("$..Records[?(@.eventName == 'RunInstances' && @.responseElements != null)]").toString();
+                    .read("$..Records[?(@.eventName == 'CreateSecurityGroup' && @.responseElements != null)]")
+                    .toString();
             GsonBuilder gsonBuilder = new GsonBuilder();
-            JsonDeserializer<RunInstances> deserializer = (jsonElement, type, context) -> {
+            JsonDeserializer<CreateSecurityGroup> deserializer = (jsonElement, type, context) -> {
                 String id = jsonElement
                         .getAsJsonObject().get("responseElements")
-                        .getAsJsonObject().get("instancesSet")
-                        .getAsJsonObject().get("items")
-                        .getAsJsonArray().get(0).getAsJsonObject().get("instanceId").getAsString();
+                        .getAsJsonObject().get("groupId").getAsString();
                 String owner = jsonElement.getAsJsonObject().get("userIdentity").getAsJsonObject().get("arn").getAsString();
-                return new RunInstances(id, owner);
+                return new CreateSecurityGroup(id, owner);
             };
 
-            gsonBuilder.registerTypeAdapter(RunInstances.class, deserializer);
+            gsonBuilder.registerTypeAdapter(CreateSecurityGroup.class, deserializer);
 
             Gson gson = gsonBuilder.setLenient().create();
-            List<RunInstances> runInstances = gson.fromJson(json, new TypeToken<List<RunInstances>>() {}.getType());
-            events.addAll(runInstances);
+            List<CreateSecurityGroup> createSecurityGroups = gson.fromJson(
+                    json, new TypeToken<List<CreateSecurityGroup>>() {}.getType());
+            events.addAll(createSecurityGroups);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -68,12 +70,13 @@ public class RunInstancesTagger implements ResourceTagger {
 
     private void filterTaggedResources(Log log) {
         List<Event> untaggedEvents = new ArrayList<>();
-        List<Instance> instancesWithoutTags = describeInstances(log);
-        for (Instance instancesWithoutTag : instancesWithoutTags) {
+        List<SecurityGroup> securityGroupsWithoutTags = describeSecurityGroup(log);
+
+        for (SecurityGroup securityGroupsWithoutTag : securityGroupsWithoutTags) {
             for (Event event : events) {
-                String instanceId = instancesWithoutTag.getInstanceId();
+                String groupId = securityGroupsWithoutTag.getGroupId();
                 String eventId = event.getId();
-                if (instanceId.equals(eventId)) {
+                if (groupId.equals(eventId)){
                     untaggedEvents.add(event);
                 }
             }
@@ -81,31 +84,25 @@ public class RunInstancesTagger implements ResourceTagger {
         this.events = untaggedEvents;
     }
 
-    private List<Instance> describeInstances(Log log) {
-        List<Instance> instances = new ArrayList<>();
-        boolean done = false;
-        while (!done) {
-            DescribeInstancesRequest request = new DescribeInstancesRequest();
-            DescribeInstancesResult response = ec2.describeInstances(request);
 
-            for (Reservation reservation : response.getReservations()) {
-                for (Instance instance : reservation.getInstances()) {
-                    if (instance.getTags().stream().noneMatch(t -> t.getKey().equals(log.getAccount().getOwnerTag()))) {
-                        instances.add(instance);
-                    }
-                }
 
-            }
-            request.setNextToken(response.getNextToken());
+    private List<SecurityGroup> describeSecurityGroup(Log log) {
+        List<SecurityGroup> securityGroups = new ArrayList<>();
 
-            if (response.getNextToken() == null) {
-                done = true;
+        DescribeSecurityGroupsRequest request = new DescribeSecurityGroupsRequest();
+        DescribeSecurityGroupsResult response = ec2.describeSecurityGroups(request);
+
+        for (SecurityGroup securityGroup : response.getSecurityGroups()) {
+            if (securityGroup.getTags().stream().noneMatch(t -> t.getKey().equals(log.getAccount().getOwnerTag()))) {
+                securityGroups.add(securityGroup);
             }
         }
-        return instances;
+
+        return securityGroups;
+
     }
 
-    private void tag(Log log) {
+    private void tag(Log log){
         for (Event event : events) {
             CreateTagsRequest tagsRequest = new CreateTagsRequest()
                     .withResources(event.getId())
@@ -115,6 +112,5 @@ public class RunInstancesTagger implements ResourceTagger {
                     " with key: " + log.getAccount().getOwnerTag() +
                     " value: " + event.getOwner());
         }
-
     }
 }
