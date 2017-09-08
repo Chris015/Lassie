@@ -30,6 +30,7 @@ public class LogHandler {
     private Path tmpFolderZipped;
     private Path tmpFolderUnzipped;
     private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd");
+    private String tmpFolder = "tmp";
 
     public LogHandler() {
         createTmpFolders();
@@ -153,12 +154,12 @@ public class LogHandler {
 
     private void createTmpFolders() {
         try {
-            if (!Files.isDirectory(Paths.get("tmp"))) {
-                Files.createDirectory(Paths.get("tmp"));
+            if (!Files.isDirectory(Paths.get(tmpFolder))) {
+                Files.createDirectory(Paths.get(tmpFolder));
             }
 
-            tmpFolderZipped = Files.createTempDirectory(Paths.get("tmp/"), null);
-            tmpFolderUnzipped = Files.createTempDirectory(Paths.get("tmp/"), null);
+            tmpFolderZipped = Files.createTempDirectory(Paths.get(tmpFolder + "/"), null);
+            tmpFolderUnzipped = Files.createTempDirectory(Paths.get(tmpFolder + "/"), null);
 
 
         } catch (IOException e) {
@@ -168,7 +169,7 @@ public class LogHandler {
 
     public void clearLogs() {
         try {
-            FileUtils.cleanDirectory(new File("tmp"));
+            FileUtils.cleanDirectory(new File(tmpFolder));
         } catch (IOException e) {
             e.printStackTrace();
         }
