@@ -25,7 +25,6 @@ public class CreateSecurityGroupTagger implements ResourceTagger {
 
     @Override
     public void tagResources(List<Log> logs) {
-        System.out.println("Parsing json");
         for (Log log : logs) {
             instantiateEc2Client(log);
             parseJson(log);
