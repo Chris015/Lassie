@@ -9,6 +9,7 @@ public class ResourceTaggerFactory {
             case "CREATEBUCKET": return new S3BucketTagger();
             case "CREATEVOLUME": return new EBSVolumeTagger();
             case "CREATEDBINSTANCE": return  new CreateDBInstanceTagger();
+            case "CREATECLUSTER": return new ClusterTagger();
         }
         throw new UnsupportedResourceTypeException(resourceType + " is not a supported");
     }
