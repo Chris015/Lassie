@@ -24,14 +24,13 @@ public class CreateDBInstanceTagger implements ResourceTagger {
     private AmazonRDS rds;
     private List<Event> events = new ArrayList<>();
 
-    //TODO: Tagging more then once?
     @Override
     public void tagResources(List<Log> logs) {
         System.out.println("Parsing logs and tagging resources...");
         for (Log log : logs) {
             instantiateRDSClient(log);
             parseJson(log);
-            describeRDSInstances(log);
+            filterTaggedResources(log);
             tag(log);
         }
     }
@@ -64,11 +63,28 @@ public class CreateDBInstanceTagger implements ResourceTagger {
             gsonBuilder.registerTypeAdapter(CreateDBInstance.class, deserializer);
             Gson gson = gsonBuilder.setLenient().create();
             List<CreateDBInstance> createDBInstances = gson.fromJson(
-                    json, new TypeToken<List<CreateDBInstance>>() {}.getType());
+                    json, new TypeToken<List<CreateDBInstance>>() {
+                    }.getType());
             events.addAll(createDBInstances);
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void filterTaggedResources(Log log) {
+        List<Event> untaggedEvents = new ArrayList<>();
+        List<DBInstance> dbInstancesWithoutTag = describeRDSInstances(log);
+
+        for (DBInstance tag : dbInstancesWithoutTag) {
+            for (Event event : events) {
+                String dbId = tag.getDBInstanceArn();
+                String eventId = event.getId();
+                if (dbId.equals(eventId)) {
+                    untaggedEvents.add(event);
+                }
+            }
+        }
+        this.events = untaggedEvents;
     }
 
     public List<DBInstance> describeRDSInstances(Log log) {
@@ -78,7 +94,7 @@ public class CreateDBInstanceTagger implements ResourceTagger {
         for (DBInstance dbInstance : describeDBInstancesResult.getDBInstances()) {
             ListTagsForResourceRequest request = new ListTagsForResourceRequest().withResourceName(dbInstance.getDBInstanceArn());
             ListTagsForResourceResult response = rds.listTagsForResource(request);
-            if (response.getTagList().stream().noneMatch(t -> t.getKey().equals(log.getAccount().getOwnerTag()))){
+            if (response.getTagList().stream().noneMatch(t -> t.getKey().equals(log.getAccount().getOwnerTag()))) {
                 dbInstancesWithoutOwner.add(dbInstance);
             }
         }
