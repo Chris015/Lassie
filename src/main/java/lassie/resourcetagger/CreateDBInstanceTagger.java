@@ -35,7 +35,7 @@ public class CreateDBInstanceTagger implements ResourceTagger {
         }
     }
 
-    public void instantiateRDSClient(Log log) {
+    private void instantiateRDSClient(Log log) {
         BasicAWSCredentials awsCreds = new BasicAWSCredentials(log.getAccount().getAccessKeyId(), log.getAccount().getSecretAccessKey());
         AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(awsCreds);
         rds = AmazonRDSClientBuilder.standard()
