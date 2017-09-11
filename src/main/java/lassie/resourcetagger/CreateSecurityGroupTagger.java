@@ -112,4 +112,5 @@ public class CreateSecurityGroupTagger implements ResourceTagger {
                     " value: " + event.getOwner());
         }
     }
+
 }

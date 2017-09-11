@@ -54,6 +54,11 @@
             <artifactId>aws-java-sdk-rds</artifactId>
             <version>1.11.113</version>
         </dependency>
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-java-sdk-emr</artifactId>
+            <version>1.11.184</version>
+        </dependency>
     </dependencies>
     
 
