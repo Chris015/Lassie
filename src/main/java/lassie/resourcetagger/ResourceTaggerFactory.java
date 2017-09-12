@@ -15,7 +15,7 @@ public class ResourceTaggerFactory {
             case "REDSHIFTCLUSTER":
                 return new RedshiftClusterTagger();
             case "EC2INSTANCE":
-                return new EC2Instance();
+                return new EC2InstanceTagger();
             case "EMRCLUSTER":
                 return new EMRClusterTagger();
             case "LOADBALANCER":
