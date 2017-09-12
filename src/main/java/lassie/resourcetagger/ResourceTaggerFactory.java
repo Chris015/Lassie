@@ -21,6 +21,6 @@ public class ResourceTaggerFactory {
             case "LOADBALANCER":
                 return new LoadBalancerTagger();
         }
-        throw new UnsupportedResourceTypeException(resourceType + " is not a supported");
+        throw new UnsupportedResourceTypeException(resourceType + " is not a supported resource type");
     }
 }
