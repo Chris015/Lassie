@@ -28,7 +28,7 @@ public class EBSVolumeTagger implements ResourceTagger {
         System.out.println("Parsing logs and tagging resources...");
         for (Log log : logs) {
             instantiateEc2Client(log);
-            parseJson(log);
+            parseJson(log.getFilePaths());
             filterTaggedResources(log);
             tag(log);
         }
@@ -43,29 +43,31 @@ public class EBSVolumeTagger implements ResourceTagger {
                 .build();
     }
 
-    private void parseJson(Log log) {
-        try {
-            String json = JsonPath.parse(new File(log.getFilePath()))
-                    .read("$..Records[?(@.eventName == 'CreateVolume' && @.responseElements != null)]")
-                    .toString();
-            GsonBuilder gsonBuilder = new GsonBuilder();
-            JsonDeserializer<CreateSecurityGroup> deserializer = (jsonElement, type, context) -> {
-                String id = jsonElement
-                        .getAsJsonObject().get("responseElements")
-                        .getAsJsonObject().get("volumeId").getAsString();
-                String owner = jsonElement.getAsJsonObject().get("userIdentity").getAsJsonObject().get("arn").getAsString();
-                return new CreateSecurityGroup(id, owner);
-            };
+    private void parseJson(List<String> filePaths) {
+        for (String filePath : filePaths) {
+            try {
+                String json = JsonPath.parse(new File(filePath))
+                        .read("$..Records[?(@.eventName == 'CreateVolume' && @.responseElements != null)]")
+                        .toString();
+                GsonBuilder gsonBuilder = new GsonBuilder();
+                JsonDeserializer<CreateSecurityGroup> deserializer = (jsonElement, type, context) -> {
+                    String id = jsonElement
+                            .getAsJsonObject().get("responseElements")
+                            .getAsJsonObject().get("volumeId").getAsString();
+                    String owner = jsonElement.getAsJsonObject().get("userIdentity").getAsJsonObject().get("arn").getAsString();
+                    return new CreateSecurityGroup(id, owner);
+                };
 
-            gsonBuilder.registerTypeAdapter(CreateSecurityGroup.class, deserializer);
+                gsonBuilder.registerTypeAdapter(CreateSecurityGroup.class, deserializer);
 
-            Gson gson = gsonBuilder.setLenient().create();
-            List<CreateSecurityGroup> createSecurityGroups = gson.fromJson(
-                    json, new TypeToken<List<CreateSecurityGroup>>() {
-                    }.getType());
-            events.addAll(createSecurityGroups);
-        } catch (IOException e) {
-            e.printStackTrace();
+                Gson gson = gsonBuilder.setLenient().create();
+                List<CreateSecurityGroup> createSecurityGroups = gson.fromJson(
+                        json, new TypeToken<List<CreateSecurityGroup>>() {
+                        }.getType());
+                events.addAll(createSecurityGroups);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 

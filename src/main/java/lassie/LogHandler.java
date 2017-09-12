@@ -20,7 +20,6 @@ import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
 
@@ -41,28 +40,27 @@ public class LogHandler {
         List<Log> logs = new ArrayList<>();
         LocalDate end = LocalDate.now();
         LocalDate start = LocalDate.parse(startDate);
-
         List<LocalDate> totalDates = new ArrayList<>();
-        while (!start.isAfter(end)) {
-            totalDates.add(start);
-            start = start.plusDays(1);
-        }
 
-        for (LocalDate date : totalDates) {
-            // For each account
-            for (Account account : accounts) {
-                BasicAWSCredentials awsCredentials = new BasicAWSCredentials(account.getAccessKeyId(),
-                        account.getSecretAccessKey());
+        // For each account
+        for (Account account : accounts) {
+            BasicAWSCredentials awsCredentials = new BasicAWSCredentials(account.getAccessKeyId(),
+                    account.getSecretAccessKey());
 
-                this.s3 = AmazonS3ClientBuilder.standard()
-                        .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
-                        .withRegion(Regions.fromName(account.getBucketRegion()))
-                        .build();
-                // For each region, gets3ObjectSummaries
+            this.s3 = AmazonS3ClientBuilder.standard()
+                    .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
+                    .withRegion(Regions.fromName(account.getBucketRegion()))
+                    .build();
+
+            // For each region and date, gets3ObjectSummaries
+            while (!start.isAfter(end)) {
+                totalDates.add(start);
+                start = start.plusDays(1);
+            }
+
+            for (LocalDate date : totalDates) {
                 for (String region : account.getRegions()) {
                     List<S3ObjectSummary> summaries = getObjectSummaries(date.format(formatter), account, region);
-
-
                     // Download and unzip CloudTrail logs
                     List<String> filePaths = downloadLogs(account, summaries);
                     // Create new logs and add them to list
@@ -134,21 +132,18 @@ public class LogHandler {
 
     private List<Log> createLogs(Account account, String region, List<String> filePaths) {
         List<Log> logs = new ArrayList<>();
-
-        for (String filePath : filePaths) {
-            List<String> regions = new ArrayList<>();
-            regions.add(region);
-            logs.add(new Log(
-                    new Account(account.getOwnerTag(),
-                            account.getAccessKeyId(),
-                            account.getSecretAccessKey(),
-                            account.getAccountId(),
-                            account.getS3Url(),
-                            account.getBucketRegion(),
-                            account.getResourceTypes(),
-                            regions),
-                    filePath));
-        }
+        List<String> regions = new ArrayList<>();
+        regions.add(region);
+        logs.add(new Log(
+                new Account(account.getOwnerTag(),
+                        account.getAccessKeyId(),
+                        account.getSecretAccessKey(),
+                        account.getAccountId(),
+                        account.getS3Url(),
+                        account.getBucketRegion(),
+                        account.getResourceTypes(),
+                        regions),
+                filePaths));
         return logs;
     }
 

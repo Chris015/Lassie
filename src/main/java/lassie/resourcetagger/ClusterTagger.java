@@ -27,7 +27,7 @@ public class ClusterTagger implements ResourceTagger {
     public void tagResources(List<Log> logs) {
         for (Log log : logs) {
             instantiateRedshiftClient(log);
-            parseJson(log);
+            parseJson(log, log.getFilePaths());
             filterTaggedResources(log);
             tag(log);
         }
@@ -42,33 +42,36 @@ public class ClusterTagger implements ResourceTagger {
                 .build();
     }
 
-    private void parseJson(Log log) {
-        try {
-            String json = JsonPath.parse(new File(log.getFilePath()))
-                    .read("$..Records[?(@.eventName == 'CreateCluster' && @.responseElements != null)]")
-                    .toString();
-            GsonBuilder gsonBuilder = new GsonBuilder();
-            JsonDeserializer<CreateCluster> deserializer = (jsonElement, type, context) -> {
-                String clusterId = jsonElement
-                        .getAsJsonObject().get("requestParameters")
-                        .getAsJsonObject().get("clusterIdentifier").getAsString();
-                String arn = "arn:aws:redshift:"
-                        + log.getAccount().getRegions().get(0) + ":"
-                        + log.getAccount().getAccountId() + ":cluster:"
-                        + clusterId;
-                String owner = jsonElement.getAsJsonObject().get("userIdentity").getAsJsonObject().get("arn").getAsString();
-                return new CreateCluster(arn, owner);
+    private void parseJson(Log log, List<String> filePaths) {
+        for (String filePath : filePaths) {
+            try {
+                String json = JsonPath.parse(new File(filePath))
+                        .read("$..Records[?(@.eventName == 'CreateCluster' && @.responseElements != null)]")
+                        .toString();
+                GsonBuilder gsonBuilder = new GsonBuilder();
+                JsonDeserializer<CreateCluster> deserializer = (jsonElement, type, context) -> {
+                    String clusterId = jsonElement
+                            .getAsJsonObject().get("requestParameters")
+                            .getAsJsonObject().get("clusterIdentifier").getAsString();
+                    String arn = "arn:aws:redshift:"
+                            + log.getAccount().getRegions().get(0) + ":"
+                            + log.getAccount().getAccountId() + ":cluster:"
+                            + clusterId;
+                    String owner = jsonElement.getAsJsonObject().get("userIdentity").getAsJsonObject().get("arn").getAsString();
+                    return new CreateCluster(arn, owner);
 
-            };
+                };
 
-            gsonBuilder.registerTypeAdapter(CreateCluster.class, deserializer);
+                gsonBuilder.registerTypeAdapter(CreateCluster.class, deserializer);
 
-            Gson gson = gsonBuilder.setLenient().create();
-            List<CreateCluster> createSecurityGroups = gson.fromJson(
-                    json, new TypeToken<List<CreateCluster>>() {}.getType());
-            events.addAll(createSecurityGroups);
-        } catch (IOException e) {
-            e.printStackTrace();
+                Gson gson = gsonBuilder.setLenient().create();
+                List<CreateCluster> createSecurityGroups = gson.fromJson(
+                        json, new TypeToken<List<CreateCluster>>() {
+                        }.getType());
+                events.addAll(createSecurityGroups);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -94,7 +97,7 @@ public class ClusterTagger implements ResourceTagger {
             for (Event event : events) {
                 String clusterId = clustersWithoutTag.getClusterIdentifier();
                 String eventId = event.getId();
-                eventId = eventId.substring(eventId.lastIndexOf(':') +1, eventId.length());
+                eventId = eventId.substring(eventId.lastIndexOf(':') + 1, eventId.length());
                 if (clusterId.equals(eventId)) {
                     untaggedEvents.add(event);
                 }
@@ -103,7 +106,7 @@ public class ClusterTagger implements ResourceTagger {
         this.events = untaggedEvents;
     }
 
-    private void tag(Log log){
+    private void tag(Log log) {
         for (Event event : events) {
             String ownerTag = log.getAccount().getOwnerTag();
             String owner = event.getOwner();

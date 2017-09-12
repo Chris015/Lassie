@@ -27,7 +27,7 @@ public class CreateSecurityGroupTagger implements ResourceTagger {
     public void tagResources(List<Log> logs) {
         for (Log log : logs) {
             instantiateEc2Client(log);
-            parseJson(log);
+            parseJson(log.getFilePaths());
             filterTaggedResources(log);
             tag(log);
         }
@@ -42,28 +42,31 @@ public class CreateSecurityGroupTagger implements ResourceTagger {
                 .build();
     }
 
-    private void parseJson(Log log) {
-        try {
-            String json = JsonPath.parse(new File(log.getFilePath()))
-                    .read("$..Records[?(@.eventName == 'CreateSecurityGroup' && @.responseElements != null)]")
-                    .toString();
-            GsonBuilder gsonBuilder = new GsonBuilder();
-            JsonDeserializer<CreateSecurityGroup> deserializer = (jsonElement, type, context) -> {
-                String id = jsonElement
-                        .getAsJsonObject().get("responseElements")
-                        .getAsJsonObject().get("groupId").getAsString();
-                String owner = jsonElement.getAsJsonObject().get("userIdentity").getAsJsonObject().get("arn").getAsString();
-                return new CreateSecurityGroup(id, owner);
-            };
+    private void parseJson(List<String> filePaths) {
+        for (String filePath : filePaths) {
+            try {
+                String json = JsonPath.parse(new File(filePath))
+                        .read("$..Records[?(@.eventName == 'CreateSecurityGroup' && @.responseElements != null)]")
+                        .toString();
+                GsonBuilder gsonBuilder = new GsonBuilder();
+                JsonDeserializer<CreateSecurityGroup> deserializer = (jsonElement, type, context) -> {
+                    String id = jsonElement
+                            .getAsJsonObject().get("responseElements")
+                            .getAsJsonObject().get("groupId").getAsString();
+                    String owner = jsonElement.getAsJsonObject().get("userIdentity").getAsJsonObject().get("arn").getAsString();
+                    return new CreateSecurityGroup(id, owner);
+                };
 
-            gsonBuilder.registerTypeAdapter(CreateSecurityGroup.class, deserializer);
+                gsonBuilder.registerTypeAdapter(CreateSecurityGroup.class, deserializer);
 
-            Gson gson = gsonBuilder.setLenient().create();
-            List<CreateSecurityGroup> createSecurityGroups = gson.fromJson(
-                    json, new TypeToken<List<CreateSecurityGroup>>() {}.getType());
-            events.addAll(createSecurityGroups);
-        } catch (IOException e) {
-            e.printStackTrace();
+                Gson gson = gsonBuilder.setLenient().create();
+                List<CreateSecurityGroup> createSecurityGroups = gson.fromJson(
+                        json, new TypeToken<List<CreateSecurityGroup>>() {
+                        }.getType());
+                events.addAll(createSecurityGroups);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -75,14 +78,13 @@ public class CreateSecurityGroupTagger implements ResourceTagger {
             for (Event event : events) {
                 String groupId = securityGroupsWithoutTag.getGroupId();
                 String eventId = event.getId();
-                if (groupId.equals(eventId)){
+                if (groupId.equals(eventId)) {
                     untaggedEvents.add(event);
                 }
             }
         }
         this.events = untaggedEvents;
     }
-
 
 
     private List<SecurityGroup> describeSecurityGroup(Log log) {
@@ -101,7 +103,7 @@ public class CreateSecurityGroupTagger implements ResourceTagger {
 
     }
 
-    private void tag(Log log){
+    private void tag(Log log) {
         for (Event event : events) {
             CreateTagsRequest tagsRequest = new CreateTagsRequest()
                     .withResources(event.getId())

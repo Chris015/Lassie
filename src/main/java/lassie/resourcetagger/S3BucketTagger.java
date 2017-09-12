@@ -31,7 +31,7 @@ public class S3BucketTagger implements ResourceTagger {
     public void tagResources(List<Log> logs) {
         for (Log log : logs) {
             instantiateS3Client(log);
-            parseJson(log);
+            parseJson(log.getFilePaths());
             filterTaggedResources(log);
             tag(log);
         }
@@ -47,27 +47,29 @@ public class S3BucketTagger implements ResourceTagger {
                 .build();
     }
 
-    private void parseJson(Log log) {
-        try {
-            String json = JsonPath.parse(new File(log.getFilePath()))
-                    .read("$..Records[?(@.eventName == 'CreateBucket' && @.requestParameters != null)]").toString();
-            GsonBuilder gsonBuilder = new GsonBuilder();
-            JsonDeserializer<RunInstances> deserializer = (jsonElement, type, context) -> {
-                String id = jsonElement
-                        .getAsJsonObject().get("requestParameters")
-                        .getAsJsonObject().get("bucketName").getAsString();
-                String owner = jsonElement.getAsJsonObject().get("userIdentity").getAsJsonObject().get("arn").getAsString();
-                return new RunInstances(id, owner);
-            };
+    private void parseJson(List<String> filePaths) {
+        for (String filePath : filePaths) {
+            try {
+                String json = JsonPath.parse(new File(filePath))
+                        .read("$..Records[?(@.eventName == 'CreateBucket' && @.requestParameters != null)]").toString();
+                GsonBuilder gsonBuilder = new GsonBuilder();
+                JsonDeserializer<RunInstances> deserializer = (jsonElement, type, context) -> {
+                    String id = jsonElement
+                            .getAsJsonObject().get("requestParameters")
+                            .getAsJsonObject().get("bucketName").getAsString();
+                    String owner = jsonElement.getAsJsonObject().get("userIdentity").getAsJsonObject().get("arn").getAsString();
+                    return new RunInstances(id, owner);
+                };
 
-            gsonBuilder.registerTypeAdapter(RunInstances.class, deserializer);
+                gsonBuilder.registerTypeAdapter(RunInstances.class, deserializer);
 
-            Gson gson = gsonBuilder.setLenient().create();
-            List<RunInstances> runInstances = gson.fromJson(json, new TypeToken<List<RunInstances>>() {
-            }.getType());
-            events.addAll(runInstances);
-        } catch (IOException e) {
-            e.printStackTrace();
+                Gson gson = gsonBuilder.setLenient().create();
+                List<RunInstances> runInstances = gson.fromJson(json, new TypeToken<List<RunInstances>>() {
+                }.getType());
+                events.addAll(runInstances);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 

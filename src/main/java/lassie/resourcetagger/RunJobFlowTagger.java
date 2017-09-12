@@ -20,7 +20,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class RunJobFlowTagger implements ResourceTagger {
     private AmazonElasticMapReduce emr;
@@ -30,7 +29,7 @@ public class RunJobFlowTagger implements ResourceTagger {
     public void tagResources(List<Log> logs) {
         for (Log log : logs) {
             instantiateEmrInstance(log);
-            parseJson(log);
+            parseJson(log.getFilePaths());
             filterTaggedResources(log);
             tag(log);
         }
@@ -45,30 +44,32 @@ public class RunJobFlowTagger implements ResourceTagger {
                 .build();
     }
 
-    private void parseJson(Log log) {
-        try {
-            String json = JsonPath.parse(new File(log.getFilePath()))
-                    .read("$..Records[?(@.eventName == 'RunJobFlow' && @.responseElements != null)]")
-                    .toString();
-            GsonBuilder gsonBuilder = new GsonBuilder();
-            JsonDeserializer<RunJobFlow> deserializer = (jsonElement, type, context) -> {
-                String id = jsonElement
-                        .getAsJsonObject().get("responseElements")
-                        .getAsJsonObject().get("jobFlowId").getAsString();
+    private void parseJson(List<String> filePaths) {
+        for (String filePath : filePaths) {
+            try {
+                String json = JsonPath.parse(new File(filePath))
+                        .read("$..Records[?(@.eventName == 'RunJobFlow' && @.responseElements != null)]")
+                        .toString();
+                GsonBuilder gsonBuilder = new GsonBuilder();
+                JsonDeserializer<RunJobFlow> deserializer = (jsonElement, type, context) -> {
+                    String id = jsonElement
+                            .getAsJsonObject().get("responseElements")
+                            .getAsJsonObject().get("jobFlowId").getAsString();
 
-                String owner = jsonElement.getAsJsonObject().get("userIdentity")
-                        .getAsJsonObject().get("arn").getAsString();
+                    String owner = jsonElement.getAsJsonObject().get("userIdentity")
+                            .getAsJsonObject().get("arn").getAsString();
 
-                return new RunJobFlow(id, owner);
-            };
-            gsonBuilder.registerTypeAdapter(CreateDBInstance.class, deserializer);
-            Gson gson = gsonBuilder.setLenient().create();
-            List<CreateDBInstance> createDBInstances = gson.fromJson(
-                    json, new TypeToken<List<CreateDBInstance>>() {
-                    }.getType());
-            events.addAll(createDBInstances);
-        } catch (IOException e) {
-            e.printStackTrace();
+                    return new RunJobFlow(id, owner);
+                };
+                gsonBuilder.registerTypeAdapter(CreateDBInstance.class, deserializer);
+                Gson gson = gsonBuilder.setLenient().create();
+                List<CreateDBInstance> createDBInstances = gson.fromJson(
+                        json, new TypeToken<List<CreateDBInstance>>() {
+                        }.getType());
+                events.addAll(createDBInstances);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -91,19 +92,14 @@ public class RunJobFlowTagger implements ResourceTagger {
     private List<Cluster> describeClusters(Log log) {
         List<Cluster> clusters = new ArrayList<>();
         ListClustersResult listClustersResult = emr.listClusters();
-        try {
-            TimeUnit.SECONDS.sleep(4);
-            for (ClusterSummary clusterSummary : listClustersResult.getClusters()) {
-                DescribeClusterRequest request = new DescribeClusterRequest().withClusterId(clusterSummary.getId());
-                DescribeClusterResult result = emr.describeCluster(request);
-                if (isClusterActive(result.getCluster())) {
-                    if (result.getCluster().getTags().stream().noneMatch(t -> t.getKey().equals(log.getAccount().getOwnerTag()))) {
-                        clusters.add(result.getCluster());
-                    }
+        for (ClusterSummary clusterSummary : listClustersResult.getClusters()) {
+            DescribeClusterRequest request = new DescribeClusterRequest().withClusterId(clusterSummary.getId());
+            DescribeClusterResult result = emr.describeCluster(request);
+            if (isClusterActive(result.getCluster())) {
+                if (result.getCluster().getTags().stream().noneMatch(t -> t.getKey().equals(log.getAccount().getOwnerTag()))) {
+                    clusters.add(result.getCluster());
                 }
             }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         }
         return clusters;
     }
