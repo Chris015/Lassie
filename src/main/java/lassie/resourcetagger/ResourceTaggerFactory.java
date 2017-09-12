@@ -10,6 +10,7 @@ public class ResourceTaggerFactory {
             case "CREATEVOLUME": return new EBSVolumeTagger();
             case "CREATEDBINSTANCE": return  new CreateDBInstanceTagger();
             case "CREATECLUSTER": return new ClusterTagger();
+            case "CREATELOADBALANCER": return new LoadBalancerTagger();
         }
         throw new UnsupportedResourceTypeException(resourceType + " is not a supported");
     }
