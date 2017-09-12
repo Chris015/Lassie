@@ -2,8 +2,12 @@ package lassie.resourcetagger;
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancing;
-import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClientBuilder;
+import com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancing;
+import com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClientBuilder;
+import com.amazonaws.services.elasticloadbalancingv2.model.*;
+import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTagsRequest;
+import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTagsResult;
+import com.amazonaws.services.elasticloadbalancingv2.model.TagDescription;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
@@ -27,7 +31,8 @@ public class LoadBalancerTagger implements ResourceTagger {
         for (Log log : logs) {
             instantiateClient(log);
             parseJson(log.getFilePaths());
-
+            filterTaggedResources(log);
+            tag(log);
         }
     }
 
@@ -54,7 +59,6 @@ public class LoadBalancerTagger implements ResourceTagger {
                             .getAsJsonArray().get(0).getAsJsonObject().get("loadBalancerArn")
                             .getAsString();
                     String owner = jsonElement.getAsJsonObject().get("userIdentity").getAsJsonObject().get("arn").getAsString();
-
                     return new Event(id, owner);
                 };
 
@@ -70,4 +74,56 @@ public class LoadBalancerTagger implements ResourceTagger {
             }
         }
     }
+
+    private List<LoadBalancer> describeLoadBalancers(Log log) {
+        List<LoadBalancer> loadBalancers = new ArrayList<>();
+        DescribeLoadBalancersResult result = elb.describeLoadBalancers(new DescribeLoadBalancersRequest());
+
+        for (LoadBalancer loadBalancer : result.getLoadBalancers()) {
+            DescribeTagsRequest tagsRequest = new DescribeTagsRequest().withResourceArns(loadBalancer.getLoadBalancerArn());
+            DescribeTagsResult tagsResult = elb.describeTags(tagsRequest);
+
+            for (TagDescription tagDescription : tagsResult.getTagDescriptions()) {
+                if (tagDescription.getTags().isEmpty() || tagDescription.getTags().stream().noneMatch(t -> t.getKey().equals(log.getAccount().getOwnerTag()))) {
+                    loadBalancers.add(loadBalancer);
+
+                }
+            }
+
+        }
+        return loadBalancers;
+    }
+
+    private void filterTaggedResources(Log log) {
+        List<Event> untaggedEvents = new ArrayList<>();
+        List<LoadBalancer> loadBalancersWithoutTags = describeLoadBalancers(log);
+
+        for (LoadBalancer loadBalancer : loadBalancersWithoutTags) {
+            for (Event event : events) {
+                String arn = loadBalancer.getLoadBalancerArn();
+                String eventId = event.getId();
+
+                if (arn.equals(eventId)) {
+                    untaggedEvents.add(event);
+                }
+            }
+        }
+        this.events = untaggedEvents;
+    }
+
+    private void tag(Log log) {
+        for (Event event : events) {
+            com.amazonaws.services.elasticloadbalancingv2.model.Tag tag = new com.amazonaws.services.elasticloadbalancingv2.model.Tag();
+            tag.setKey(log.getAccount().getOwnerTag());
+            tag.setValue(event.getOwner());
+            AddTagsRequest tagsRequest = new AddTagsRequest()
+                    .withResourceArns(event.getId())
+                    .withTags(tag);
+            elb.addTags(tagsRequest);
+            System.out.println("Tagged: " + event.getId() +
+                    " with key: " + log.getAccount().getOwnerTag() +
+                    " value: " + event.getOwner());
+        }
+    }
+
 }
