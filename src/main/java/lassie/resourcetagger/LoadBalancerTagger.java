@@ -2,20 +2,14 @@ package lassie.resourcetagger;
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.ec2.model.*;
-import com.amazonaws.services.ec2.model.DescribeTagsRequest;
-import com.amazonaws.services.ec2.model.DescribeTagsResult;
-import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancing;
 import com.amazonaws.services.elasticloadbalancing.AmazonElasticLoadBalancingClientBuilder;
-import com.amazonaws.services.elasticloadbalancing.model.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
 import lassie.Log;
-import lassie.event.CreateLoadBalancer;
 import lassie.event.Event;
 
 import java.io.File;
@@ -53,7 +47,7 @@ public class LoadBalancerTagger implements ResourceTagger {
                         .read("$..Records[?(@.eventName == 'CreateLoadBalancer' && @.responseElements != null)]")
                         .toString();
                 GsonBuilder gsonBuilder = new GsonBuilder();
-                JsonDeserializer<CreateLoadBalancer> deserializer = (jsonElement, type, context) -> {
+                JsonDeserializer<Event> deserializer = (jsonElement, type, context) -> {
                     String id = jsonElement
                             .getAsJsonObject().get("responseElements")
                             .getAsJsonObject().get("loadBalancers")
@@ -61,14 +55,14 @@ public class LoadBalancerTagger implements ResourceTagger {
                             .getAsString();
                     String owner = jsonElement.getAsJsonObject().get("userIdentity").getAsJsonObject().get("arn").getAsString();
 
-                    return new CreateLoadBalancer(id, owner);
+                    return new Event(id, owner);
                 };
 
-                gsonBuilder.registerTypeAdapter(CreateLoadBalancer.class, deserializer);
+                gsonBuilder.registerTypeAdapter(Event.class, deserializer);
 
                 Gson gson = gsonBuilder.setLenient().create();
-                List<CreateLoadBalancer> createLoadBalancers = gson.fromJson(
-                        json, new TypeToken<List<CreateLoadBalancer>>() {
+                List<Event> createLoadBalancers = gson.fromJson(
+                        json, new TypeToken<List<Event>>() {
                         }.getType());
                 events.addAll(createLoadBalancers);
             } catch (IOException e) {
