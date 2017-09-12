@@ -9,6 +9,7 @@ import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
 import lassie.Log;
+import lassie.config.Account;
 import lassie.event.Event;
 
 import java.io.File;
@@ -22,55 +23,55 @@ public class EC2Instance implements ResourceTagger {
 
     @Override
     public void tagResources(List<Log> logs) {
-        System.out.println("Parsing logs and tagging resources...");
         for (Log log : logs) {
-            instantiateEc2Client(log);
+            instantiateEc2Client(log.getAccount());
             parseJson(log.getFilePaths());
-            filterTaggedResources(log);
-            tag(log);
+            filterTaggedResources(log.getAccount().getOwnerTag());
+            tag(log.getAccount().getOwnerTag());
         }
     }
 
-    private void instantiateEc2Client(Log log) {
-        BasicAWSCredentials awsCreds = new BasicAWSCredentials(log.getAccount().getAccessKeyId(), log.getAccount().getSecretAccessKey());
+    private void instantiateEc2Client(Account account) {
+        BasicAWSCredentials awsCreds = new BasicAWSCredentials(account.getAccessKeyId(), account.getSecretAccessKey());
         AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(awsCreds);
         ec2 = AmazonEC2ClientBuilder.standard()
                 .withCredentials(awsCredentials)
-                .withRegion(log.getAccount().getRegions().get(0))
+                .withRegion(account.getRegions().get(0))
                 .build();
     }
 
     private void parseJson(List<String> filePaths) {
+        String jsonPath = "$..Records[?(@.eventName == 'RunInstances' && @.responseElements != null)]";
         for (String filePath : filePaths) {
             try {
-                String json = JsonPath.parse(new File(filePath))
-                        .read("$..Records[?(@.eventName == 'RunInstances' && @.responseElements != null)]").toString();
+                String json = JsonPath.parse(new File(filePath)).read(jsonPath).toString();
                 GsonBuilder gsonBuilder = new GsonBuilder();
                 JsonDeserializer<Event> deserializer = (jsonElement, type, context) -> {
                     String id = jsonElement
                             .getAsJsonObject().get("responseElements")
                             .getAsJsonObject().get("instancesSet")
                             .getAsJsonObject().get("items")
-                            .getAsJsonArray().get(0).getAsJsonObject().get("instanceId").getAsString();
-                    String owner = jsonElement.getAsJsonObject().get("userIdentity").getAsJsonObject().get("arn").getAsString();
+                            .getAsJsonArray().get(0).getAsJsonObject().get("instanceId")
+                            .getAsString();
+                    String owner = jsonElement
+                            .getAsJsonObject().get("userIdentity")
+                            .getAsJsonObject().get("arn")
+                            .getAsString();
                     return new Event(id, owner);
                 };
-
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);
-
                 Gson gson = gsonBuilder.setLenient().create();
-                List<Event> runInstances = gson.fromJson(json, new TypeToken<List<Event>>() {
-                }.getType());
-                events.addAll(runInstances);
+                List<Event> runInstancesEvents = gson.fromJson(json, new TypeToken<List<Event>>() {}.getType());
+                events.addAll(runInstancesEvents);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    private void filterTaggedResources(Log log) {
+    private void filterTaggedResources(String ownerTag) {
         List<Event> untaggedEvents = new ArrayList<>();
-        List<Instance> instancesWithoutTags = describeInstances(log);
+        List<Instance> instancesWithoutTags = describeInstances(ownerTag);
         for (Instance instancesWithoutTag : instancesWithoutTags) {
             for (Event event : events) {
                 String instanceId = instancesWithoutTag.getInstanceId();
@@ -83,22 +84,20 @@ public class EC2Instance implements ResourceTagger {
         this.events = untaggedEvents;
     }
 
-    private List<Instance> describeInstances(Log log) {
+    private List<Instance> describeInstances(String ownerTag) {
         List<Instance> instances = new ArrayList<>();
         boolean done = false;
         while (!done) {
             DescribeInstancesRequest request = new DescribeInstancesRequest();
             DescribeInstancesResult response = ec2.describeInstances(request);
-
             for (Reservation reservation : response.getReservations()) {
                 for (Instance instance : reservation.getInstances()) {
-                    if (instance.getTags().stream().noneMatch(t -> t.getKey().equals(log.getAccount().getOwnerTag()))) {
+                    if (!hasTag(instance, ownerTag)) {
                         instances.add(instance);
                     }
                 }
             }
             request.setNextToken(response.getNextToken());
-
             if (response.getNextToken() == null) {
                 done = true;
             }
@@ -106,16 +105,19 @@ public class EC2Instance implements ResourceTagger {
         return instances;
     }
 
-    private void tag(Log log) {
+    private boolean hasTag(Instance instance, String tag) {
+        return instance.getTags().stream().noneMatch(t -> t.getKey().equals(tag));
+    }
+
+    private void tag(String ownerTag) {
         for (Event event : events) {
             CreateTagsRequest tagsRequest = new CreateTagsRequest()
                     .withResources(event.getId())
-                    .withTags(new Tag(log.getAccount().getOwnerTag(), event.getOwner()));
+                    .withTags(new Tag(ownerTag, event.getOwner()));
             ec2.createTags(tagsRequest);
             System.out.println("Tagged: " + event.getId() +
-                    " with key: " + log.getAccount().getOwnerTag() +
+                    " with key: " + ownerTag +
                     " value: " + event.getOwner());
         }
-
     }
 }

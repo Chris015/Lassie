@@ -12,6 +12,7 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
 import lassie.Log;
+import lassie.config.Account;
 import lassie.event.Event;
 
 import java.io.File;
@@ -26,55 +27,55 @@ public class EMRClusterTagger implements ResourceTagger {
     @Override
     public void tagResources(List<Log> logs) {
         for (Log log : logs) {
-            instantiateEmrInstance(log);
+            instantiateEmrInstance(log.getAccount());
             parseJson(log.getFilePaths());
-            filterTaggedResources(log);
-            tag(log);
+            filterTaggedResources(log.getAccount().getOwnerTag());
+            tag(log.getAccount().getOwnerTag());
         }
     }
 
-    private void instantiateEmrInstance(Log log) {
-        AWSCredentials awsCreds = new BasicAWSCredentials(log.getAccount().getAccessKeyId(), log.getAccount().getSecretAccessKey());
+    private void instantiateEmrInstance(Account account) {
+        AWSCredentials awsCreds = new BasicAWSCredentials(account.getAccessKeyId(), account.getSecretAccessKey());
         AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(awsCreds);
         this.emr = AmazonElasticMapReduceClientBuilder.standard()
                 .withCredentials(awsCredentials)
-                .withRegion(log.getAccount().getRegions().get(0))
+                .withRegion(account.getRegions().get(0))
                 .build();
     }
 
     private void parseJson(List<String> filePaths) {
+        String jsonPath = "$..Records[?(@.eventName == 'RunJobFlow' && @.responseElements != null)]";
         for (String filePath : filePaths) {
             try {
                 String json = JsonPath.parse(new File(filePath))
-                        .read("$..Records[?(@.eventName == 'RunJobFlow' && @.responseElements != null)]")
+                        .read(jsonPath)
                         .toString();
                 GsonBuilder gsonBuilder = new GsonBuilder();
                 JsonDeserializer<Event> deserializer = (jsonElement, type, context) -> {
                     String id = jsonElement
                             .getAsJsonObject().get("responseElements")
-                            .getAsJsonObject().get("jobFlowId").getAsString();
-
+                            .getAsJsonObject().get("jobFlowId")
+                            .getAsString();
                     String owner = jsonElement.getAsJsonObject().get("userIdentity")
-                            .getAsJsonObject().get("arn").getAsString();
-
+                            .getAsJsonObject().get("arn")
+                            .getAsString();
                     return new Event(id, owner);
                 };
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);
                 Gson gson = gsonBuilder.setLenient().create();
-                List<Event> createDBInstances = gson.fromJson(
-                        json, new TypeToken<List<Event>>() {
-                        }.getType());
-                events.addAll(createDBInstances);
+                List<Event> createDBInstanceEvents = gson.fromJson(
+                        json, new TypeToken<List<Event>>() {}.getType());
+                events.addAll(createDBInstanceEvents);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    private void filterTaggedResources(Log log) {
-        List<Cluster> clusters = describeClusters(log);
+    private void filterTaggedResources(String ownerTag) {
+        List<Cluster> clustersWithoutTags = describeClusters(ownerTag);
         List<Event> untaggedResources = new ArrayList<>();
-        for (Cluster cluster : clusters) {
+        for (Cluster cluster : clustersWithoutTags) {
             for (Event event : events) {
                 if (cluster.getId().equals(event.getId())) {
                     untaggedResources.add(event);
@@ -87,14 +88,14 @@ public class EMRClusterTagger implements ResourceTagger {
         }
     }
 
-    private List<Cluster> describeClusters(Log log) {
+    private List<Cluster> describeClusters(String ownerTag) {
         List<Cluster> clusters = new ArrayList<>();
         ListClustersResult listClustersResult = emr.listClusters();
         for (ClusterSummary clusterSummary : listClustersResult.getClusters()) {
             DescribeClusterRequest request = new DescribeClusterRequest().withClusterId(clusterSummary.getId());
             DescribeClusterResult result = emr.describeCluster(request);
             if (isClusterActive(result.getCluster())) {
-                if (result.getCluster().getTags().stream().noneMatch(t -> t.getKey().equals(log.getAccount().getOwnerTag()))) {
+                if (!hasTag(result.getCluster(), ownerTag)) {
                     clusters.add(result.getCluster());
                 }
             }
@@ -114,19 +115,22 @@ public class EMRClusterTagger implements ResourceTagger {
         return true;
     }
 
-    private void tag(Log log) {
+    private boolean hasTag(Cluster cluster, String ownerTag) {
+        return cluster.getTags().stream().noneMatch(t -> t.getKey().equals(ownerTag));
+    }
+
+    private void tag(String ownerTag) {
         for (Event event : events) {
             DescribeClusterRequest request = new DescribeClusterRequest().withClusterId(event.getId());
             DescribeClusterResult result = emr.describeCluster(request);
             List<Tag> tags = result.getCluster().getTags();
-            tags.add(new Tag(log.getAccount().getOwnerTag(), event.getOwner()));
+            tags.add(new Tag(ownerTag, event.getOwner()));
             AddTagsRequest tagsRequest = new AddTagsRequest(event.getId(), tags);
             emr.addTags(tagsRequest);
-            System.out.println("Tagged: " + event.getId() +
-                    " with key: " + log.getAccount().getOwnerTag() +
-                    " value: " + event.getOwner());
+            System.out.println("Tagged: " + event.getId()
+                    + " with key: " + ownerTag
+                    + " value: " + event.getOwner());
         }
-
     }
 }
 

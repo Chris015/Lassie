@@ -10,7 +10,7 @@ public class Event {
     }
 
     private String resolveArn(String arn) {
-        return arn.substring(arn.lastIndexOf('/') +1, arn.length());
+        return arn.substring(arn.lastIndexOf('/') + 1, arn.length());
     }
 
     public String getId() {

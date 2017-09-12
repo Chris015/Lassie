@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.zip.GZIPInputStream;
 
 public class LogHandler {
-
     private AmazonS3 s3;
     private Path tmpFolderZipped;
     private Path tmpFolderUnzipped;
@@ -36,23 +35,19 @@ public class LogHandler {
     }
 
     public List<Log> getLogs(String startDate, List<Account> accounts) {
-        System.out.println("Fetching logs...");
         List<Log> logs = new ArrayList<>();
         LocalDate end = LocalDate.now();
         LocalDate start = LocalDate.parse(startDate);
         List<LocalDate> totalDates = new ArrayList<>();
 
-        // For each account
         for (Account account : accounts) {
             BasicAWSCredentials awsCredentials = new BasicAWSCredentials(account.getAccessKeyId(),
                     account.getSecretAccessKey());
-
             this.s3 = AmazonS3ClientBuilder.standard()
                     .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
                     .withRegion(Regions.fromName(account.getBucketRegion()))
                     .build();
 
-            // For each region and date, gets3ObjectSummaries
             while (!start.isAfter(end)) {
                 totalDates.add(start);
                 start = start.plusDays(1);
@@ -61,26 +56,23 @@ public class LogHandler {
             for (LocalDate date : totalDates) {
                 for (String region : account.getRegions()) {
                     List<S3ObjectSummary> summaries = getObjectSummaries(date.format(formatter), account, region);
-                    // Download and unzip CloudTrail logs
                     List<String> filePaths = downloadLogs(account, summaries);
-                    // Create new logs and add them to list
                     logs.addAll(createLogs(account, region, filePaths));
                 }
             }
         }
-        // Return a list of Logs containing the account with Region
         return logs;
     }
 
     private List<S3ObjectSummary> getObjectSummaries(String date, Account account, String region) {
         ListObjectsV2Request request = new ListObjectsV2Request()
                 .withBucketName(account.getS3Url().getBucket())
-                .withPrefix(account.getS3Url().getKey() +
-                        "/AWSLogs/" +
-                        account.getAccountId() + "/" +
-                        "CloudTrail/" +
-                        region + "/" +
-                        date + "/"
+                .withPrefix(account.getS3Url().getKey()
+                        + "/AWSLogs/"
+                        + account.getAccountId() + "/"
+                        + "CloudTrail/"
+                        + region + "/"
+                        + date + "/"
                 );
         return s3.listObjectsV2(request).getObjectSummaries();
     }
@@ -98,8 +90,11 @@ public class LogHandler {
                  S3ObjectInputStream objectContent = s3Object.getObjectContent()) {
 
                 String filename = s3Object.getKey().substring(key.lastIndexOf('/') + 1, key.length());
-                Files.copy(objectContent, Paths.get(tmpFolderZipped + "/" + filename), StandardCopyOption.REPLACE_EXISTING);
+                Files.copy(objectContent,
+                        Paths.get(tmpFolderZipped + "/" + filename),
+                        StandardCopyOption.REPLACE_EXISTING);
                 fileNames.add(filename);
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -122,7 +117,9 @@ public class LogHandler {
                 while ((len = gzipInputStream.read(buffer)) != -1) {
                     fileOutputStream.write(buffer, 0, len);
                 }
+
                 filePaths.add(fileOutputPath);
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -155,7 +152,6 @@ public class LogHandler {
 
             tmpFolderZipped = Files.createTempDirectory(Paths.get(tmpFolder + "/"), null);
             tmpFolderUnzipped = Files.createTempDirectory(Paths.get(tmpFolder + "/"), null);
-
 
         } catch (IOException e) {
             e.printStackTrace();

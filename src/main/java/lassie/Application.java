@@ -32,7 +32,7 @@ public class Application {
     }
 
     private void setFromDate(String[] args) {
-        this.fromDate = (args.length==1) ? args[0] : LocalDate.now().minusDays(1).toString();
+        this.fromDate = (args.length == 1) ? args[0] : LocalDate.now().minusDays(1).toString();
     }
 
     private List<ResourceTagger> getResourceTaggers(List<Account> accounts) {

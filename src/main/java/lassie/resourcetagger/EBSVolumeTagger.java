@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EBSVolumeTagger implements ResourceTagger {
-
     private AmazonEC2 ec2;
     private List<Event> events = new ArrayList<>();
 
@@ -62,10 +61,9 @@ public class EBSVolumeTagger implements ResourceTagger {
                 };
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);
                 Gson gson = gsonBuilder.setLenient().create();
-                List<Event> createSecurityGroups = gson.fromJson(
-                        json, new TypeToken<List<Event>>() {
-                        }.getType());
-                events.addAll(createSecurityGroups);
+                List<Event> createVolumeEvents = gson.fromJson(
+                        json, new TypeToken<List<Event>>() {}.getType());
+                events.addAll(createVolumeEvents);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -88,14 +86,14 @@ public class EBSVolumeTagger implements ResourceTagger {
     }
 
     private List<Volume> describeVolumes(String ownerTag) {
-        List<Volume> volumes = new ArrayList<>();
+        List<Volume> volumesWithoutTags = new ArrayList<>();
         boolean done = false;
         while (!done) {
             DescribeVolumesRequest request = new DescribeVolumesRequest();
             DescribeVolumesResult result = ec2.describeVolumes(request);
             for (Volume volume : result.getVolumes()) {
-                if (volume.getTags().stream().noneMatch(t -> t.getKey().equals(ownerTag))) {
-                    volumes.add(volume);
+                if (!hasTag(volume, ownerTag)) {
+                    volumesWithoutTags.add(volume);
                 }
             }
             request.setNextToken(result.getNextToken());
@@ -103,7 +101,11 @@ public class EBSVolumeTagger implements ResourceTagger {
                 done = true;
             }
         }
-        return volumes;
+        return volumesWithoutTags;
+    }
+
+    private boolean hasTag(Volume volume, String ownerTag) {
+        return volume.getTags().stream().noneMatch(t -> t.getKey().equals(ownerTag));
     }
 
     private void tag(String ownerTag) {

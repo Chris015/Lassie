@@ -13,6 +13,7 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
 import lassie.Log;
+import lassie.config.Account;
 import lassie.event.Event;
 
 import java.io.File;
@@ -29,50 +30,48 @@ public class S3BucketTagger implements ResourceTagger {
     @Override
     public void tagResources(List<Log> logs) {
         for (Log log : logs) {
-            instantiateS3Client(log);
+            instantiateS3Client(log.getAccount());
             parseJson(log.getFilePaths());
-            filterTaggedResources(log);
-            tag(log);
+            filterTaggedResources(log.getAccount().getOwnerTag());
+            tag(log.getAccount().getOwnerTag());
         }
     }
 
-    private void instantiateS3Client(Log log) {
-        BasicAWSCredentials awsCredentials = new BasicAWSCredentials(log.getAccount().getAccessKeyId(),
-                log.getAccount().getSecretAccessKey());
-
+    private void instantiateS3Client(Account account) {
+        BasicAWSCredentials awsCreds = new BasicAWSCredentials(account.getAccessKeyId(), account.getSecretAccessKey());
         this.s3 = AmazonS3ClientBuilder.standard()
-                .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
-                .withRegion(Regions.fromName(log.getAccount().getBucketRegion()))
+                .withCredentials(new AWSStaticCredentialsProvider(awsCreds))
+                .withRegion(Regions.fromName(account.getBucketRegion()))
                 .build();
     }
 
     private void parseJson(List<String> filePaths) {
+        String jsonPath = "$..Records[?(@.eventName == 'CreateBucket' && @.requestParameters != null)]";
         for (String filePath : filePaths) {
             try {
                 String json = JsonPath.parse(new File(filePath))
-                        .read("$..Records[?(@.eventName == 'CreateBucket' && @.requestParameters != null)]").toString();
+                        .read(jsonPath).toString();
                 GsonBuilder gsonBuilder = new GsonBuilder();
                 JsonDeserializer<Event> deserializer = (jsonElement, type, context) -> {
                     String id = jsonElement
                             .getAsJsonObject().get("requestParameters")
                             .getAsJsonObject().get("bucketName").getAsString();
-                    String owner = jsonElement.getAsJsonObject().get("userIdentity").getAsJsonObject().get("arn").getAsString();
+                    String owner = jsonElement.getAsJsonObject().get("userIdentity")
+                            .getAsJsonObject().get("arn")
+                            .getAsString();
                     return new Event(id, owner);
                 };
-
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);
-
                 Gson gson = gsonBuilder.setLenient().create();
-                List<Event> runInstances = gson.fromJson(json, new TypeToken<List<Event>>() {
-                }.getType());
-                events.addAll(runInstances);
+                List<Event> runInstancesEvents = gson.fromJson(json, new TypeToken<List<Event>>() {}.getType());
+                events.addAll(runInstancesEvents);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    private void filterTaggedResources(Log log) {
+    private void filterTaggedResources(String ownerTag) {
         List<Event> untaggedBuckets = new ArrayList<>();
         for (Event event : events) {
             if (s3.getBucketTaggingConfiguration(event.getId()) == null) {
@@ -80,8 +79,8 @@ public class S3BucketTagger implements ResourceTagger {
             }
             BucketTaggingConfiguration configuration = s3.getBucketTaggingConfiguration(event.getId());
             List<TagSet> allTagSets = configuration.getAllTagSets();
-            for (TagSet allTagSet : allTagSets) {
-                if (!allTagSet.getAllTags().containsKey(log.getAccount().getOwnerTag())) {
+            for (TagSet tagSet : allTagSets) {
+                if (!hasTag(tagSet, ownerTag)) {
                     untaggedBuckets.add(event);
                 }
             }
@@ -89,16 +88,23 @@ public class S3BucketTagger implements ResourceTagger {
         this.events = untaggedBuckets;
     }
 
-    private void tag(Log log) {
+    private boolean hasTag(TagSet tagSet, String tag) {
+        return tagSet.getAllTags().containsKey(tag);
+    }
+
+    private void tag(String ownerTag) {
         Map<String, String> newTags = new HashMap<>();
         List<TagSet> tags = new ArrayList<>();
         for (Event event : events) {
             BucketTaggingConfiguration configuration = s3.getBucketTaggingConfiguration(event.getId());
             List<TagSet> oldTags = configuration.getAllTagSets();
             oldTags.forEach(oldTag -> newTags.putAll(oldTag.getAllTags()));
-            newTags.put(log.getAccount().getOwnerTag(), event.getOwner());
+            newTags.put(ownerTag, event.getOwner());
             tags.add(new TagSet(newTags));
             s3.setBucketTaggingConfiguration(event.getId(), new BucketTaggingConfiguration(tags));
+            System.out.println("Tagged: " + event.getId()
+                    + " with key: " + ownerTag
+                    + " value: " + event.getOwner());
         }
     }
 }
