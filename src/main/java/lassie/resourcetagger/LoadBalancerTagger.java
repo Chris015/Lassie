@@ -32,7 +32,7 @@ public class LoadBalancerTagger implements ResourceTagger {
     public void tagResources(List<Log> logs) {
         for (Log log : logs) {
             instantiateClient(log);
-            parseJson(log);
+            parseJson(log.getFilePaths());
 
         }
     }
@@ -46,34 +46,34 @@ public class LoadBalancerTagger implements ResourceTagger {
                 .build();
     }
 
-    private void parseJson(Log log) {
-        try {
-            String json = JsonPath.parse(new File(log.getFilePath()))
-                    .read("$..Records[?(@.eventName == 'CreateLoadBalancer' && @.responseElements != null)]")
-                    .toString();
-            GsonBuilder gsonBuilder = new GsonBuilder();
-            JsonDeserializer<CreateLoadBalancer> deserializer = (jsonElement, type, context) -> {
-                String id = jsonElement
-                        .getAsJsonObject().get("responseElements")
-                        .getAsJsonObject().get("loadBalancers")
-                        .getAsJsonArray().get(0).getAsJsonObject().get("loadBalancerArn")
-                        .getAsString();
-                String owner = jsonElement.getAsJsonObject().get("userIdentity").getAsJsonObject().get("arn").getAsString();
+    private void parseJson(List<String> filePaths) {
+        for (String filePath : filePaths) {
+            try {
+                String json = JsonPath.parse(new File(filePath))
+                        .read("$..Records[?(@.eventName == 'CreateLoadBalancer' && @.responseElements != null)]")
+                        .toString();
+                GsonBuilder gsonBuilder = new GsonBuilder();
+                JsonDeserializer<CreateLoadBalancer> deserializer = (jsonElement, type, context) -> {
+                    String id = jsonElement
+                            .getAsJsonObject().get("responseElements")
+                            .getAsJsonObject().get("loadBalancers")
+                            .getAsJsonArray().get(0).getAsJsonObject().get("loadBalancerArn")
+                            .getAsString();
+                    String owner = jsonElement.getAsJsonObject().get("userIdentity").getAsJsonObject().get("arn").getAsString();
 
-                return new CreateLoadBalancer(id, owner);
-            };
+                    return new CreateLoadBalancer(id, owner);
+                };
 
-            gsonBuilder.registerTypeAdapter(CreateLoadBalancer.class, deserializer);
+                gsonBuilder.registerTypeAdapter(CreateLoadBalancer.class, deserializer);
 
-            Gson gson = gsonBuilder.setLenient().create();
-            List<CreateLoadBalancer> createLoadBalancers = gson.fromJson(
-                    json, new TypeToken<List<CreateLoadBalancer>>() {}.getType());
-            events.addAll(createLoadBalancers);
-        } catch (IOException e) {
-            e.printStackTrace();
+                Gson gson = gsonBuilder.setLenient().create();
+                List<CreateLoadBalancer> createLoadBalancers = gson.fromJson(
+                        json, new TypeToken<List<CreateLoadBalancer>>() {
+                        }.getType());
+                events.addAll(createLoadBalancers);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
-
-
-
 }

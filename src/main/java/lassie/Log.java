@@ -2,20 +2,22 @@ package lassie;
 
 import lassie.config.Account;
 
+import java.util.List;
+
 public class Log {
     private Account account;
-    private String filePath;
+    private List<String> filePaths;
 
-    public Log(Account account, String filePath) {
+    public Log(Account account, List<String> filePaths) {
         this.account = account;
-        this.filePath = filePath;
+        this.filePaths = filePaths;
     }
 
     public Account getAccount() {
         return account;
     }
 
-    public String getFilePath() {
-        return filePath;
+    public List<String> getFilePaths() {
+        return filePaths;
     }
 }

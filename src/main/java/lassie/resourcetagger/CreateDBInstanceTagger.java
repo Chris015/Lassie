@@ -29,7 +29,7 @@ public class CreateDBInstanceTagger implements ResourceTagger {
         System.out.println("Parsing logs and tagging resources...");
         for (Log log : logs) {
             instantiateRDSClient(log);
-            parseJson(log);
+            parseJson(log.getFilePaths());
             filterTaggedResources(log);
             tag(log);
         }
@@ -44,30 +44,34 @@ public class CreateDBInstanceTagger implements ResourceTagger {
                 .build();
     }
 
-    private void parseJson(Log log) {
-        try {
-            String json = JsonPath.parse(new File(log.getFilePath()))
-                    .read("$..Records[?(@.eventName == 'CreateDBInstance' && @.responseElements != null)]")
-                    .toString();
-            GsonBuilder gsonBuilder = new GsonBuilder();
-            JsonDeserializer<CreateDBInstance> deserializer = (jsonElement, type, context) -> {
-                String id = jsonElement
-                        .getAsJsonObject().get("responseElements")
-                        .getAsJsonObject().get("dBInstanceArn").getAsString();
+    private void parseJson(List<String> filePaths) {
+        for (String filePath : filePaths) {
 
-                String owner = jsonElement.getAsJsonObject().get("userIdentity")
-                        .getAsJsonObject().get("arn").getAsString();
 
-                return new CreateDBInstance(id, owner);
-            };
-            gsonBuilder.registerTypeAdapter(CreateDBInstance.class, deserializer);
-            Gson gson = gsonBuilder.setLenient().create();
-            List<CreateDBInstance> createDBInstances = gson.fromJson(
-                    json, new TypeToken<List<CreateDBInstance>>() {
-                    }.getType());
-            events.addAll(createDBInstances);
-        } catch (IOException e) {
-            e.printStackTrace();
+            try {
+                String json = JsonPath.parse(new File(filePath))
+                        .read("$..Records[?(@.eventName == 'CreateDBInstance' && @.responseElements != null)]")
+                        .toString();
+                GsonBuilder gsonBuilder = new GsonBuilder();
+                JsonDeserializer<CreateDBInstance> deserializer = (jsonElement, type, context) -> {
+                    String id = jsonElement
+                            .getAsJsonObject().get("responseElements")
+                            .getAsJsonObject().get("dBInstanceArn").getAsString();
+
+                    String owner = jsonElement.getAsJsonObject().get("userIdentity")
+                            .getAsJsonObject().get("arn").getAsString();
+
+                    return new CreateDBInstance(id, owner);
+                };
+                gsonBuilder.registerTypeAdapter(CreateDBInstance.class, deserializer);
+                Gson gson = gsonBuilder.setLenient().create();
+                List<CreateDBInstance> createDBInstances = gson.fromJson(
+                        json, new TypeToken<List<CreateDBInstance>>() {
+                        }.getType());
+                events.addAll(createDBInstances);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -87,7 +91,7 @@ public class CreateDBInstanceTagger implements ResourceTagger {
         this.events = untaggedEvents;
     }
 
-    public List<DBInstance> describeRDSInstances(Log log) {
+    private List<DBInstance> describeRDSInstances(Log log) {
         List<DBInstance> dbInstancesWithoutOwner = new ArrayList<>();
         DescribeDBInstancesRequest describeDBInstancesRequest = new DescribeDBInstancesRequest();
         DescribeDBInstancesResult describeDBInstancesResult = rds.describeDBInstances(describeDBInstancesRequest);
