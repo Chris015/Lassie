@@ -4,12 +4,12 @@ public class ResourceTaggerFactory {
 
     public ResourceTagger getResourceTagger(String resourceType) throws UnsupportedResourceTypeException {
         switch (resourceType.toUpperCase()) {
-            case "RUNINSTANCES": return new RunInstancesTagger();
+            case "RUNINSTANCES": return new EC2Instance();
             case "CREATESECURITYGROUP": return new CreateSecurityGroupTagger();
             case "CREATEBUCKET": return new S3BucketTagger();
             case "CREATEVOLUME": return new EBSVolumeTagger();
             case "CREATEDBINSTANCE": return  new CreateDBInstanceTagger();
-            case "RUNJOBFLOW": return new RunJobFlowTagger();
+            case "RUNJOBFLOW": return new EMRClusterTagger();
             case "CREATECLUSTER": return new ClusterTagger();
             case "CREATELOADBALANCER": return new LoadBalancerTagger();
         }

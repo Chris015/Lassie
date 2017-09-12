@@ -16,7 +16,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RunInstancesTagger implements ResourceTagger {
+public class EC2Instance implements ResourceTagger {
     private AmazonEC2 ec2;
     private List<Event> events = new ArrayList<>();
 

@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RunJobFlowTagger implements ResourceTagger {
+public class EMRClusterTagger implements ResourceTagger {
     private AmazonElasticMapReduce emr;
     private List<Event> events = new ArrayList<>();
 
