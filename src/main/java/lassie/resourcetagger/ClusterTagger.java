@@ -11,7 +11,6 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
 import lassie.Log;
-import lassie.event.CreateCluster;
 import lassie.event.Event;
 
 import java.io.File;
@@ -49,7 +48,7 @@ public class ClusterTagger implements ResourceTagger {
                         .read("$..Records[?(@.eventName == 'CreateCluster' && @.responseElements != null)]")
                         .toString();
                 GsonBuilder gsonBuilder = new GsonBuilder();
-                JsonDeserializer<CreateCluster> deserializer = (jsonElement, type, context) -> {
+                JsonDeserializer<Event> deserializer = (jsonElement, type, context) -> {
                     String clusterId = jsonElement
                             .getAsJsonObject().get("requestParameters")
                             .getAsJsonObject().get("clusterIdentifier").getAsString();
@@ -58,15 +57,15 @@ public class ClusterTagger implements ResourceTagger {
                             + log.getAccount().getAccountId() + ":cluster:"
                             + clusterId;
                     String owner = jsonElement.getAsJsonObject().get("userIdentity").getAsJsonObject().get("arn").getAsString();
-                    return new CreateCluster(arn, owner);
+                    return new Event(arn, owner);
 
                 };
 
-                gsonBuilder.registerTypeAdapter(CreateCluster.class, deserializer);
+                gsonBuilder.registerTypeAdapter(Event.class, deserializer);
 
                 Gson gson = gsonBuilder.setLenient().create();
-                List<CreateCluster> createSecurityGroups = gson.fromJson(
-                        json, new TypeToken<List<CreateCluster>>() {
+                List<Event> createSecurityGroups = gson.fromJson(
+                        json, new TypeToken<List<Event>>() {
                         }.getType());
                 events.addAll(createSecurityGroups);
             } catch (IOException e) {

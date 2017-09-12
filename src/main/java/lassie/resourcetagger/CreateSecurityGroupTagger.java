@@ -11,7 +11,6 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
 import lassie.Log;
-import lassie.event.CreateSecurityGroup;
 import lassie.event.Event;
 
 import java.io.File;
@@ -49,19 +48,19 @@ public class CreateSecurityGroupTagger implements ResourceTagger {
                         .read("$..Records[?(@.eventName == 'CreateSecurityGroup' && @.responseElements != null)]")
                         .toString();
                 GsonBuilder gsonBuilder = new GsonBuilder();
-                JsonDeserializer<CreateSecurityGroup> deserializer = (jsonElement, type, context) -> {
+                JsonDeserializer<Event> deserializer = (jsonElement, type, context) -> {
                     String id = jsonElement
                             .getAsJsonObject().get("responseElements")
                             .getAsJsonObject().get("groupId").getAsString();
                     String owner = jsonElement.getAsJsonObject().get("userIdentity").getAsJsonObject().get("arn").getAsString();
-                    return new CreateSecurityGroup(id, owner);
+                    return new Event(id, owner);
                 };
 
-                gsonBuilder.registerTypeAdapter(CreateSecurityGroup.class, deserializer);
+                gsonBuilder.registerTypeAdapter(Event.class, deserializer);
 
                 Gson gson = gsonBuilder.setLenient().create();
-                List<CreateSecurityGroup> createSecurityGroups = gson.fromJson(
-                        json, new TypeToken<List<CreateSecurityGroup>>() {
+                List<Event> createSecurityGroups = gson.fromJson(
+                        json, new TypeToken<List<Event>>() {
                         }.getType());
                 events.addAll(createSecurityGroups);
             } catch (IOException e) {

@@ -12,9 +12,7 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
 import lassie.Log;
-import lassie.event.CreateDBInstance;
 import lassie.event.Event;
-import lassie.event.RunJobFlow;
 
 import java.io.File;
 import java.io.IOException;
@@ -51,7 +49,7 @@ public class RunJobFlowTagger implements ResourceTagger {
                         .read("$..Records[?(@.eventName == 'RunJobFlow' && @.responseElements != null)]")
                         .toString();
                 GsonBuilder gsonBuilder = new GsonBuilder();
-                JsonDeserializer<RunJobFlow> deserializer = (jsonElement, type, context) -> {
+                JsonDeserializer<Event> deserializer = (jsonElement, type, context) -> {
                     String id = jsonElement
                             .getAsJsonObject().get("responseElements")
                             .getAsJsonObject().get("jobFlowId").getAsString();
@@ -59,12 +57,12 @@ public class RunJobFlowTagger implements ResourceTagger {
                     String owner = jsonElement.getAsJsonObject().get("userIdentity")
                             .getAsJsonObject().get("arn").getAsString();
 
-                    return new RunJobFlow(id, owner);
+                    return new Event(id, owner);
                 };
-                gsonBuilder.registerTypeAdapter(CreateDBInstance.class, deserializer);
+                gsonBuilder.registerTypeAdapter(Event.class, deserializer);
                 Gson gson = gsonBuilder.setLenient().create();
-                List<CreateDBInstance> createDBInstances = gson.fromJson(
-                        json, new TypeToken<List<CreateDBInstance>>() {
+                List<Event> createDBInstances = gson.fromJson(
+                        json, new TypeToken<List<Event>>() {
                         }.getType());
                 events.addAll(createDBInstances);
             } catch (IOException e) {

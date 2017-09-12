@@ -14,7 +14,6 @@ import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
 import lassie.Log;
 import lassie.event.Event;
-import lassie.event.RunInstances;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,18 +52,18 @@ public class S3BucketTagger implements ResourceTagger {
                 String json = JsonPath.parse(new File(filePath))
                         .read("$..Records[?(@.eventName == 'CreateBucket' && @.requestParameters != null)]").toString();
                 GsonBuilder gsonBuilder = new GsonBuilder();
-                JsonDeserializer<RunInstances> deserializer = (jsonElement, type, context) -> {
+                JsonDeserializer<Event> deserializer = (jsonElement, type, context) -> {
                     String id = jsonElement
                             .getAsJsonObject().get("requestParameters")
                             .getAsJsonObject().get("bucketName").getAsString();
                     String owner = jsonElement.getAsJsonObject().get("userIdentity").getAsJsonObject().get("arn").getAsString();
-                    return new RunInstances(id, owner);
+                    return new Event(id, owner);
                 };
 
-                gsonBuilder.registerTypeAdapter(RunInstances.class, deserializer);
+                gsonBuilder.registerTypeAdapter(Event.class, deserializer);
 
                 Gson gson = gsonBuilder.setLenient().create();
-                List<RunInstances> runInstances = gson.fromJson(json, new TypeToken<List<RunInstances>>() {
+                List<Event> runInstances = gson.fromJson(json, new TypeToken<List<Event>>() {
                 }.getType());
                 events.addAll(runInstances);
             } catch (IOException e) {

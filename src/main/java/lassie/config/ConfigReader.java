@@ -24,6 +24,6 @@ public class ConfigReader {
             e.printStackTrace();
         }
 
-        return new ArrayList<Account>();
+        return new ArrayList<>();
     }
 }
