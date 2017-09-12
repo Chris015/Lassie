@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RedshiftClusterTagger implements ResourceTagger {
-    private AmazonRedshift redshiftClient;
+    private AmazonRedshift redshift;
     private List<Event> events = new ArrayList<>();
 
     @Override
@@ -27,74 +27,76 @@ public class RedshiftClusterTagger implements ResourceTagger {
         for (Log log : logs) {
             instantiateRedshiftClient(log);
             parseJson(log, log.getFilePaths());
-            filterTaggedResources(log);
-            tag(log);
+            filterTaggedResources(log.getAccount().getOwnerTag());
+            tag(log.getAccount().getOwnerTag());
         }
     }
 
     private void instantiateRedshiftClient(Log log) {
-        BasicAWSCredentials awsCreds = new BasicAWSCredentials(log.getAccount().getAccessKeyId(), log.getAccount().getSecretAccessKey());
+        BasicAWSCredentials awsCreds = new BasicAWSCredentials(log.getAccount().getAccessKeyId(),
+                log.getAccount().getSecretAccessKey());
         AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(awsCreds);
-        redshiftClient = AmazonRedshiftClientBuilder.standard()
+        redshift = AmazonRedshiftClientBuilder.standard()
                 .withCredentials(awsCredentials)
                 .withRegion(log.getAccount().getRegions().get(0))
                 .build();
     }
 
     private void parseJson(Log log, List<String> filePaths) {
+        String jsonPath = "$..Records[?(@.eventName == 'CreateCluster' && @.responseElements != null)]";
         for (String filePath : filePaths) {
             try {
-                String json = JsonPath.parse(new File(filePath))
-                        .read("$..Records[?(@.eventName == 'CreateCluster' && @.responseElements != null)]")
-                        .toString();
+                String json = JsonPath.parse(new File(filePath)).read(jsonPath).toString();
                 GsonBuilder gsonBuilder = new GsonBuilder();
                 JsonDeserializer<Event> deserializer = (jsonElement, type, context) -> {
                     String clusterId = jsonElement
                             .getAsJsonObject().get("requestParameters")
-                            .getAsJsonObject().get("clusterIdentifier").getAsString();
+                            .getAsJsonObject().get("clusterIdentifier")
+                            .getAsString();
                     String arn = "arn:aws:redshift:"
                             + log.getAccount().getRegions().get(0) + ":"
                             + log.getAccount().getAccountId() + ":cluster:"
                             + clusterId;
-                    String owner = jsonElement.getAsJsonObject().get("userIdentity").getAsJsonObject().get("arn").getAsString();
+                    String owner = jsonElement
+                            .getAsJsonObject().get("userIdentity")
+                            .getAsJsonObject().get("arn")
+                            .getAsString();
                     return new Event(arn, owner);
-
                 };
-
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);
-
                 Gson gson = gsonBuilder.setLenient().create();
-                List<Event> createSecurityGroups = gson.fromJson(
+                List<Event> createClusterEvents = gson.fromJson(
                         json, new TypeToken<List<Event>>() {
                         }.getType());
-                events.addAll(createSecurityGroups);
+                events.addAll(createClusterEvents);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    private List<Cluster> describeCluster(Log log) {
+    private List<Cluster> describeCluster(String ownerTag) {
         List<Cluster> clusters = new ArrayList<>();
-
         DescribeClustersRequest request = new DescribeClustersRequest();
-        DescribeClustersResult response = redshiftClient.describeClusters(request);
-
+        DescribeClustersResult response = redshift.describeClusters(request);
         for (Cluster cluster : response.getClusters()) {
-            if (cluster.getTags().stream().noneMatch(t -> t.getKey().equals(log.getAccount().getOwnerTag()))) {
+            if (!hasTag(cluster, ownerTag)) {
                 clusters.add(cluster);
             }
         }
         return clusters;
     }
 
-    private void filterTaggedResources(Log log) {
-        List<Event> untaggedEvents = new ArrayList<>();
-        List<Cluster> clustersWithoutTags = describeCluster(log);
+    private boolean hasTag(Cluster cluster, String tag) {
+        return cluster.getTags().stream().noneMatch(t -> t.getKey().equals(tag));
+    }
 
-        for (Cluster clustersWithoutTag : clustersWithoutTags) {
+    private void filterTaggedResources(String ownerTag) {
+        List<Event> untaggedEvents = new ArrayList<>();
+        List<Cluster> clustersWithoutOwnerTags = describeCluster(ownerTag);
+        for (Cluster cluster : clustersWithoutOwnerTags) {
             for (Event event : events) {
-                String clusterId = clustersWithoutTag.getClusterIdentifier();
+                String clusterId = cluster.getClusterIdentifier();
                 String eventId = event.getId();
                 eventId = eventId.substring(eventId.lastIndexOf(':') + 1, eventId.length());
                 if (clusterId.equals(eventId)) {
@@ -105,19 +107,17 @@ public class RedshiftClusterTagger implements ResourceTagger {
         this.events = untaggedEvents;
     }
 
-    private void tag(Log log) {
+    private void tag(String ownerTag) {
         for (Event event : events) {
-            String ownerTag = log.getAccount().getOwnerTag();
-            String owner = event.getOwner();
             Tag tag = new Tag();
             tag.setKey(ownerTag);
-            tag.setValue(owner);
+            tag.setValue(event.getOwner());
             CreateTagsRequest tagsRequest = new CreateTagsRequest();
             tagsRequest.withResourceName(event.getId());
             tagsRequest.withTags(tag);
-            redshiftClient.createTags(tagsRequest);
+            redshift.createTags(tagsRequest);
             System.out.println("Tagged: " + event.getId() +
-                    " with key: " + log.getAccount().getOwnerTag() +
+                    " with key: " + ownerTag +
                     " value: " + event.getOwner());
         }
     }

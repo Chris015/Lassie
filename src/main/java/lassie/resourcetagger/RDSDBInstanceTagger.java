@@ -25,17 +25,17 @@ public class RDSDBInstanceTagger implements ResourceTagger {
 
     @Override
     public void tagResources(List<Log> logs) {
-        System.out.println("Parsing logs and tagging resources...");
         for (Log log : logs) {
             instantiateRDSClient(log);
             parseJson(log.getFilePaths());
-            filterTaggedResources(log);
-            tag(log);
+            filterTaggedResources(log.getAccount().getOwnerTag());
+            tag(log.getAccount().getOwnerTag());
         }
     }
 
     private void instantiateRDSClient(Log log) {
-        BasicAWSCredentials awsCreds = new BasicAWSCredentials(log.getAccount().getAccessKeyId(), log.getAccount().getSecretAccessKey());
+        BasicAWSCredentials awsCreds = new BasicAWSCredentials(log.getAccount().getAccessKeyId(),
+                log.getAccount().getSecretAccessKey());
         AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(awsCreds);
         rds = AmazonRDSClientBuilder.standard()
                 .withCredentials(awsCredentials)
@@ -44,43 +44,40 @@ public class RDSDBInstanceTagger implements ResourceTagger {
     }
 
     private void parseJson(List<String> filePaths) {
+        String jsonPath = "$..Records[?(@.eventName == 'CreateDBInstance' && @.responseElements != null)]";
         for (String filePath : filePaths) {
-
-
             try {
-                String json = JsonPath.parse(new File(filePath))
-                        .read("$..Records[?(@.eventName == 'CreateDBInstance' && @.responseElements != null)]")
-                        .toString();
+                String json = JsonPath.parse(new File(filePath)).read(jsonPath).toString();
                 GsonBuilder gsonBuilder = new GsonBuilder();
                 JsonDeserializer<Event> deserializer = (jsonElement, type, context) -> {
                     String id = jsonElement
                             .getAsJsonObject().get("responseElements")
-                            .getAsJsonObject().get("dBInstanceArn").getAsString();
-
-                    String owner = jsonElement.getAsJsonObject().get("userIdentity")
-                            .getAsJsonObject().get("arn").getAsString();
-
+                            .getAsJsonObject().get("dBInstanceArn")
+                            .getAsString();
+                    String owner = jsonElement
+                            .getAsJsonObject().get("userIdentity")
+                            .getAsJsonObject().get("arn")
+                            .getAsString();
                     return new Event(id, owner);
                 };
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);
                 Gson gson = gsonBuilder.setLenient().create();
-                List<Event> createDBInstances = gson.fromJson(
+                List<Event> createDBInstanceEvents = gson.fromJson(
                         json, new TypeToken<List<Event>>() {
                         }.getType());
-                events.addAll(createDBInstances);
+                events.addAll(createDBInstanceEvents);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    private void filterTaggedResources(Log log) {
+    private void filterTaggedResources(String ownerTag) {
         List<Event> untaggedEvents = new ArrayList<>();
-        List<DBInstance> dbInstancesWithoutTag = describeRDSInstances(log);
-
-        for (DBInstance tag : dbInstancesWithoutTag) {
+        List<DBInstance> dbInstancesWithoutOwnerTag = describeRDSInstances(ownerTag);
+        for (DBInstance dbInstance : dbInstancesWithoutOwnerTag) {
             for (Event event : events) {
-                String dbId = tag.getDBInstanceArn();
+                String dbId = dbInstance.getDBInstanceArn();
                 String eventId = event.getId();
                 if (dbId.equals(eventId)) {
                     untaggedEvents.add(event);
@@ -90,32 +87,37 @@ public class RDSDBInstanceTagger implements ResourceTagger {
         this.events = untaggedEvents;
     }
 
-    private List<DBInstance> describeRDSInstances(Log log) {
+    private List<DBInstance> describeRDSInstances(String ownerTag) {
         List<DBInstance> dbInstancesWithoutOwner = new ArrayList<>();
-        DescribeDBInstancesRequest describeDBInstancesRequest = new DescribeDBInstancesRequest();
-        DescribeDBInstancesResult describeDBInstancesResult = rds.describeDBInstances(describeDBInstancesRequest);
+        DescribeDBInstancesResult describeDBInstancesResult = rds.describeDBInstances(new DescribeDBInstancesRequest());
         for (DBInstance dbInstance : describeDBInstancesResult.getDBInstances()) {
-            ListTagsForResourceRequest request = new ListTagsForResourceRequest().withResourceName(dbInstance.getDBInstanceArn());
+            ListTagsForResourceRequest request = new ListTagsForResourceRequest()
+                    .withResourceName(dbInstance.getDBInstanceArn());
             ListTagsForResourceResult response = rds.listTagsForResource(request);
-            if (response.getTagList().stream().noneMatch(t -> t.getKey().equals(log.getAccount().getOwnerTag()))) {
+            if (!hasTag(response, ownerTag)) {
                 dbInstancesWithoutOwner.add(dbInstance);
             }
         }
         return dbInstancesWithoutOwner;
     }
 
-    private void tag(Log log) {
+    private boolean hasTag(ListTagsForResourceResult response, String tag) {
+        return response.getTagList().stream().noneMatch(t -> t.getKey().equals(tag));
+    }
+
+    private void tag(String ownerTag) {
         for (Event event : events) {
             Tag tag = new Tag();
-            tag.setKey(log.getAccount().getOwnerTag());
+            tag.setKey(ownerTag);
             tag.setValue(event.getOwner());
             AddTagsToResourceRequest tagsRequest = new AddTagsToResourceRequest()
                     .withResourceName(event.getId())
                     .withTags(tag);
             rds.addTagsToResource(tagsRequest);
             System.out.println("Tagged: " + event.getId() +
-                    " with key: " + log.getAccount().getOwnerTag() +
+                    " with key: " + ownerTag +
                     " value: " + event.getOwner());
         }
     }
+
 }

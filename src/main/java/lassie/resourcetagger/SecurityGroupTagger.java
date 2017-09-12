@@ -27,13 +27,14 @@ public class SecurityGroupTagger implements ResourceTagger {
         for (Log log : logs) {
             instantiateEc2Client(log);
             parseJson(log.getFilePaths());
-            filterTaggedResources(log);
-            tag(log);
+            filterTaggedResources(log.getAccount().getOwnerTag());
+            tag(log.getAccount().getOwnerTag());
         }
     }
 
     private void instantiateEc2Client(Log log) {
-        BasicAWSCredentials awsCreds = new BasicAWSCredentials(log.getAccount().getAccessKeyId(), log.getAccount().getSecretAccessKey());
+        BasicAWSCredentials awsCreds = new BasicAWSCredentials(log.getAccount().getAccessKeyId(),
+                log.getAccount().getSecretAccessKey());
         AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(awsCreds);
         this.ec2 = AmazonEC2ClientBuilder.standard()
                 .withCredentials(awsCredentials)
@@ -42,40 +43,40 @@ public class SecurityGroupTagger implements ResourceTagger {
     }
 
     private void parseJson(List<String> filePaths) {
+        String jsonPath = "$..Records[?(@.eventName == 'CreateSecurityGroup' && @.responseElements != null)]";
         for (String filePath : filePaths) {
             try {
-                String json = JsonPath.parse(new File(filePath))
-                        .read("$..Records[?(@.eventName == 'CreateSecurityGroup' && @.responseElements != null)]")
-                        .toString();
+                String json = JsonPath.parse(new File(filePath)).read(jsonPath).toString();
                 GsonBuilder gsonBuilder = new GsonBuilder();
                 JsonDeserializer<Event> deserializer = (jsonElement, type, context) -> {
                     String id = jsonElement
                             .getAsJsonObject().get("responseElements")
-                            .getAsJsonObject().get("groupId").getAsString();
-                    String owner = jsonElement.getAsJsonObject().get("userIdentity").getAsJsonObject().get("arn").getAsString();
+                            .getAsJsonObject().get("groupId")
+                            .getAsString();
+                    String owner = jsonElement
+                            .getAsJsonObject().get("userIdentity")
+                            .getAsJsonObject().get("arn")
+                            .getAsString();
                     return new Event(id, owner);
                 };
-
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);
-
                 Gson gson = gsonBuilder.setLenient().create();
-                List<Event> createSecurityGroups = gson.fromJson(
+                List<Event> createSecurityGroupEvents = gson.fromJson(
                         json, new TypeToken<List<Event>>() {
                         }.getType());
-                events.addAll(createSecurityGroups);
+                events.addAll(createSecurityGroupEvents);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    private void filterTaggedResources(Log log) {
+    private void filterTaggedResources(String ownerTag) {
         List<Event> untaggedEvents = new ArrayList<>();
-        List<SecurityGroup> securityGroupsWithoutTags = describeSecurityGroup(log);
-
-        for (SecurityGroup securityGroupsWithoutTag : securityGroupsWithoutTags) {
+        List<SecurityGroup> securityGroupsWithoutOwnerTags = describeSecurityGroup(ownerTag);
+        for (SecurityGroup securityGroup : securityGroupsWithoutOwnerTags) {
             for (Event event : events) {
-                String groupId = securityGroupsWithoutTag.getGroupId();
+                String groupId = securityGroup.getGroupId();
                 String eventId = event.getId();
                 if (groupId.equals(eventId)) {
                     untaggedEvents.add(event);
@@ -85,31 +86,30 @@ public class SecurityGroupTagger implements ResourceTagger {
         this.events = untaggedEvents;
     }
 
-
-    private List<SecurityGroup> describeSecurityGroup(Log log) {
+    private List<SecurityGroup> describeSecurityGroup(String ownerTag) {
         List<SecurityGroup> securityGroups = new ArrayList<>();
-
         DescribeSecurityGroupsRequest request = new DescribeSecurityGroupsRequest();
         DescribeSecurityGroupsResult response = ec2.describeSecurityGroups(request);
-
         for (SecurityGroup securityGroup : response.getSecurityGroups()) {
-            if (securityGroup.getTags().stream().noneMatch(t -> t.getKey().equals(log.getAccount().getOwnerTag()))) {
+            if (!hasTag(securityGroup, ownerTag)) {
                 securityGroups.add(securityGroup);
             }
         }
-
         return securityGroups;
-
     }
 
-    private void tag(Log log) {
+    private boolean hasTag(SecurityGroup securityGroup, String tag) {
+        return securityGroup.getTags().stream().noneMatch(t -> t.getKey().equals(tag));
+    }
+
+    private void tag(String ownerTag) {
         for (Event event : events) {
             CreateTagsRequest tagsRequest = new CreateTagsRequest()
                     .withResources(event.getId())
-                    .withTags(new Tag(log.getAccount().getOwnerTag(), event.getOwner()));
+                    .withTags(new Tag(ownerTag, event.getOwner()));
             ec2.createTags(tagsRequest);
             System.out.println("Tagged: " + event.getId() +
-                    " with key: " + log.getAccount().getOwnerTag() +
+                    " with key: " + ownerTag +
                     " value: " + event.getOwner());
         }
     }

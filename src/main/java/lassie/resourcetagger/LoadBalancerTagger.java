@@ -5,9 +5,6 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancing;
 import com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClientBuilder;
 import com.amazonaws.services.elasticloadbalancingv2.model.*;
-import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTagsRequest;
-import com.amazonaws.services.elasticloadbalancingv2.model.DescribeTagsResult;
-import com.amazonaws.services.elasticloadbalancingv2.model.TagDescription;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
@@ -25,19 +22,19 @@ public class LoadBalancerTagger implements ResourceTagger {
     private AmazonElasticLoadBalancing elb;
     private List<Event> events = new ArrayList<>();
 
-
     @Override
     public void tagResources(List<Log> logs) {
         for (Log log : logs) {
             instantiateClient(log);
             parseJson(log.getFilePaths());
-            filterTaggedResources(log);
-            tag(log);
+            filterTaggedResources(log.getAccount().getOwnerTag());
+            tag(log.getAccount().getOwnerTag());
         }
     }
 
     private void instantiateClient(Log log) {
-        BasicAWSCredentials awsCreds = new BasicAWSCredentials(log.getAccount().getAccessKeyId(), log.getAccount().getSecretAccessKey());
+        BasicAWSCredentials awsCreds = new BasicAWSCredentials(log.getAccount().getAccessKeyId(),
+                log.getAccount().getSecretAccessKey());
         AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(awsCreds);
         this.elb = AmazonElasticLoadBalancingClientBuilder.standard()
                 .withCredentials(awsCredentials)
@@ -46,63 +43,64 @@ public class LoadBalancerTagger implements ResourceTagger {
     }
 
     private void parseJson(List<String> filePaths) {
+        String jsonPath = "$..Records[?(@.eventName == 'CreateLoadBalancer' && @.responseElements != null)]";
         for (String filePath : filePaths) {
             try {
-                String json = JsonPath.parse(new File(filePath))
-                        .read("$..Records[?(@.eventName == 'CreateLoadBalancer' && @.responseElements != null)]")
-                        .toString();
+                String json = JsonPath.parse(new File(filePath)).read(jsonPath).toString();
                 GsonBuilder gsonBuilder = new GsonBuilder();
                 JsonDeserializer<Event> deserializer = (jsonElement, type, context) -> {
                     String id = jsonElement
                             .getAsJsonObject().get("responseElements")
                             .getAsJsonObject().get("loadBalancers")
-                            .getAsJsonArray().get(0).getAsJsonObject().get("loadBalancerArn")
+                            .getAsJsonArray().get(0)
+                            .getAsJsonObject().get("loadBalancerArn")
                             .getAsString();
-                    String owner = jsonElement.getAsJsonObject().get("userIdentity").getAsJsonObject().get("arn").getAsString();
+                    String owner = jsonElement
+                            .getAsJsonObject().get("userIdentity")
+                            .getAsJsonObject().get("arn")
+                            .getAsString();
                     return new Event(id, owner);
                 };
-
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);
-
                 Gson gson = gsonBuilder.setLenient().create();
-                List<Event> createLoadBalancers = gson.fromJson(
+                List<Event> createLoadBalancerEvents = gson.fromJson(
                         json, new TypeToken<List<Event>>() {
                         }.getType());
-                events.addAll(createLoadBalancers);
+                events.addAll(createLoadBalancerEvents);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
 
-    private List<LoadBalancer> describeLoadBalancers(Log log) {
+    private List<LoadBalancer> describeLoadBalancers(String ownerTag) {
         List<LoadBalancer> loadBalancers = new ArrayList<>();
         DescribeLoadBalancersResult result = elb.describeLoadBalancers(new DescribeLoadBalancersRequest());
-
         for (LoadBalancer loadBalancer : result.getLoadBalancers()) {
-            DescribeTagsRequest tagsRequest = new DescribeTagsRequest().withResourceArns(loadBalancer.getLoadBalancerArn());
+            DescribeTagsRequest tagsRequest = new DescribeTagsRequest()
+                    .withResourceArns(loadBalancer.getLoadBalancerArn());
             DescribeTagsResult tagsResult = elb.describeTags(tagsRequest);
-
             for (TagDescription tagDescription : tagsResult.getTagDescriptions()) {
-                if (tagDescription.getTags().isEmpty() || tagDescription.getTags().stream().noneMatch(t -> t.getKey().equals(log.getAccount().getOwnerTag()))) {
+                if (!hasTag(tagDescription, ownerTag)) {
                     loadBalancers.add(loadBalancer);
-
                 }
             }
-
         }
         return loadBalancers;
     }
 
-    private void filterTaggedResources(Log log) {
-        List<Event> untaggedEvents = new ArrayList<>();
-        List<LoadBalancer> loadBalancersWithoutTags = describeLoadBalancers(log);
+    private boolean hasTag(TagDescription tagDescription, String ownerTag) {
+        return tagDescription.getTags().isEmpty() ||
+                tagDescription.getTags().stream().noneMatch(t -> t.getKey().equals(ownerTag));
+    }
 
-        for (LoadBalancer loadBalancer : loadBalancersWithoutTags) {
+    private void filterTaggedResources(String ownerTag) {
+        List<Event> untaggedEvents = new ArrayList<>();
+        List<LoadBalancer> loadBalancersWithoutOwnerTags = describeLoadBalancers(ownerTag);
+        for (LoadBalancer loadBalancer : loadBalancersWithoutOwnerTags) {
             for (Event event : events) {
                 String arn = loadBalancer.getLoadBalancerArn();
                 String eventId = event.getId();
-
                 if (arn.equals(eventId)) {
                     untaggedEvents.add(event);
                 }
@@ -111,17 +109,17 @@ public class LoadBalancerTagger implements ResourceTagger {
         this.events = untaggedEvents;
     }
 
-    private void tag(Log log) {
+    private void tag(String ownerTag) {
         for (Event event : events) {
-            com.amazonaws.services.elasticloadbalancingv2.model.Tag tag = new com.amazonaws.services.elasticloadbalancingv2.model.Tag();
-            tag.setKey(log.getAccount().getOwnerTag());
+            Tag tag = new Tag();
+            tag.setKey(ownerTag);
             tag.setValue(event.getOwner());
             AddTagsRequest tagsRequest = new AddTagsRequest()
                     .withResourceArns(event.getId())
                     .withTags(tag);
             elb.addTags(tagsRequest);
             System.out.println("Tagged: " + event.getId() +
-                    " with key: " + log.getAccount().getOwnerTag() +
+                    " with key: " + ownerTag +
                     " value: " + event.getOwner());
         }
     }
