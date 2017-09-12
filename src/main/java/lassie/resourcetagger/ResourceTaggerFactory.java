@@ -4,14 +4,14 @@ public class ResourceTaggerFactory {
 
     public ResourceTagger getResourceTagger(String resourceType) throws UnsupportedResourceTypeException {
         switch (resourceType.toUpperCase()) {
-            case "RUNINSTANCES": return new RunInstancesTagger();
-            case "CREATESECURITYGROUP": return new SecurityGroupTagger();
-            case "CREATEBUCKET": return new S3BucketTagger();
-            case "CREATEVOLUME": return new EBSVolumeTagger();
-            case "CREATEDBINSTANCE": return  new RDSDBInstanceTagger();
-            case "RUNJOBFLOW": return new RunJobFlowTagger();
-            case "CREATECLUSTER": return new RedshiftClusterTagger();
-            case "CREATELOADBALANCER": return new LoadBalancerTagger();
+            case "SECURITYGROUP": return new SecurityGroupTagger();
+            case "S3BUCKET": return new S3BucketTagger();
+            case "EBSVOLUME": return new EBSVolumeTagger();
+            case "RDSDBINSTANCE": return  new RDSDBInstanceTagger();
+            case "REDSHIFTCLUSTER": return new RedshiftClusterTagger();
+            case "EC2INSTANCE": return new EC2Instance();
+            case "EMRCLUSTER": return new EMRClusterTagger();
+            case "LOADBALANCER": return new LoadBalancerTagger();
         }
         throw new UnsupportedResourceTypeException(resourceType + " is not a supported");
     }
