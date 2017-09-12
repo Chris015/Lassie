@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CreateSecurityGroupTagger implements ResourceTagger {
+public class SecurityGroupTagger implements ResourceTagger {
     private AmazonEC2 ec2;
     private List<Event> events = new ArrayList<>();
 

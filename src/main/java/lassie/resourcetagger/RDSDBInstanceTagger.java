@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CreateDBInstanceTagger implements ResourceTagger {
+public class RDSDBInstanceTagger implements ResourceTagger {
     private AmazonRDS rds;
     private List<Event> events = new ArrayList<>();
 

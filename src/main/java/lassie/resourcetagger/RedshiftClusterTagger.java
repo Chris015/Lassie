@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ClusterTagger implements ResourceTagger {
+public class RedshiftClusterTagger implements ResourceTagger {
     private AmazonRedshift redshiftClient;
     private List<Event> events = new ArrayList<>();
 
