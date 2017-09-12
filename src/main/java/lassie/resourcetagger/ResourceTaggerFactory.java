@@ -11,6 +11,7 @@ public class ResourceTaggerFactory {
             case "CREATEDBINSTANCE": return  new CreateDBInstanceTagger();
             case "RUNJOBFLOW": return new RunJobFlowTagger();
             case "CREATECLUSTER": return new ClusterTagger();
+            case "CREATELOADBALANCER": return new LoadBalancerTagger();
         }
         throw new UnsupportedResourceTypeException(resourceType + " is not a supported");
     }

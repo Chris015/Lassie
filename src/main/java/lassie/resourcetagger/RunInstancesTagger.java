@@ -96,7 +96,6 @@ public class RunInstancesTagger implements ResourceTagger {
                         instances.add(instance);
                     }
                 }
-
             }
             request.setNextToken(response.getNextToken());
 
