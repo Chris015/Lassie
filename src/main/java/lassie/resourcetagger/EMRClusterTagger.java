@@ -116,7 +116,7 @@ public class EMRClusterTagger implements ResourceTagger {
     }
 
     private boolean hasTag(Cluster cluster, String ownerTag) {
-        return cluster.getTags().stream().noneMatch(t -> t.getKey().equals(ownerTag));
+        return cluster.getTags().stream().anyMatch(t -> t.getKey().equals(ownerTag));
     }
 
     private void tag(String ownerTag) {

@@ -91,7 +91,7 @@ public class LoadBalancerTagger implements ResourceTagger {
 
     private boolean hasTag(TagDescription tagDescription, String ownerTag) {
         return tagDescription.getTags().isEmpty() ||
-                tagDescription.getTags().stream().noneMatch(t -> t.getKey().equals(ownerTag));
+                tagDescription.getTags().stream().anyMatch(t -> t.getKey().equals(ownerTag));
     }
 
     private void filterTaggedResources(String ownerTag) {

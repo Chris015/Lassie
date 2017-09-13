@@ -88,7 +88,7 @@ public class RedshiftClusterTagger implements ResourceTagger {
     }
 
     private boolean hasTag(Cluster cluster, String tag) {
-        return cluster.getTags().stream().noneMatch(t -> t.getKey().equals(tag));
+        return cluster.getTags().stream().anyMatch(t -> t.getKey().equals(tag));
     }
 
     private void filterTaggedResources(String ownerTag) {

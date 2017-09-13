@@ -102,7 +102,7 @@ public class RDSDBInstanceTagger implements ResourceTagger {
     }
 
     private boolean hasTag(ListTagsForResourceResult response, String tag) {
-        return response.getTagList().stream().noneMatch(t -> t.getKey().equals(tag));
+        return response.getTagList().stream().anyMatch(t -> t.getKey().equals(tag));
     }
 
     private void tag(String ownerTag) {

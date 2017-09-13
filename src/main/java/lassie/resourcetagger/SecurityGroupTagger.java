@@ -99,7 +99,7 @@ public class SecurityGroupTagger implements ResourceTagger {
     }
 
     private boolean hasTag(SecurityGroup securityGroup, String tag) {
-        return securityGroup.getTags().stream().noneMatch(t -> t.getKey().equals(tag));
+        return securityGroup.getTags().stream().anyMatch(t -> t.getKey().equals(tag));
     }
 
     private void tag(String ownerTag) {

@@ -106,7 +106,7 @@ public class EC2InstanceTagger implements ResourceTagger {
     }
 
     private boolean hasTag(Instance instance, String tag) {
-        return instance.getTags().stream().noneMatch(t -> t.getKey().equals(tag));
+        return instance.getTags().stream().anyMatch(t -> t.getKey().equals(tag));
     }
 
     private void tag(String ownerTag) {

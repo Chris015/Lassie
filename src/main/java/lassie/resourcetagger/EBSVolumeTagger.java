@@ -105,7 +105,7 @@ public class EBSVolumeTagger implements ResourceTagger {
     }
 
     private boolean hasTag(Volume volume, String ownerTag) {
-        return volume.getTags().stream().noneMatch(t -> t.getKey().equals(ownerTag));
+        return volume.getTags().stream().anyMatch(t -> t.getKey().equals(ownerTag));
     }
 
     private void tag(String ownerTag) {
