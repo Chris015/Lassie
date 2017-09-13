@@ -96,8 +96,8 @@ public class LoadBalancerTagger implements ResourceTagger {
 
     private void filterTaggedResources(String ownerTag) {
         List<Event> untaggedEvents = new ArrayList<>();
-        List<LoadBalancer> loadBalancersWithoutOwnerTags = describeLoadBalancers(ownerTag);
-        for (LoadBalancer loadBalancer : loadBalancersWithoutOwnerTags) {
+        List<LoadBalancer> loadBalancersWithoutTag = describeLoadBalancers(ownerTag);
+        for (LoadBalancer loadBalancer : loadBalancersWithoutTag) {
             for (Event event : events) {
                 String arn = loadBalancer.getLoadBalancerArn();
                 String eventId = event.getId();

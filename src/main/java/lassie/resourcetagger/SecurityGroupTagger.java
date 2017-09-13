@@ -73,8 +73,8 @@ public class SecurityGroupTagger implements ResourceTagger {
 
     private void filterTaggedResources(String ownerTag) {
         List<Event> untaggedEvents = new ArrayList<>();
-        List<SecurityGroup> securityGroupsWithoutOwnerTags = describeSecurityGroup(ownerTag);
-        for (SecurityGroup securityGroup : securityGroupsWithoutOwnerTags) {
+        List<SecurityGroup> securityGroupsWithoutTag = describeSecurityGroup(ownerTag);
+        for (SecurityGroup securityGroup : securityGroupsWithoutTag) {
             for (Event event : events) {
                 String groupId = securityGroup.getGroupId();
                 String eventId = event.getId();

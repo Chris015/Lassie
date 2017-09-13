@@ -97,8 +97,11 @@ public class S3BucketTagger implements ResourceTagger {
         List<TagSet> tags = new ArrayList<>();
         for (Event event : events) {
             BucketTaggingConfiguration configuration = s3.getBucketTaggingConfiguration(event.getId());
-            List<TagSet> oldTags = configuration.getAllTagSets();
-            oldTags.forEach(oldTag -> newTags.putAll(oldTag.getAllTags()));
+            List<TagSet> oldTags;
+            if (configuration != null) {
+                oldTags = configuration.getAllTagSets();
+                oldTags.forEach(oldTag -> newTags.putAll(oldTag.getAllTags()));
+            }
             newTags.put(ownerTag, event.getOwner());
             tags.add(new TagSet(newTags));
             s3.setBucketTaggingConfiguration(event.getId(), new BucketTaggingConfiguration(tags));

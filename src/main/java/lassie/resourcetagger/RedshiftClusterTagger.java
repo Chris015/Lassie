@@ -93,8 +93,8 @@ public class RedshiftClusterTagger implements ResourceTagger {
 
     private void filterTaggedResources(String ownerTag) {
         List<Event> untaggedEvents = new ArrayList<>();
-        List<Cluster> clustersWithoutOwnerTags = describeCluster(ownerTag);
-        for (Cluster cluster : clustersWithoutOwnerTags) {
+        List<Cluster> clustersWithoutTag = describeCluster(ownerTag);
+        for (Cluster cluster : clustersWithoutTag) {
             for (Event event : events) {
                 String clusterId = cluster.getClusterIdentifier();
                 String eventId = event.getId();

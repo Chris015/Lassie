@@ -74,8 +74,8 @@ public class RDSDBInstanceTagger implements ResourceTagger {
 
     private void filterTaggedResources(String ownerTag) {
         List<Event> untaggedEvents = new ArrayList<>();
-        List<DBInstance> dbInstancesWithoutOwnerTag = describeRDSInstances(ownerTag);
-        for (DBInstance dbInstance : dbInstancesWithoutOwnerTag) {
+        List<DBInstance> dbInstancesWithoutTag = describeRDSInstances(ownerTag);
+        for (DBInstance dbInstance : dbInstancesWithoutTag) {
             for (Event event : events) {
                 String dbId = dbInstance.getDBInstanceArn();
                 String eventId = event.getId();
