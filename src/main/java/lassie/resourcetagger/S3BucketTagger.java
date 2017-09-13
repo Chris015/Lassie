@@ -96,8 +96,6 @@ public class S3BucketTagger implements ResourceTagger {
         Map<String, String> newTags = new HashMap<>();
         List<TagSet> tags = new ArrayList<>();
         for (Event event : events) {
-            System.out.println(events.size());
-            System.out.println(event.getId());
             BucketTaggingConfiguration configuration = s3.getBucketTaggingConfiguration(event.getId());
             List<TagSet> oldTags;
             if (configuration != null) {
