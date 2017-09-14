@@ -6,7 +6,6 @@ import lassie.resourcetagger.ResourceTagger;
 import lassie.resourcetagger.ResourceTaggerFactory;
 import lassie.resourcetagger.UnsupportedResourceTypeException;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,23 +15,19 @@ public class Application {
     private ResourceTaggerFactory resourceTaggerFactory;
     private String fromDate;
 
-    public Application() {
+    public Application(String[] args) {
         this.configReader = new ConfigReader();
         this.logHandler = new LogHandler();
         this.resourceTaggerFactory = new ResourceTaggerFactory();
+        this.fromDate = new DateInterpreter().interpret(args);
     }
 
-    public void run(String[] args) {
-        setFromDate(args);
+    public void run() {
         List<Account> accounts = configReader.getAccounts();
         List<Log> logs = logHandler.getLogs(fromDate, accounts);
         List<ResourceTagger> resourceTaggers = getResourceTaggers(accounts);
         resourceTaggers.forEach(resourceTagger -> resourceTagger.tagResources(logs));
         logHandler.clearLogs();
-    }
-
-    private void setFromDate(String[] args) {
-        this.fromDate = (args.length == 1) ? args[0] : LocalDate.now().minusDays(1).toString();
     }
 
     private List<ResourceTagger> getResourceTaggers(List<Account> accounts) {
