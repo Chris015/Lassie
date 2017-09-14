@@ -73,6 +73,21 @@ public class LoadBalancerTagger implements ResourceTagger {
         }
     }
 
+    private void filterTaggedResources(String ownerTag) {
+        List<Event> untaggedEvents = new ArrayList<>();
+        List<LoadBalancer> loadBalancersWithoutTag = describeLoadBalancers(ownerTag);
+        for (LoadBalancer loadBalancer : loadBalancersWithoutTag) {
+            for (Event event : events) {
+                String arn = loadBalancer.getLoadBalancerArn();
+                String eventId = event.getId();
+                if (arn.equals(eventId)) {
+                    untaggedEvents.add(event);
+                }
+            }
+        }
+        this.events = untaggedEvents;
+    }
+
     private List<LoadBalancer> describeLoadBalancers(String ownerTag) {
         List<LoadBalancer> loadBalancers = new ArrayList<>();
         DescribeLoadBalancersResult result = elb.describeLoadBalancers(new DescribeLoadBalancersRequest());
@@ -90,23 +105,7 @@ public class LoadBalancerTagger implements ResourceTagger {
     }
 
     private boolean hasTag(TagDescription tagDescription, String ownerTag) {
-        return tagDescription.getTags().isEmpty() ||
-                tagDescription.getTags().stream().anyMatch(t -> t.getKey().equals(ownerTag));
-    }
-
-    private void filterTaggedResources(String ownerTag) {
-        List<Event> untaggedEvents = new ArrayList<>();
-        List<LoadBalancer> loadBalancersWithoutTag = describeLoadBalancers(ownerTag);
-        for (LoadBalancer loadBalancer : loadBalancersWithoutTag) {
-            for (Event event : events) {
-                String arn = loadBalancer.getLoadBalancerArn();
-                String eventId = event.getId();
-                if (arn.equals(eventId)) {
-                    untaggedEvents.add(event);
-                }
-            }
-        }
-        this.events = untaggedEvents;
+        return tagDescription.getTags().stream().anyMatch(t -> t.getKey().equals(ownerTag));
     }
 
     private void tag(String ownerTag) {
@@ -122,6 +121,6 @@ public class LoadBalancerTagger implements ResourceTagger {
                     " with key: " + ownerTag +
                     " value: " + event.getOwner());
         }
+        this.events = new ArrayList<>();
     }
-
 }

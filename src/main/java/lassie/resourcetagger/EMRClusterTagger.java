@@ -131,6 +131,7 @@ public class EMRClusterTagger implements ResourceTagger {
                     + " with key: " + ownerTag
                     + " value: " + event.getOwner());
         }
+        this.events = new ArrayList<>();
     }
 }
 
