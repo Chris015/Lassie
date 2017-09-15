@@ -10,9 +10,9 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
-import lassie.Log;
+import lassie.model.Log;
 import lassie.config.Account;
-import lassie.event.Event;
+import lassie.model.Event;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -62,7 +62,7 @@ public class EBSVolumeTagger implements ResourceTagger {
                             .get("userIdentity")
                             .getAsJsonObject()
                             .get("arn").getAsString();
-                    log.info("EBS volume event created. Id: " + id + " Owner: " + owner);
+                    log.info("EBS volume model created. Id: " + id + " Owner: " + owner);
                     return new Event(id, owner);
                 };
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);

@@ -2,6 +2,7 @@ package lassie;
 
 import lassie.config.Account;
 import lassie.config.ConfigReader;
+import lassie.model.Log;
 import lassie.resourcetagger.ResourceTagger;
 import lassie.resourcetagger.ResourceTaggerFactory;
 import lassie.resourcetagger.UnsupportedResourceTypeException;

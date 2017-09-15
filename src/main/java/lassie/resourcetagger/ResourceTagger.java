@@ -1,6 +1,6 @@
 package lassie.resourcetagger;
 
-import lassie.Log;
+import lassie.model.Log;
 
 import java.util.List;
 

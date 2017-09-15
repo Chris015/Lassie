@@ -10,9 +10,9 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
-import lassie.Log;
+import lassie.model.Log;
 import lassie.config.Account;
-import lassie.event.Event;
+import lassie.model.Event;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -67,7 +67,7 @@ public class RedshiftClusterTagger implements ResourceTagger {
                             .getAsJsonObject().get("userIdentity")
                             .getAsJsonObject().get("arn")
                             .getAsString();
-                    log.info("RedShift cluster event created. ARN: " + arn + " Owner: " + owner);
+                    log.info("RedShift cluster model created. ARN: " + arn + " Owner: " + owner);
                     return new Event(arn, owner);
                 };
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);

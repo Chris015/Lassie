@@ -1,4 +1,4 @@
-package lassie.event;
+package lassie.model;
 
 public class Event {
     private String id;

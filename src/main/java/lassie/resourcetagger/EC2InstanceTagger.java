@@ -8,9 +8,9 @@ import com.amazonaws.services.ec2.model.*;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
-import lassie.Log;
+import lassie.model.Log;
 import lassie.config.Account;
-import lassie.event.Event;
+import lassie.model.Event;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -63,7 +63,7 @@ public class EC2InstanceTagger implements ResourceTagger {
                             .getAsJsonObject().get("userIdentity")
                             .getAsJsonObject().get("arn")
                             .getAsString();
-                    log.info("EC2 instance event created. Id: " + id + " Owner: " + owner);
+                    log.info("EC2 instance model created. Id: " + id + " Owner: " + owner);
                     return new Event(id, owner);
                 };
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);

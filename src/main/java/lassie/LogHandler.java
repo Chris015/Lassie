@@ -7,6 +7,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.*;
 import lassie.config.Account;
+import lassie.model.Log;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 

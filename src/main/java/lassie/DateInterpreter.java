@@ -30,7 +30,7 @@ public class DateInterpreter {
         }
 
         String argument = programArguments[0];
-        String validDate = "^\\d{4}\\-(0?0[1-9]|1[012])\\-(0?0[1-9]|[12][0-9]|3[01])$";
+        String validDate = "^\\d{4}-(0?0[1-9]|1[012])-(0?0[1-9]|[12][0-9]|3[01])$";
         String validNumber = "^\\d+$";
         if (!argument.matches(validDate) && !argument.matches(validNumber)) {
             log.warn(new IllegalArgumentException("Malformed argument: " + argument
