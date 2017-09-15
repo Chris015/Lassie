@@ -11,6 +11,7 @@ import com.jayway.jsonpath.JsonPath;
 import lassie.Log;
 import lassie.config.Account;
 import lassie.event.Event;
+import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,6 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EC2InstanceTagger implements ResourceTagger {
+    private final Logger log = Logger.getLogger(EC2InstanceTagger.class);
+
     private AmazonEC2 ec2;
     private List<Event> events = new ArrayList<>();
 
@@ -32,15 +35,18 @@ public class EC2InstanceTagger implements ResourceTagger {
     }
 
     private void instantiateEc2Client(Account account) {
+        log.info("Instantiating EC2 client");
         BasicAWSCredentials awsCreds = new BasicAWSCredentials(account.getAccessKeyId(), account.getSecretAccessKey());
         AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(awsCreds);
         ec2 = AmazonEC2ClientBuilder.standard()
                 .withCredentials(awsCredentials)
                 .withRegion(account.getRegions().get(0))
                 .build();
+        log.info("EC2 client instantiated");
     }
 
     private void parseJson(List<String> filePaths) {
+        log.info("Parsing json");
         String jsonPath = "$..Records[?(@.eventName == 'RunInstances' && @.responseElements != null)]";
         for (String filePath : filePaths) {
             try {
@@ -57,19 +63,23 @@ public class EC2InstanceTagger implements ResourceTagger {
                             .getAsJsonObject().get("userIdentity")
                             .getAsJsonObject().get("arn")
                             .getAsString();
+                    log.info("EC2 instance event created. Id: " + id + " Owner: " + owner);
                     return new Event(id, owner);
                 };
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);
                 Gson gson = gsonBuilder.setLenient().create();
-                List<Event> runInstancesEvents = gson.fromJson(json, new TypeToken<List<Event>>() {}.getType());
+                List<Event> runInstancesEvents = gson.fromJson(json, new TypeToken<List<Event>>() {
+                }.getType());
                 events.addAll(runInstancesEvents);
             } catch (IOException e) {
+                log.error("Could not parse json", e);
                 e.printStackTrace();
             }
         }
+        log.info("Parsing json complete");
     }
-
     private void filterTaggedResources(String ownerTag) {
+        log.info("Filtering tagged EC2 instances");
         List<Event> untaggedEvents = new ArrayList<>();
         List<Instance> instancesWithoutTags = describeInstances(ownerTag);
         for (Instance instancesWithoutTag : instancesWithoutTags) {
@@ -82,9 +92,12 @@ public class EC2InstanceTagger implements ResourceTagger {
             }
         }
         this.events = untaggedEvents;
+        log.info("Done filtering tagged EC2 instances");
+
     }
 
     private List<Instance> describeInstances(String ownerTag) {
+        log.info("Describing Instances");
         List<Instance> instances = new ArrayList<>();
         boolean done = false;
         while (!done) {
@@ -102,6 +115,7 @@ public class EC2InstanceTagger implements ResourceTagger {
                 done = true;
             }
         }
+        log.info("Found " + instances.size() + " instances without tag");
         return instances;
     }
 
@@ -110,14 +124,16 @@ public class EC2InstanceTagger implements ResourceTagger {
     }
 
     private void tag(String ownerTag) {
+        log.info("Tagging EC2 instances");
         for (Event event : events) {
             CreateTagsRequest tagsRequest = new CreateTagsRequest()
                     .withResources(event.getId())
                     .withTags(new Tag(ownerTag, event.getOwner()));
             ec2.createTags(tagsRequest);
-            System.out.println("Tagged: " + event.getId() +
+            log.info("Tagged: " + event.getId() +
                     " with key: " + ownerTag +
                     " value: " + event.getOwner());
         }
+        log.info("Tagging EC2 instances complete");
     }
 }

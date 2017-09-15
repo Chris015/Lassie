@@ -13,6 +13,7 @@ import com.jayway.jsonpath.JsonPath;
 import lassie.Log;
 import lassie.config.Account;
 import lassie.event.Event;
+import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EBSVolumeTagger implements ResourceTagger {
+    private final Logger log = Logger.getLogger(EBSVolumeTagger.class);
     private AmazonEC2 ec2;
     private List<Event> events = new ArrayList<>();
 
@@ -34,15 +36,18 @@ public class EBSVolumeTagger implements ResourceTagger {
     }
 
     private void instantiateEc2Client(Account account) {
+        log.info("Instantiating EC2 client");
         BasicAWSCredentials awsCreds = new BasicAWSCredentials(account.getAccessKeyId(), account.getSecretAccessKey());
         AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(awsCreds);
         ec2 = AmazonEC2ClientBuilder.standard()
                 .withCredentials(awsCredentials)
                 .withRegion(account.getRegions().get(0))
                 .build();
+        log.info("EC2 client instantiated");
     }
 
     private void parseJson(List<String> filePaths) {
+        log.info("Parsing json");
         String jsonPath = "$..Records[?(@.eventName == 'CreateVolume' && @.responseElements != null)]";
         for (String filePath : filePaths) {
             try {
@@ -57,6 +62,7 @@ public class EBSVolumeTagger implements ResourceTagger {
                             .get("userIdentity")
                             .getAsJsonObject()
                             .get("arn").getAsString();
+                    log.info("EBS volume event created. Id: " + id + " Owner: " + owner);
                     return new Event(id, owner);
                 };
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);
@@ -65,12 +71,15 @@ public class EBSVolumeTagger implements ResourceTagger {
                         json, new TypeToken<List<Event>>() {}.getType());
                 events.addAll(createVolumeEvents);
             } catch (IOException e) {
+                log.error("Could nog parse json.", e);
                 e.printStackTrace();
             }
         }
+        log.info("Parsing json complete");
     }
 
     private void filterTaggedResources(String ownerTag) {
+        log.info("Filtering tagged EBS volume");
         List<Event> untaggedEvents = new ArrayList<>();
         List<Volume> volumesWithoutTags = describeVolumes(ownerTag);
         for (Volume volumesWithoutTag : volumesWithoutTags) {
@@ -83,9 +92,11 @@ public class EBSVolumeTagger implements ResourceTagger {
             }
         }
         this.events = untaggedEvents;
+        log.info("Done filtering tagged EBS volumes");
     }
 
     private List<Volume> describeVolumes(String ownerTag) {
+        log.info("Describing volumes");
         List<Volume> volumesWithoutTags = new ArrayList<>();
         boolean done = false;
         while (!done) {
@@ -101,6 +112,7 @@ public class EBSVolumeTagger implements ResourceTagger {
                 done = true;
             }
         }
+        log.info("Found " + volumesWithoutTags.size() + " EBS volumes without tag");
         return volumesWithoutTags;
     }
 
@@ -109,14 +121,16 @@ public class EBSVolumeTagger implements ResourceTagger {
     }
 
     private void tag(String ownerTag) {
+        log.info("Tagging volumes");
         for (Event event : events) {
             CreateTagsRequest tagsRequest = new CreateTagsRequest()
                     .withResources(event.getId())
                     .withTags(new Tag(ownerTag, event.getOwner()));
             ec2.createTags(tagsRequest);
-            System.out.println("Tagged: " + event.getId()
+            log.info("Tagged: " + event.getId()
                     + " with key: " + ownerTag
                     + " value: " + event.getOwner());
         }
+        log.info("Tagging volumes complete");
     }
 }

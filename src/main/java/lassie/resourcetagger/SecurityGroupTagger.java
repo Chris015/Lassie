@@ -11,7 +11,9 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
 import lassie.Log;
+import lassie.config.Account;
 import lassie.event.Event;
+import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,30 +21,34 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SecurityGroupTagger implements ResourceTagger {
+    Logger log = Logger.getLogger(SecurityGroupTagger.class);
     private AmazonEC2 ec2;
     private List<Event> events = new ArrayList<>();
 
     @Override
     public void tagResources(List<Log> logs) {
         for (Log log : logs) {
-            instantiateEc2Client(log);
+            instantiateEc2Client(log.getAccount());
             parseJson(log.getFilePaths());
             filterTaggedResources(log.getAccount().getOwnerTag());
             tag(log.getAccount().getOwnerTag());
         }
     }
 
-    private void instantiateEc2Client(Log log) {
-        BasicAWSCredentials awsCreds = new BasicAWSCredentials(log.getAccount().getAccessKeyId(),
-                log.getAccount().getSecretAccessKey());
+    private void instantiateEc2Client(Account account) {
+        log.info("Instantiating EC2 client");
+        BasicAWSCredentials awsCreds = new BasicAWSCredentials(account.getAccessKeyId(),
+                account.getSecretAccessKey());
         AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(awsCreds);
         this.ec2 = AmazonEC2ClientBuilder.standard()
                 .withCredentials(awsCredentials)
-                .withRegion(log.getAccount().getRegions().get(0))
+                .withRegion(account.getRegions().get(0))
                 .build();
+        log.info("EC2 client created");
     }
 
     private void parseJson(List<String> filePaths) {
+        log.info("Parsing json");
         String jsonPath = "$..Records[?(@.eventName == 'CreateSecurityGroup' && @.responseElements != null)]";
         for (String filePath : filePaths) {
             try {
@@ -57,6 +63,7 @@ public class SecurityGroupTagger implements ResourceTagger {
                             .getAsJsonObject().get("userIdentity")
                             .getAsJsonObject().get("arn")
                             .getAsString();
+                    log.info("Security group event created. Id: "+ id + " Owner: " + owner);
                     return new Event(id, owner);
                 };
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);
@@ -66,12 +73,15 @@ public class SecurityGroupTagger implements ResourceTagger {
                         }.getType());
                 events.addAll(createSecurityGroupEvents);
             } catch (IOException e) {
+                log.error("Could not parse json", e);
                 e.printStackTrace();
             }
         }
+        log.info("Done parsing json");
     }
 
     private void filterTaggedResources(String ownerTag) {
+        log.info("Filtering tagged Security groups");
         List<Event> untaggedEvents = new ArrayList<>();
         List<SecurityGroup> securityGroupsWithoutTag = describeSecurityGroup(ownerTag);
         for (SecurityGroup securityGroup : securityGroupsWithoutTag) {
@@ -83,10 +93,12 @@ public class SecurityGroupTagger implements ResourceTagger {
                 }
             }
         }
+        log.info("Done filtering tagged Security groups");
         this.events = untaggedEvents;
     }
 
     private List<SecurityGroup> describeSecurityGroup(String ownerTag) {
+        log.info("Describing Security groups");
         List<SecurityGroup> securityGroups = new ArrayList<>();
         DescribeSecurityGroupsRequest request = new DescribeSecurityGroupsRequest();
         DescribeSecurityGroupsResult response = ec2.describeSecurityGroups(request);
@@ -95,6 +107,7 @@ public class SecurityGroupTagger implements ResourceTagger {
                 securityGroups.add(securityGroup);
             }
         }
+        log.info("Found " + securityGroups.size() + " Security groups without tag");
         return securityGroups;
     }
 
@@ -103,15 +116,17 @@ public class SecurityGroupTagger implements ResourceTagger {
     }
 
     private void tag(String ownerTag) {
+        log.info("Tagging Security groups");
         for (Event event : events) {
             CreateTagsRequest tagsRequest = new CreateTagsRequest()
                     .withResources(event.getId())
                     .withTags(new Tag(ownerTag, event.getOwner()));
             ec2.createTags(tagsRequest);
-            System.out.println("Tagged: " + event.getId() +
+            log.info("Tagged: " + event.getId() +
                     " with key: " + ownerTag +
                     " value: " + event.getOwner());
         }
+        log.info("Done tagging Security groups");
     }
 
 }

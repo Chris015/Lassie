@@ -5,12 +5,14 @@ import lassie.config.ConfigReader;
 import lassie.resourcetagger.ResourceTagger;
 import lassie.resourcetagger.ResourceTaggerFactory;
 import lassie.resourcetagger.UnsupportedResourceTypeException;
+import org.apache.log4j.Logger;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Application {
+    private static Logger log = Logger.getLogger(Application.class);
     private ConfigReader configReader;
     private LogHandler logHandler;
     private ResourceTaggerFactory resourceTaggerFactory;
@@ -32,10 +34,11 @@ public class Application {
     }
 
     private void setFromDate(String[] args) {
-        this.fromDate = (args.length == 1) ? args[0] : LocalDate.now().minusDays(1).toString();
+        this.fromDate = (args.length == 1) ? args[0] : LocalDate.now().minusDays(2).toString();
     }
 
     private List<ResourceTagger> getResourceTaggers(List<Account> accounts) {
+        log.info("Getting resource taggers");
         List<ResourceTagger> resourceTaggers = new ArrayList<>();
         List<String> resourceTypes = new ArrayList<>();
 
@@ -47,6 +50,7 @@ public class Application {
                 resourceTaggers.add(resourceTaggerFactory.getResourceTagger(resourceType));
             }
         } catch (UnsupportedResourceTypeException e) {
+            log.warn("Unsupported resource request.", e);
             e.printStackTrace();
         }
         return resourceTaggers;

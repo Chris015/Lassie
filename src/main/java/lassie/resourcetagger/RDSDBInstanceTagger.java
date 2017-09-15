@@ -11,7 +11,9 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
 import lassie.Log;
+import lassie.config.Account;
 import lassie.event.Event;
+import org.apache.log4j.Logger;
 
 
 import java.io.File;
@@ -20,30 +22,34 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RDSDBInstanceTagger implements ResourceTagger {
+    private final Logger log = Logger.getLogger(RDSDBInstanceTagger.class);
     private AmazonRDS rds;
     private List<Event> events = new ArrayList<>();
 
     @Override
     public void tagResources(List<Log> logs) {
         for (Log log : logs) {
-            instantiateRDSClient(log);
+            instantiateRDSClient(log.getAccount());
             parseJson(log.getFilePaths());
             filterTaggedResources(log.getAccount().getOwnerTag());
             tag(log.getAccount().getOwnerTag());
         }
     }
 
-    private void instantiateRDSClient(Log log) {
-        BasicAWSCredentials awsCreds = new BasicAWSCredentials(log.getAccount().getAccessKeyId(),
-                log.getAccount().getSecretAccessKey());
+    private void instantiateRDSClient(Account account) {
+        log.info("Instantiating RDS client");
+        BasicAWSCredentials awsCreds = new BasicAWSCredentials(account.getAccessKeyId(),
+                account.getSecretAccessKey());
         AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(awsCreds);
         rds = AmazonRDSClientBuilder.standard()
                 .withCredentials(awsCredentials)
-                .withRegion(log.getAccount().getRegions().get(0))
+                .withRegion(account.getRegions().get(0))
                 .build();
+        log.info("RDS client created");
     }
 
     private void parseJson(List<String> filePaths) {
+        log.info("Parsing json");
         String jsonPath = "$..Records[?(@.eventName == 'CreateDBInstance' && @.responseElements != null)]";
         for (String filePath : filePaths) {
             try {
@@ -58,6 +64,7 @@ public class RDSDBInstanceTagger implements ResourceTagger {
                             .getAsJsonObject().get("userIdentity")
                             .getAsJsonObject().get("arn")
                             .getAsString();
+                    log.info("RDS DB instance event created. Id: " + id + " Owner: " + owner);
                     return new Event(id, owner);
                 };
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);
@@ -67,12 +74,15 @@ public class RDSDBInstanceTagger implements ResourceTagger {
                         }.getType());
                 events.addAll(createDBInstanceEvents);
             } catch (IOException e) {
+                log.error("Could not parse json", e);
                 e.printStackTrace();
             }
         }
+        log.info("Parsing json complete");
     }
 
     private void filterTaggedResources(String ownerTag) {
+        log.info("Filtering tagged DB instances");
         List<Event> untaggedEvents = new ArrayList<>();
         List<DBInstance> dbInstancesWithoutTag = describeRDSInstances(ownerTag);
         for (DBInstance dbInstance : dbInstancesWithoutTag) {
@@ -84,10 +94,12 @@ public class RDSDBInstanceTagger implements ResourceTagger {
                 }
             }
         }
+        log.info("Done filtering tagged DB instances");
         this.events = untaggedEvents;
     }
 
     private List<DBInstance> describeRDSInstances(String ownerTag) {
+        log.info("Describing DB instances");
         List<DBInstance> dbInstancesWithoutOwner = new ArrayList<>();
         DescribeDBInstancesResult describeDBInstancesResult = rds.describeDBInstances(new DescribeDBInstancesRequest());
         for (DBInstance dbInstance : describeDBInstancesResult.getDBInstances()) {
@@ -98,6 +110,7 @@ public class RDSDBInstanceTagger implements ResourceTagger {
                 dbInstancesWithoutOwner.add(dbInstance);
             }
         }
+        log.info("Found " + dbInstancesWithoutOwner.size() + " DB instances without tag");
         return dbInstancesWithoutOwner;
     }
 
@@ -106,6 +119,7 @@ public class RDSDBInstanceTagger implements ResourceTagger {
     }
 
     private void tag(String ownerTag) {
+        log.info("Tagging DB instances");
         for (Event event : events) {
             Tag tag = new Tag();
             tag.setKey(ownerTag);
@@ -114,10 +128,11 @@ public class RDSDBInstanceTagger implements ResourceTagger {
                     .withResourceName(event.getId())
                     .withTags(tag);
             rds.addTagsToResource(tagsRequest);
-            System.out.println("Tagged: " + event.getId() +
+            log.info("Tagged: " + event.getId() +
                     " with key: " + ownerTag +
                     " value: " + event.getOwner());
         }
+        log.info("Done tagging DB instances");
     }
 
 }

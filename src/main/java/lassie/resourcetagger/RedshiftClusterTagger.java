@@ -11,7 +11,9 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
 import lassie.Log;
+import lassie.config.Account;
 import lassie.event.Event;
+import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,30 +21,34 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RedshiftClusterTagger implements ResourceTagger {
+    private final Logger log = Logger.getLogger(RedshiftClusterTagger.class);
     private AmazonRedshift redshift;
     private List<Event> events = new ArrayList<>();
 
     @Override
     public void tagResources(List<Log> logs) {
         for (Log log : logs) {
-            instantiateRedshiftClient(log);
-            parseJson(log, log.getFilePaths());
+            instantiateRedshiftClient(log.getAccount());
+            parseJson(log.getAccount(), log.getFilePaths());
             filterTaggedResources(log.getAccount().getOwnerTag());
             tag(log.getAccount().getOwnerTag());
         }
     }
 
-    private void instantiateRedshiftClient(Log log) {
-        BasicAWSCredentials awsCreds = new BasicAWSCredentials(log.getAccount().getAccessKeyId(),
-                log.getAccount().getSecretAccessKey());
+    private void instantiateRedshiftClient(Account account) {
+        log.info("Instantiating RedShift client");
+        BasicAWSCredentials awsCreds = new BasicAWSCredentials(account.getAccessKeyId(),
+                account.getSecretAccessKey());
         AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(awsCreds);
         redshift = AmazonRedshiftClientBuilder.standard()
                 .withCredentials(awsCredentials)
-                .withRegion(log.getAccount().getRegions().get(0))
+                .withRegion(account.getRegions().get(0))
                 .build();
+        log.info("RedShift client created");
     }
 
-    private void parseJson(Log log, List<String> filePaths) {
+    private void parseJson(Account account, List<String> filePaths) {
+        log.info("Parsing json");
         String jsonPath = "$..Records[?(@.eventName == 'CreateCluster' && @.responseElements != null)]";
         for (String filePath : filePaths) {
             try {
@@ -54,13 +60,14 @@ public class RedshiftClusterTagger implements ResourceTagger {
                             .getAsJsonObject().get("clusterIdentifier")
                             .getAsString();
                     String arn = "arn:aws:redshift:"
-                            + log.getAccount().getRegions().get(0) + ":"
-                            + log.getAccount().getAccountId() + ":cluster:"
+                            + account.getRegions().get(0) + ":"
+                            + account.getAccountId() + ":cluster:"
                             + clusterId;
                     String owner = jsonElement
                             .getAsJsonObject().get("userIdentity")
                             .getAsJsonObject().get("arn")
                             .getAsString();
+                    log.info("RedShift cluster event created. ARN: " + arn + " Owner: " + owner);
                     return new Event(arn, owner);
                 };
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);
@@ -70,12 +77,15 @@ public class RedshiftClusterTagger implements ResourceTagger {
                         }.getType());
                 events.addAll(createClusterEvents);
             } catch (IOException e) {
+                log.error("Could not parse json", e);
                 e.printStackTrace();
             }
         }
+        log.info("Parsing json complete");
     }
 
     private List<Cluster> describeCluster(String ownerTag) {
+        log.info("Describing RedShift clusters");
         List<Cluster> clusters = new ArrayList<>();
         DescribeClustersRequest request = new DescribeClustersRequest();
         DescribeClustersResult response = redshift.describeClusters(request);
@@ -84,6 +94,7 @@ public class RedshiftClusterTagger implements ResourceTagger {
                 clusters.add(cluster);
             }
         }
+        log.info("Found " + clusters.size() + " RedShift clusters without tag");
         return clusters;
     }
 
@@ -92,6 +103,7 @@ public class RedshiftClusterTagger implements ResourceTagger {
     }
 
     private void filterTaggedResources(String ownerTag) {
+        log.info("Filtering tagged RedShift clusters");
         List<Event> untaggedEvents = new ArrayList<>();
         List<Cluster> clustersWithoutTag = describeCluster(ownerTag);
         for (Cluster cluster : clustersWithoutTag) {
@@ -104,10 +116,12 @@ public class RedshiftClusterTagger implements ResourceTagger {
                 }
             }
         }
+        log.info("Done filtering tagged RedShift clusters");
         this.events = untaggedEvents;
     }
 
     private void tag(String ownerTag) {
+        log.info("Tagging RedShift clusters");
         for (Event event : events) {
             Tag tag = new Tag();
             tag.setKey(ownerTag);
@@ -116,10 +130,11 @@ public class RedshiftClusterTagger implements ResourceTagger {
             tagsRequest.withResourceName(event.getId());
             tagsRequest.withTags(tag);
             redshift.createTags(tagsRequest);
-            System.out.println("Tagged: " + event.getId() +
+            log.info("Tagged: " + event.getId() +
                     " with key: " + ownerTag +
                     " value: " + event.getOwner());
         }
+        log.info("Done tagging RedShift clusters");
     }
 
 }
