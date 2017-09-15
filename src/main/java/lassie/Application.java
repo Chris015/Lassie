@@ -25,15 +25,17 @@ public class Application {
     }
 
     public void run() {
+        log.info("Application started");
         List<Account> accounts = configReader.getAccounts();
-        List<Log> logs = logHandler.getLogs(fromDate, accounts);
         List<ResourceTagger> resourceTaggers = getResourceTaggers(accounts);
+        List<Log> logs = logHandler.getLogs(fromDate, accounts);
         resourceTaggers.forEach(resourceTagger -> resourceTagger.tagResources(logs));
         logHandler.clearLogs();
+        log.info("Application completed");
     }
 
     private List<ResourceTagger> getResourceTaggers(List<Account> accounts) {
-        log.info("Getting resource taggers");
+        log.info("Creating resource taggers");
         List<ResourceTagger> resourceTaggers = new ArrayList<>();
         List<String> resourceTypes = new ArrayList<>();
 
