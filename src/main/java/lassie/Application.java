@@ -50,6 +50,7 @@ public class Application {
             log.warn("Unsupported resource request.", e);
             e.printStackTrace();
         }
+        log.info("Resource taggers created");
         return resourceTaggers;
     }
 }
