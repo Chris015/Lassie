@@ -82,6 +82,23 @@ public class LoadBalancerTagger implements ResourceTagger {
         }
     }
 
+    private void filterTaggedResources(String ownerTag) {
+        log.info("Filtering tagged Load Balancers");
+        List<Event> untaggedEvents = new ArrayList<>();
+        List<LoadBalancer> loadBalancersWithoutTag = describeLoadBalancers(ownerTag);
+        for (LoadBalancer loadBalancer : loadBalancersWithoutTag) {
+            for (Event event : events) {
+                String arn = loadBalancer.getLoadBalancerArn();
+                String eventId = event.getId();
+                if (arn.equals(eventId)) {
+                    untaggedEvents.add(event);
+                }
+            }
+        }
+        this.events = untaggedEvents;
+        log.info("Done filtering Load Balancers");
+    }
+
     private List<LoadBalancer> describeLoadBalancers(String ownerTag) {
         log.info("Describing Load Balancers");
         List<LoadBalancer> loadBalancers = new ArrayList<>();
@@ -101,25 +118,7 @@ public class LoadBalancerTagger implements ResourceTagger {
     }
 
     private boolean hasTag(TagDescription tagDescription, String ownerTag) {
-        return tagDescription.getTags().isEmpty() ||
-                tagDescription.getTags().stream().anyMatch(t -> t.getKey().equals(ownerTag));
-    }
-
-    private void filterTaggedResources(String ownerTag) {
-        log.info("Filtering tagged Load Balancers");
-        List<Event> untaggedEvents = new ArrayList<>();
-        List<LoadBalancer> loadBalancersWithoutTag = describeLoadBalancers(ownerTag);
-        for (LoadBalancer loadBalancer : loadBalancersWithoutTag) {
-            for (Event event : events) {
-                String arn = loadBalancer.getLoadBalancerArn();
-                String eventId = event.getId();
-                if (arn.equals(eventId)) {
-                    untaggedEvents.add(event);
-                }
-            }
-        }
-        this.events = untaggedEvents;
-        log.info("Done filtering Load Balancers");
+        return tagDescription.getTags().stream().anyMatch(t -> t.getKey().equals(ownerTag));
     }
 
     private void tag(String ownerTag) {
@@ -136,7 +135,7 @@ public class LoadBalancerTagger implements ResourceTagger {
                     " with key: " + ownerTag +
                     " value: " + event.getOwner());
         }
+        this.events = new ArrayList<>();
         log.info("Done tagging Load Balancers");
     }
-
 }

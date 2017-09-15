@@ -134,6 +134,7 @@ public class EC2InstanceTagger implements ResourceTagger {
                     " with key: " + ownerTag +
                     " value: " + event.getOwner());
         }
+        this.events = new ArrayList<>();
         log.info("Tagging EC2 instances complete");
     }
 }

@@ -44,7 +44,7 @@ public class S3BucketTagger implements ResourceTagger {
         BasicAWSCredentials awsCreds = new BasicAWSCredentials(account.getAccessKeyId(), account.getSecretAccessKey());
         this.s3 = AmazonS3ClientBuilder.standard()
                 .withCredentials(new AWSStaticCredentialsProvider(awsCreds))
-                .withRegion(Regions.fromName(account.getBucketRegion()))
+                .withRegion(Regions.fromName(account.getRegions().get(0)))
                 .build();
         log.info("S3 client created");
     }
@@ -54,13 +54,13 @@ public class S3BucketTagger implements ResourceTagger {
         String jsonPath = "$..Records[?(@.eventName == 'CreateBucket' && @.requestParameters != null)]";
         for (String filePath : filePaths) {
             try {
-                String json = JsonPath.parse(new File(filePath))
-                        .read(jsonPath).toString();
+                String json = JsonPath.parse(new File(filePath)).read(jsonPath).toString();
                 GsonBuilder gsonBuilder = new GsonBuilder();
                 JsonDeserializer<Event> deserializer = (jsonElement, type, context) -> {
                     String id = jsonElement
                             .getAsJsonObject().get("requestParameters")
-                            .getAsJsonObject().get("bucketName").getAsString();
+                            .getAsJsonObject().get("bucketName")
+                            .getAsString();
                     String owner = jsonElement.getAsJsonObject().get("userIdentity")
                             .getAsJsonObject().get("arn")
                             .getAsString();
@@ -69,7 +69,8 @@ public class S3BucketTagger implements ResourceTagger {
                 };
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);
                 Gson gson = gsonBuilder.setLenient().create();
-                List<Event> runInstancesEvents = gson.fromJson(json, new TypeToken<List<Event>>() {}.getType());
+                List<Event> runInstancesEvents = gson.fromJson(json, new TypeToken<List<Event>>() {
+                }.getType());
                 events.addAll(runInstancesEvents);
             } catch (IOException e) {
                 log.error("Could not parse json", e);
@@ -120,6 +121,7 @@ public class S3BucketTagger implements ResourceTagger {
                     + " with key: " + ownerTag
                     + " value: " + event.getOwner());
         }
+        this.events = new ArrayList<>();
         log.info("Done tagging Buckets");
     }
 }

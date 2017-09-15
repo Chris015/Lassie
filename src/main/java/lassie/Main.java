@@ -7,6 +7,6 @@ public class Main {
 
     public static void main(String[] args) {
         log.info("Application is starting");
-        new Application().run(args);
+        new Application(args).run();
     }
 }
