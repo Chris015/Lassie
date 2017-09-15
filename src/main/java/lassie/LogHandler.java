@@ -51,7 +51,7 @@ public class LogHandler {
                     .withRegion(Regions.fromName(account.getBucketRegion()))
                     .build();
 
-            log.info("S3 Client created: " + s3.getS3AccountOwner());
+            log.info("S3 Client created");
 
             while (!start.isAfter(end)) {
                 totalDates.add(start);
@@ -86,8 +86,7 @@ public class LogHandler {
                         + account.getAccountId() + "/"
                         + "CloudTrail/"
                         + region + "/"
-                        + date + "/"
-                );
+                        + date + "/");
         log.info("Get object summaries complete");
         return s3.listObjectsV2(request).getObjectSummaries();
     }
@@ -98,7 +97,7 @@ public class LogHandler {
     }
 
     private List<String> downloadZip(Account account, List<S3ObjectSummary> summaries) {
-        log.info("Downloading zip");
+        log.info("Downloading zipped files");
         List<String> fileNames = new ArrayList<>();
         for (S3ObjectSummary objectSummary : summaries) {
             String key = objectSummary.getKey();
@@ -106,7 +105,7 @@ public class LogHandler {
                  S3ObjectInputStream objectContent = s3Object.getObjectContent()) {
 
                 String filename = s3Object.getKey().substring(key.lastIndexOf('/') + 1, key.length());
-                log.info("Downloading file: " + filename);
+                log.trace("Downloading file: " + filename);
                 Files.copy(objectContent,
                         Paths.get(tmpFolderZipped + "/" + filename),
                         StandardCopyOption.REPLACE_EXISTING);

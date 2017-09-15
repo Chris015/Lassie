@@ -26,8 +26,8 @@ public class Application {
 
     public void run() {
         List<Account> accounts = configReader.getAccounts();
-        List<Log> logs = logHandler.getLogs(fromDate, accounts);
         List<ResourceTagger> resourceTaggers = getResourceTaggers(accounts);
+        List<Log> logs = logHandler.getLogs(fromDate, accounts);
         resourceTaggers.forEach(resourceTagger -> resourceTagger.tagResources(logs));
         logHandler.clearLogs();
     }
