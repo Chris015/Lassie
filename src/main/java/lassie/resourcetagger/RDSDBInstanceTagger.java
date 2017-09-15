@@ -45,7 +45,7 @@ public class RDSDBInstanceTagger implements ResourceTagger {
                 .withCredentials(awsCredentials)
                 .withRegion(account.getRegions().get(0))
                 .build();
-        log.info("RDS client created");
+        log.info("RDS client instantiated");
     }
 
     private void parseJson(List<String> filePaths) {
@@ -74,11 +74,11 @@ public class RDSDBInstanceTagger implements ResourceTagger {
                         }.getType());
                 events.addAll(createDBInstanceEvents);
             } catch (IOException e) {
-                log.error("Could not parse json", e);
+                log.error("Could not parse json: ", e);
                 e.printStackTrace();
             }
         }
-        log.info("Parsing json complete");
+        log.info("Done parsing json");
     }
 
     private void filterTaggedResources(String ownerTag) {
@@ -110,11 +110,12 @@ public class RDSDBInstanceTagger implements ResourceTagger {
                 dbInstancesWithoutOwner.add(dbInstance);
             }
         }
-        log.info("Found " + dbInstancesWithoutOwner.size() + " DB instances without tag");
+        log.info("Found " + dbInstancesWithoutOwner.size() + " DB instances without " + ownerTag);
         return dbInstancesWithoutOwner;
     }
 
     private boolean hasTag(ListTagsForResourceResult response, String tag) {
+        log.trace(tag + " found: " + response.getTagList().stream().anyMatch(t -> t.getKey().equals(tag)));
         return response.getTagList().stream().anyMatch(t -> t.getKey().equals(tag));
     }
 

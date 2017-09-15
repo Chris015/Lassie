@@ -44,7 +44,7 @@ public class SecurityGroupTagger implements ResourceTagger {
                 .withCredentials(awsCredentials)
                 .withRegion(account.getRegions().get(0))
                 .build();
-        log.info("EC2 client created");
+        log.info("EC2 client instantiated");
     }
 
     private void parseJson(List<String> filePaths) {
@@ -73,7 +73,7 @@ public class SecurityGroupTagger implements ResourceTagger {
                         }.getType());
                 events.addAll(createSecurityGroupEvents);
             } catch (IOException e) {
-                log.error("Could not parse json", e);
+                log.error("Could not parse json: ", e);
                 e.printStackTrace();
             }
         }
@@ -112,6 +112,7 @@ public class SecurityGroupTagger implements ResourceTagger {
     }
 
     private boolean hasTag(SecurityGroup securityGroup, String tag) {
+        log.trace(tag + " found: " +  securityGroup.getTags().stream().anyMatch(t -> t.getKey().equals(tag)));
         return securityGroup.getTags().stream().anyMatch(t -> t.getKey().equals(tag));
     }
 

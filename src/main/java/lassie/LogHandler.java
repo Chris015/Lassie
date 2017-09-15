@@ -112,7 +112,7 @@ public class LogHandler {
                 fileNames.add(filename);
 
             } catch (IOException e) {
-                log.error("Could not download file.", e);
+                log.error("Could not download file: ", e);
                 e.printStackTrace();
             }
         }
@@ -179,7 +179,7 @@ public class LogHandler {
             tmpFolderUnzipped = Files.createTempDirectory(Paths.get(tmpFolder + "/"), null);
 
         } catch (IOException e) {
-            log.error("Temp folders could not be created", e);
+            log.error("Temp folders could not be created: ", e);
             e.printStackTrace();
         }
         log.info("Temp folders created successfully");
@@ -190,7 +190,7 @@ public class LogHandler {
             FileUtils.cleanDirectory(new File(tmpFolder));
             log.info("Temp directory cleaned");
         } catch (IOException e) {
-            log.error("Temp directory could not be cleaned", e);
+            log.error("Temp directory could not be cleaned: ", e);
             e.printStackTrace();
         }
     }

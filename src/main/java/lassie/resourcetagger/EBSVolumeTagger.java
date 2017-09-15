@@ -71,11 +71,11 @@ public class EBSVolumeTagger implements ResourceTagger {
                         json, new TypeToken<List<Event>>() {}.getType());
                 events.addAll(createVolumeEvents);
             } catch (IOException e) {
-                log.error("Could nog parse json.", e);
+                log.error("Could nog parse json: ", e);
                 e.printStackTrace();
             }
         }
-        log.info("Parsing json complete");
+        log.info("Done parsing json");
     }
 
     private void filterTaggedResources(String ownerTag) {
@@ -112,12 +112,13 @@ public class EBSVolumeTagger implements ResourceTagger {
                 done = true;
             }
         }
-        log.info("Found " + volumesWithoutTags.size() + " EBS volumes without tag");
+        log.info("Found " + volumesWithoutTags.size() + " EBS volumes without " + ownerTag);
         return volumesWithoutTags;
     }
 
-    private boolean hasTag(Volume volume, String ownerTag) {
-        return volume.getTags().stream().anyMatch(t -> t.getKey().equals(ownerTag));
+    private boolean hasTag(Volume volume, String tag) {
+        log.trace(tag + " found: " + volume.getTags().stream().anyMatch(t -> t.getKey().equals(tag)));
+        return volume.getTags().stream().anyMatch(t -> t.getKey().equals(tag));
     }
 
     private void tag(String ownerTag) {

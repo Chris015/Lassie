@@ -46,7 +46,7 @@ public class S3BucketTagger implements ResourceTagger {
                 .withCredentials(new AWSStaticCredentialsProvider(awsCreds))
                 .withRegion(Regions.fromName(account.getRegions().get(0)))
                 .build();
-        log.info("S3 client created");
+        log.info("S3 client instantiated");
     }
 
     private void parseJson(List<String> filePaths) {
@@ -73,11 +73,11 @@ public class S3BucketTagger implements ResourceTagger {
                 }.getType());
                 events.addAll(runInstancesEvents);
             } catch (IOException e) {
-                log.error("Could not parse json", e);
+                log.error("Could not parse json: ", e);
                 e.printStackTrace();
             }
         }
-        log.info("Parsing json complete");
+        log.info("Done parsing json");
     }
 
     private void filterTaggedResources(String ownerTag) {
@@ -100,6 +100,7 @@ public class S3BucketTagger implements ResourceTagger {
     }
 
     private boolean hasTag(TagSet tagSet, String tag) {
+        log.trace(tag + " found: " +  tagSet.getAllTags().containsKey(tag));
         return tagSet.getAllTags().containsKey(tag);
     }
 
