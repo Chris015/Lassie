@@ -106,22 +106,36 @@ public class S3BucketTagger implements ResourceTagger {
     private void tag(String ownerTag) {
         log.info("Tagging Buckets");
         Map<String, String> newTags = new HashMap<>();
-        List<TagSet> tags = new ArrayList<>();
+        List<TagSet> newTagSets = new ArrayList<>();
+
         for (Event event : events) {
-            BucketTaggingConfiguration configuration = s3.getBucketTaggingConfiguration(event.getId());
-            List<TagSet> oldTags;
-            if (configuration != null) {
-                oldTags = configuration.getAllTagSets();
-                oldTags.forEach(oldTag -> newTags.putAll(oldTag.getAllTags()));
-            }
+            List<TagSet> existingTagSets = fetchExistingTagSets(event.getId());
+            existingTagSets.forEach(existingTagSet -> newTags.putAll(existingTagSet.getAllTags()));
+
             newTags.put(ownerTag, event.getOwner());
-            tags.add(new TagSet(newTags));
-            s3.setBucketTaggingConfiguration(event.getId(), new BucketTaggingConfiguration(tags));
+
+            newTagSets.add(new TagSet(newTags));
+            setNewS3BucketConfiguration(event.getId(), newTagSets);
+
             log.info("Tagged: " + event.getId()
                     + " with key: " + ownerTag
                     + " value: " + event.getOwner());
+
         }
         this.events = new ArrayList<>();
         log.info("Done tagging Buckets");
+    }
+
+    private List<TagSet> fetchExistingTagSets(String eventId) {
+        List<TagSet> existingTagSets = new ArrayList<>();
+        BucketTaggingConfiguration configuration = s3.getBucketTaggingConfiguration(eventId);
+        if (configuration != null) {
+            existingTagSets = configuration.getAllTagSets();
+        }
+        return existingTagSets;
+    }
+
+    private void setNewS3BucketConfiguration(String eventId, List<TagSet> tags) {
+        s3.setBucketTaggingConfiguration(eventId, new BucketTaggingConfiguration(tags));
     }
 }

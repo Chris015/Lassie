@@ -26,8 +26,8 @@ public class Application {
 
     public void run() {
         List<Account> accounts = configReader.getAccounts();
-        List<Log> logs = logHandler.getLogs(fromDate, accounts);
         List<ResourceTagger> resourceTaggers = getResourceTaggers(accounts);
+        List<Log> logs = logHandler.getLogs(fromDate, accounts);
         resourceTaggers.forEach(resourceTagger -> resourceTagger.tagResources(logs));
         logHandler.clearLogs();
     }
@@ -47,6 +47,7 @@ public class Application {
         } catch (UnsupportedResourceTypeException e) {
             log.warn("Unsupported resource request.", e);
             e.printStackTrace();
+            System.exit(0);
         }
         return resourceTaggers;
     }
