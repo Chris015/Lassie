@@ -50,7 +50,6 @@ public class Application {
         } catch (UnsupportedResourceTypeException e) {
             log.warn("Unsupported resource request.", e);
             e.printStackTrace();
-            System.exit(0);
         }
         log.info("Resource taggers created");
         return resourceTaggers;

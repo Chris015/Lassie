@@ -116,7 +116,7 @@ public class S3BucketTagger implements ResourceTagger {
             newTags.put(ownerTag, event.getOwner());
 
             newTagSets.add(new TagSet(newTags));
-            setNewS3BucketConfiguration(event.getId(), newTagSets);
+            addTagsToS3Bucket(event.getId(), newTagSets);
 
             log.info("Tagged: " + event.getId()
                     + " with key: " + ownerTag
@@ -136,7 +136,8 @@ public class S3BucketTagger implements ResourceTagger {
         return existingTagSets;
     }
 
-    private void setNewS3BucketConfiguration(String eventId, List<TagSet> tags) {
-        s3.setBucketTaggingConfiguration(eventId, new BucketTaggingConfiguration(tags));
+    private void addTagsToS3Bucket(String bucketName, List<TagSet> tags) {
+        s3.setBucketTaggingConfiguration(bucketName, new BucketTaggingConfiguration(tags));
     }
+
 }
