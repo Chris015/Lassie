@@ -39,7 +39,7 @@ public class S3HandlerTest {
 
         when(s3.getBucketTaggingConfiguration(bucket)).thenReturn(configuration);
 
-        assertEquals(true, s3Handler.bucketHasTag("Bucket", "Owner"));
+        assertEquals(true, s3Handler.bucketHasTag(bucket, "Owner"));
     }
 
     @Test
@@ -56,6 +56,6 @@ public class S3HandlerTest {
 
         when(s3.getBucketTaggingConfiguration(bucket)).thenReturn(configuration);
 
-        assertEquals(false, s3Handler.bucketHasTag("Bucket", "Owner"));
+        assertEquals(false, s3Handler.bucketHasTag(bucket, "Owner"));
     }
 }
