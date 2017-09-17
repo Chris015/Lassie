@@ -2,6 +2,7 @@ package lassie;
 
 import lassie.config.Account;
 import lassie.config.ConfigReader;
+import lassie.model.Log;
 import lassie.resourcetagger.ResourceTagger;
 import lassie.resourcetagger.ResourceTaggerFactory;
 import lassie.resourcetagger.UnsupportedResourceTypeException;
@@ -25,15 +26,17 @@ public class Application {
     }
 
     public void run() {
+        log.info("Application started");
         List<Account> accounts = configReader.getAccounts();
         List<ResourceTagger> resourceTaggers = getResourceTaggers(accounts);
         List<Log> logs = logHandler.getLogs(fromDate, accounts);
         resourceTaggers.forEach(resourceTagger -> resourceTagger.tagResources(logs));
         logHandler.clearLogs();
+        log.info("Application completed");
     }
 
     private List<ResourceTagger> getResourceTaggers(List<Account> accounts) {
-        log.info("Getting resource taggers");
+        log.info("Creating resource taggers");
         List<ResourceTagger> resourceTaggers = new ArrayList<>();
         List<String> resourceTypes = new ArrayList<>();
 
@@ -49,6 +52,7 @@ public class Application {
             e.printStackTrace();
             System.exit(0);
         }
+        log.info("Resource taggers created");
         return resourceTaggers;
     }
 }

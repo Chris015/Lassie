@@ -8,9 +8,9 @@ import com.amazonaws.services.ec2.model.*;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
-import lassie.Log;
+import lassie.model.Log;
 import lassie.config.Account;
-import lassie.event.Event;
+import lassie.model.Event;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -63,7 +63,7 @@ public class EC2InstanceTagger implements ResourceTagger {
                             .getAsJsonObject().get("userIdentity")
                             .getAsJsonObject().get("arn")
                             .getAsString();
-                    log.info("EC2 instance event created. Id: " + id + " Owner: " + owner);
+                    log.info("EC2 instance model created. Id: " + id + " Owner: " + owner);
                     return new Event(id, owner);
                 };
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);
@@ -72,11 +72,11 @@ public class EC2InstanceTagger implements ResourceTagger {
                 }.getType());
                 events.addAll(runInstancesEvents);
             } catch (IOException e) {
-                log.error("Could not parse json", e);
+                log.error("Could not parse json: ", e);
                 e.printStackTrace();
             }
         }
-        log.info("Parsing json complete");
+        log.info("Done parsing json");
     }
     private void filterTaggedResources(String ownerTag) {
         log.info("Filtering tagged EC2 instances");
@@ -115,11 +115,12 @@ public class EC2InstanceTagger implements ResourceTagger {
                 done = true;
             }
         }
-        log.info("Found " + instances.size() + " instances without tag");
+        log.info("Found " + instances.size() + " instances without " + ownerTag);
         return instances;
     }
 
     private boolean hasTag(Instance instance, String tag) {
+        log.trace(tag + " found: " + instance.getTags().stream().anyMatch(t -> t.getKey().equals(tag)));
         return instance.getTags().stream().anyMatch(t -> t.getKey().equals(tag));
     }
 
@@ -135,6 +136,6 @@ public class EC2InstanceTagger implements ResourceTagger {
                     " value: " + event.getOwner());
         }
         this.events = new ArrayList<>();
-        log.info("Tagging EC2 instances complete");
+        log.info("Done tagging EC2 instances");
     }
 }

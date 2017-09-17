@@ -10,9 +10,9 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
-import lassie.Log;
+import lassie.model.Log;
 import lassie.config.Account;
-import lassie.event.Event;
+import lassie.model.Event;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -62,7 +62,7 @@ public class EBSVolumeTagger implements ResourceTagger {
                             .get("userIdentity")
                             .getAsJsonObject()
                             .get("arn").getAsString();
-                    log.info("EBS volume event created. Id: " + id + " Owner: " + owner);
+                    log.info("EBS volume model created. Id: " + id + " Owner: " + owner);
                     return new Event(id, owner);
                 };
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);
@@ -71,11 +71,11 @@ public class EBSVolumeTagger implements ResourceTagger {
                         json, new TypeToken<List<Event>>() {}.getType());
                 events.addAll(createVolumeEvents);
             } catch (IOException e) {
-                log.error("Could nog parse json.", e);
+                log.error("Could nog parse json: ", e);
                 e.printStackTrace();
             }
         }
-        log.info("Parsing json complete");
+        log.info("Done parsing json");
     }
 
     private void filterTaggedResources(String ownerTag) {
@@ -112,12 +112,13 @@ public class EBSVolumeTagger implements ResourceTagger {
                 done = true;
             }
         }
-        log.info("Found " + volumesWithoutTags.size() + " EBS volumes without tag");
+        log.info("Found " + volumesWithoutTags.size() + " EBS volumes without " + ownerTag);
         return volumesWithoutTags;
     }
 
-    private boolean hasTag(Volume volume, String ownerTag) {
-        return volume.getTags().stream().anyMatch(t -> t.getKey().equals(ownerTag));
+    private boolean hasTag(Volume volume, String tag) {
+        log.trace(tag + " found: " + volume.getTags().stream().anyMatch(t -> t.getKey().equals(tag)));
+        return volume.getTags().stream().anyMatch(t -> t.getKey().equals(tag));
     }
 
     private void tag(String ownerTag) {

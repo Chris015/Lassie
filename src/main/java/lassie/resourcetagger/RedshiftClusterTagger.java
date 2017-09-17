@@ -10,9 +10,9 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
-import lassie.Log;
+import lassie.model.Log;
 import lassie.config.Account;
-import lassie.event.Event;
+import lassie.model.Event;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -44,7 +44,7 @@ public class RedshiftClusterTagger implements ResourceTagger {
                 .withCredentials(awsCredentials)
                 .withRegion(account.getRegions().get(0))
                 .build();
-        log.info("RedShift client created");
+        log.info("RedShift client instantiated");
     }
 
     private void parseJson(Account account, List<String> filePaths) {
@@ -67,7 +67,7 @@ public class RedshiftClusterTagger implements ResourceTagger {
                             .getAsJsonObject().get("userIdentity")
                             .getAsJsonObject().get("arn")
                             .getAsString();
-                    log.info("RedShift cluster event created. ARN: " + arn + " Owner: " + owner);
+                    log.info("RedShift cluster model created. ARN: " + arn + " Owner: " + owner);
                     return new Event(arn, owner);
                 };
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);
@@ -77,11 +77,11 @@ public class RedshiftClusterTagger implements ResourceTagger {
                         }.getType());
                 events.addAll(createClusterEvents);
             } catch (IOException e) {
-                log.error("Could not parse json", e);
+                log.error("Could not parse json: ", e);
                 e.printStackTrace();
             }
         }
-        log.info("Parsing json complete");
+        log.info("Done parsing json");
     }
 
     private List<Cluster> describeCluster(String ownerTag) {
@@ -94,11 +94,12 @@ public class RedshiftClusterTagger implements ResourceTagger {
                 clusters.add(cluster);
             }
         }
-        log.info("Found " + clusters.size() + " RedShift clusters without tag");
+        log.info("Found " + clusters.size() + " RedShift clusters without + " + ownerTag);
         return clusters;
     }
 
     private boolean hasTag(Cluster cluster, String tag) {
+        log.trace(tag + " found: " + cluster.getTags().stream().anyMatch(t -> t.getKey().equals(tag)));
         return cluster.getTags().stream().anyMatch(t -> t.getKey().equals(tag));
     }
 

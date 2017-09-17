@@ -2,8 +2,8 @@
 *.iml
 *.yaml
 /tmp
+/target
 *.com
-*.class
 *.dll
 *.exe
 *.o

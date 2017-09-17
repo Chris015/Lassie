@@ -7,6 +7,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.*;
 import lassie.config.Account;
+import lassie.model.Log;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 
@@ -51,7 +52,7 @@ public class LogHandler {
                     .withRegion(Regions.fromName(account.getBucketRegion()))
                     .build();
 
-            log.info("S3 Client created: " + s3.getS3AccountOwner());
+            log.info("S3 Client created");
 
             while (!start.isAfter(end)) {
                 totalDates.add(start);
@@ -86,8 +87,7 @@ public class LogHandler {
                         + account.getAccountId() + "/"
                         + "CloudTrail/"
                         + region + "/"
-                        + date + "/"
-                );
+                        + date + "/");
         log.info("Get object summaries complete");
         return s3.listObjectsV2(request).getObjectSummaries();
     }
@@ -98,7 +98,7 @@ public class LogHandler {
     }
 
     private List<String> downloadZip(Account account, List<S3ObjectSummary> summaries) {
-        log.info("Downloading zip");
+        log.info("Downloading zipped files");
         List<String> fileNames = new ArrayList<>();
         for (S3ObjectSummary objectSummary : summaries) {
             String key = objectSummary.getKey();
@@ -106,14 +106,14 @@ public class LogHandler {
                  S3ObjectInputStream objectContent = s3Object.getObjectContent()) {
 
                 String filename = s3Object.getKey().substring(key.lastIndexOf('/') + 1, key.length());
-                log.info("Downloading file: " + filename);
+                log.trace("Downloading file: " + filename);
                 Files.copy(objectContent,
                         Paths.get(tmpFolderZipped + "/" + filename),
                         StandardCopyOption.REPLACE_EXISTING);
                 fileNames.add(filename);
 
             } catch (IOException e) {
-                log.error("Could not download file.", e);
+                log.error("Could not download file: ", e);
                 e.printStackTrace();
             }
         }
@@ -180,7 +180,7 @@ public class LogHandler {
             tmpFolderUnzipped = Files.createTempDirectory(Paths.get(tmpFolder + "/"), null);
 
         } catch (IOException e) {
-            log.error("Temp folders could not be created", e);
+            log.error("Temp folders could not be created: ", e);
             e.printStackTrace();
         }
         log.info("Temp folders created successfully");
@@ -191,7 +191,7 @@ public class LogHandler {
             FileUtils.cleanDirectory(new File(tmpFolder));
             log.info("Temp directory cleaned");
         } catch (IOException e) {
-            log.error("Temp directory could not be cleaned", e);
+            log.error("Temp directory could not be cleaned: ", e);
             e.printStackTrace();
         }
     }

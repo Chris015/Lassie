@@ -10,9 +10,9 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
-import lassie.Log;
+import lassie.model.Log;
 import lassie.config.Account;
-import lassie.event.Event;
+import lassie.model.Event;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -44,7 +44,7 @@ public class LoadBalancerTagger implements ResourceTagger {
                 .withCredentials(awsCredentials)
                 .withRegion(account.getRegions().get(0))
                 .build();
-        log.info("ELB client created");
+        log.info("ELB client instantiated");
     }
 
     private void parseJson(List<String> filePaths) {
@@ -65,7 +65,7 @@ public class LoadBalancerTagger implements ResourceTagger {
                             .getAsJsonObject().get("userIdentity")
                             .getAsJsonObject().get("arn")
                             .getAsString();
-                    log.info("ELB event created. Id: " + id + " Owner: " + owner);
+                    log.info("ELB model created. Id: " + id + " Owner: " + owner);
                     return new Event(id, owner);
                 };
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);
@@ -75,15 +75,15 @@ public class LoadBalancerTagger implements ResourceTagger {
                         }.getType());
                 events.addAll(createLoadBalancerEvents);
             } catch (IOException e) {
-                log.error("Could not parse json", e);
+                log.error("Could not parse json: ", e);
                 e.printStackTrace();
             }
-            log.info("Parsing json complete");
+            log.info("Done parsing json");
         }
     }
 
     private void filterTaggedResources(String ownerTag) {
-        log.info("Filtering tagged Load Balancers");
+        log.info("Filtering tagged LoadBalancers");
         List<Event> untaggedEvents = new ArrayList<>();
         List<LoadBalancer> loadBalancersWithoutTag = describeLoadBalancers(ownerTag);
         for (LoadBalancer loadBalancer : loadBalancersWithoutTag) {
@@ -96,7 +96,7 @@ public class LoadBalancerTagger implements ResourceTagger {
             }
         }
         this.events = untaggedEvents;
-        log.info("Done filtering Load Balancers");
+        log.info("Done filtering tagged LoadBalancers");
     }
 
     private List<LoadBalancer> describeLoadBalancers(String ownerTag) {
@@ -113,16 +113,17 @@ public class LoadBalancerTagger implements ResourceTagger {
                 }
             }
         }
-        log.info("Found " + loadBalancers.size() + " Load Balancers without tag");
+        log.info("Found " + loadBalancers.size() + " LoadBalancers without " + ownerTag);
         return loadBalancers;
     }
 
-    private boolean hasTag(TagDescription tagDescription, String ownerTag) {
-        return tagDescription.getTags().stream().anyMatch(t -> t.getKey().equals(ownerTag));
+    private boolean hasTag(TagDescription tagDescription, String tag) {
+        log.trace(tag + " found: " + tagDescription.getTags().stream().anyMatch(t -> t.getKey().equals(tag)));
+        return tagDescription.getTags().stream().anyMatch(t -> t.getKey().equals(tag));
     }
 
     private void tag(String ownerTag) {
-        log.info("Tagging Load Balancers");
+        log.info("Tagging LoadBalancers");
         for (Event event : events) {
             Tag tag = new Tag();
             tag.setKey(ownerTag);
@@ -136,6 +137,6 @@ public class LoadBalancerTagger implements ResourceTagger {
                     " value: " + event.getOwner());
         }
         this.events = new ArrayList<>();
-        log.info("Done tagging Load Balancers");
+        log.info("Done tagging LoadBalancers");
     }
 }

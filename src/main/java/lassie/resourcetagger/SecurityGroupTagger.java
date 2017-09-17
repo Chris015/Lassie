@@ -10,9 +10,9 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
-import lassie.Log;
+import lassie.model.Log;
 import lassie.config.Account;
-import lassie.event.Event;
+import lassie.model.Event;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -44,7 +44,7 @@ public class SecurityGroupTagger implements ResourceTagger {
                 .withCredentials(awsCredentials)
                 .withRegion(account.getRegions().get(0))
                 .build();
-        log.info("EC2 client created");
+        log.info("EC2 client instantiated");
     }
 
     private void parseJson(List<String> filePaths) {
@@ -63,7 +63,7 @@ public class SecurityGroupTagger implements ResourceTagger {
                             .getAsJsonObject().get("userIdentity")
                             .getAsJsonObject().get("arn")
                             .getAsString();
-                    log.info("Security group event created. Id: "+ id + " Owner: " + owner);
+                    log.info("Security group model created. Id: "+ id + " Owner: " + owner);
                     return new Event(id, owner);
                 };
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);
@@ -73,7 +73,7 @@ public class SecurityGroupTagger implements ResourceTagger {
                         }.getType());
                 events.addAll(createSecurityGroupEvents);
             } catch (IOException e) {
-                log.error("Could not parse json", e);
+                log.error("Could not parse json: ", e);
                 e.printStackTrace();
             }
         }
@@ -112,6 +112,7 @@ public class SecurityGroupTagger implements ResourceTagger {
     }
 
     private boolean hasTag(SecurityGroup securityGroup, String tag) {
+        log.trace(tag + " found: " +  securityGroup.getTags().stream().anyMatch(t -> t.getKey().equals(tag)));
         return securityGroup.getTags().stream().anyMatch(t -> t.getKey().equals(tag));
     }
 

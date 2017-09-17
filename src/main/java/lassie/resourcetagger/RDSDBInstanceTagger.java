@@ -10,9 +10,9 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
-import lassie.Log;
+import lassie.model.Log;
 import lassie.config.Account;
-import lassie.event.Event;
+import lassie.model.Event;
 import org.apache.log4j.Logger;
 
 
@@ -45,7 +45,7 @@ public class RDSDBInstanceTagger implements ResourceTagger {
                 .withCredentials(awsCredentials)
                 .withRegion(account.getRegions().get(0))
                 .build();
-        log.info("RDS client created");
+        log.info("RDS client instantiated");
     }
 
     private void parseJson(List<String> filePaths) {
@@ -64,7 +64,7 @@ public class RDSDBInstanceTagger implements ResourceTagger {
                             .getAsJsonObject().get("userIdentity")
                             .getAsJsonObject().get("arn")
                             .getAsString();
-                    log.info("RDS DB instance event created. Id: " + id + " Owner: " + owner);
+                    log.info("RDS DB instance model created. Id: " + id + " Owner: " + owner);
                     return new Event(id, owner);
                 };
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);
@@ -74,11 +74,11 @@ public class RDSDBInstanceTagger implements ResourceTagger {
                         }.getType());
                 events.addAll(createDBInstanceEvents);
             } catch (IOException e) {
-                log.error("Could not parse json", e);
+                log.error("Could not parse json: ", e);
                 e.printStackTrace();
             }
         }
-        log.info("Parsing json complete");
+        log.info("Done parsing json");
     }
 
     private void filterTaggedResources(String ownerTag) {
@@ -110,11 +110,12 @@ public class RDSDBInstanceTagger implements ResourceTagger {
                 dbInstancesWithoutOwner.add(dbInstance);
             }
         }
-        log.info("Found " + dbInstancesWithoutOwner.size() + " DB instances without tag");
+        log.info("Found " + dbInstancesWithoutOwner.size() + " DB instances without " + ownerTag);
         return dbInstancesWithoutOwner;
     }
 
     private boolean hasTag(ListTagsForResourceResult response, String tag) {
+        log.trace(tag + " found: " + response.getTagList().stream().anyMatch(t -> t.getKey().equals(tag)));
         return response.getTagList().stream().anyMatch(t -> t.getKey().equals(tag));
     }
 

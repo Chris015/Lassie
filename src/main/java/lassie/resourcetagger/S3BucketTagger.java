@@ -12,9 +12,9 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
-import lassie.Log;
+import lassie.model.Log;
 import lassie.config.Account;
-import lassie.event.Event;
+import lassie.model.Event;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -46,7 +46,7 @@ public class S3BucketTagger implements ResourceTagger {
                 .withCredentials(new AWSStaticCredentialsProvider(awsCreds))
                 .withRegion(Regions.fromName(account.getRegions().get(0)))
                 .build();
-        log.info("S3 client created");
+        log.info("S3 client instantiated");
     }
 
     private void parseJson(List<String> filePaths) {
@@ -64,7 +64,7 @@ public class S3BucketTagger implements ResourceTagger {
                     String owner = jsonElement.getAsJsonObject().get("userIdentity")
                             .getAsJsonObject().get("arn")
                             .getAsString();
-                    log.info("S3 bucket event created. Id: " + id + " Owner: " + owner);
+                    log.info("S3 bucket model created. Id: " + id + " Owner: " + owner);
                     return new Event(id, owner);
                 };
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);
@@ -73,11 +73,11 @@ public class S3BucketTagger implements ResourceTagger {
                 }.getType());
                 events.addAll(runInstancesEvents);
             } catch (IOException e) {
-                log.error("Could not parse json", e);
+                log.error("Could not parse json: ", e);
                 e.printStackTrace();
             }
         }
-        log.info("Parsing json complete");
+        log.info("Done parsing json");
     }
 
     private void filterTaggedResources(String ownerTag) {
@@ -100,6 +100,7 @@ public class S3BucketTagger implements ResourceTagger {
     }
 
     private boolean hasTag(TagSet tagSet, String tag) {
+        log.trace(tag + " found: " +  tagSet.getAllTags().containsKey(tag));
         return tagSet.getAllTags().containsKey(tag);
     }
 

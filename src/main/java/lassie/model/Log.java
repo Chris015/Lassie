@@ -1,4 +1,4 @@
-package lassie;
+package lassie.model;
 
 import lassie.config.Account;
 
