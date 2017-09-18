@@ -1,13 +1,12 @@
 package lassie;
 
-import lassie.resourcetagger.SecurityGroupTagger;
 import org.apache.log4j.Logger;
 
 import java.time.LocalDate;
 
 
 public class DateInterpreter {
-    Logger log = Logger.getLogger(SecurityGroupTagger.class);
+    Logger log = Logger.getLogger(DateInterpreter.class);
     /**
      * Interprets the program arguments and returns a date. If the argument is a properly formatted date, the argument is
      * returned unmodified. The argument must be formatted accordingly: yyyy-MM-dd.

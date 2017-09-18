@@ -5,13 +5,13 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.model.BucketTaggingConfiguration;
-import com.amazonaws.services.s3.model.TagSet;
+import com.amazonaws.services.s3.model.Tag;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
+import lassie.AWSHandlers.S3Handler;
 import lassie.model.Log;
 import lassie.config.Account;
 import lassie.model.Event;
@@ -20,14 +20,16 @@ import org.apache.log4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class S3BucketTagger implements ResourceTagger {
     private static Logger log = Logger.getLogger(S3BucketTagger.class);
-    private AmazonS3 s3;
+    private S3Handler s3Handler;
     private List<Event> events = new ArrayList<>();
+
+    public S3BucketTagger(S3Handler s3Handler) {
+        this.s3Handler = s3Handler;
+    }
 
     @Override
     public void tagResources(List<Log> logs) {
@@ -41,11 +43,12 @@ public class S3BucketTagger implements ResourceTagger {
 
     private void instantiateS3Client(Account account) {
         log.info("Instantiating S3 client");
-        BasicAWSCredentials awsCreds = new BasicAWSCredentials(account.getAccessKeyId(), account.getSecretAccessKey());
-        this.s3 = AmazonS3ClientBuilder.standard()
-                .withCredentials(new AWSStaticCredentialsProvider(awsCreds))
+        BasicAWSCredentials awsCredentials = new BasicAWSCredentials(account.getAccessKeyId(), account.getSecretAccessKey());
+        AmazonS3 s3 = AmazonS3ClientBuilder.standard()
+                .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
                 .withRegion(Regions.fromName(account.getRegions().get(0)))
                 .build();
+        s3Handler.instantiateS3(s3);
         log.info("S3 client instantiated");
     }
 
@@ -84,43 +87,25 @@ public class S3BucketTagger implements ResourceTagger {
         log.info("Filtering tagged Buckets");
         List<Event> untaggedBuckets = new ArrayList<>();
         for (Event event : events) {
-            if (s3.getBucketTaggingConfiguration(event.getId()) == null) {
-                return;
-            }
-            BucketTaggingConfiguration configuration = s3.getBucketTaggingConfiguration(event.getId());
-            List<TagSet> allTagSets = configuration.getAllTagSets();
-            for (TagSet tagSet : allTagSets) {
-                if (!hasTag(tagSet, ownerTag)) {
-                    untaggedBuckets.add(event);
-                }
+            if (!s3Handler.bucketHasTag(event.getId(), ownerTag)) {
+                untaggedBuckets.add(event);
             }
         }
         log.info("Done filtering tagged Buckets");
         this.events = untaggedBuckets;
     }
 
-    private boolean hasTag(TagSet tagSet, String tag) {
-        log.trace(tag + " found: " +  tagSet.getAllTags().containsKey(tag));
-        return tagSet.getAllTags().containsKey(tag);
-    }
-
     private void tag(String ownerTag) {
         log.info("Tagging Buckets");
-        Map<String, String> newTags = new HashMap<>();
-        List<TagSet> tags = new ArrayList<>();
+
         for (Event event : events) {
-            BucketTaggingConfiguration configuration = s3.getBucketTaggingConfiguration(event.getId());
-            List<TagSet> oldTags;
-            if (configuration != null) {
-                oldTags = configuration.getAllTagSets();
-                oldTags.forEach(oldTag -> newTags.putAll(oldTag.getAllTags()));
-            }
-            newTags.put(ownerTag, event.getOwner());
-            tags.add(new TagSet(newTags));
-            s3.setBucketTaggingConfiguration(event.getId(), new BucketTaggingConfiguration(tags));
+
+            s3Handler.tagBucket(event.getId(), new Tag(ownerTag, event.getOwner()));
+
             log.info("Tagged: " + event.getId()
                     + " with key: " + ownerTag
                     + " value: " + event.getOwner());
+
         }
         this.events = new ArrayList<>();
         log.info("Done tagging Buckets");
