@@ -78,8 +78,8 @@ public class LoadBalancerTagger implements ResourceTagger {
                 log.error("Could not parse json: ", e);
                 e.printStackTrace();
             }
-            log.info("Done parsing json");
         }
+        log.info("Done parsing json");
     }
 
     private void filterTaggedResources(String ownerTag) {
