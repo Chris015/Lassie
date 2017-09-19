@@ -49,7 +49,7 @@ public class LoadBalancerTagger implements ResourceTagger {
 
     private void parseJson(List<String> filePaths) {
         log.info("Parsing json");
-        String jsonPath = "$..Records[?(@.eventName == 'CreateLoadBalancer' && @.responseElements != null)]";
+        String jsonPath = "$..Records[?(@.eventName == 'CreateLoadBalancer' && @.responseElements.loadBalancers)]";
         for (String filePath : filePaths) {
             try {
                 String json = JsonPath.parse(new File(filePath)).read(jsonPath).toString();
@@ -114,6 +114,7 @@ public class LoadBalancerTagger implements ResourceTagger {
             }
         }
         log.info("Found " + loadBalancers.size() + " LoadBalancers without " + ownerTag);
+        loadBalancers.forEach(loadBalancer -> log.info(loadBalancer.getLoadBalancerName()));
         return loadBalancers;
     }
 
@@ -122,7 +123,7 @@ public class LoadBalancerTagger implements ResourceTagger {
         return tagDescription.getTags().stream().anyMatch(t -> t.getKey().equals(tag));
     }
 
-    private void tag(String ownerTag) {
+    private void tag(String ownerTag) { ;
         log.info("Tagging LoadBalancers");
         for (Event event : events) {
             Tag tag = new Tag();
