@@ -1,10 +1,12 @@
 package lassie.resourcetagger;
 
-import lassie.AWSHandlers.S3Handler;
+import lassie.awsHandlers.EC2Handler;
+import lassie.awsHandlers.S3Handler;
 
 public class ResourceTaggerFactory {
 
     private S3Handler s3Handler = new S3Handler();
+    private EC2Handler ec2Handler = new EC2Handler();
 
     public ResourceTagger getResourceTagger(String resourceType) throws UnsupportedResourceTypeException {
         switch (resourceType.toUpperCase()) {
@@ -19,7 +21,7 @@ public class ResourceTaggerFactory {
             case "REDSHIFTCLUSTER":
                 return new RedshiftClusterTagger();
             case "EC2INSTANCE":
-                return new EC2InstanceTagger();
+                return new EC2InstanceTagger(ec2Handler);
             case "EMRCLUSTER":
                 return new EMRClusterTagger();
             case "LOADBALANCER":

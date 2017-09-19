@@ -1,4 +1,4 @@
-package lassie.AWSHandlers;
+package lassie.awsHandlers;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.BucketTaggingConfiguration;
@@ -13,7 +13,7 @@ import java.util.Map;
 public class S3Handler {
     private AmazonS3 s3;
 
-    public void instantiateS3(AmazonS3 s3) {
+    public void setS3Client(AmazonS3 s3) {
         this.s3 = s3;
     }
 

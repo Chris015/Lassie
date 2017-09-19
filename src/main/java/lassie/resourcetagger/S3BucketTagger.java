@@ -11,7 +11,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
-import lassie.AWSHandlers.S3Handler;
+import lassie.awsHandlers.S3Handler;
 import lassie.model.Log;
 import lassie.config.Account;
 import lassie.model.Event;
@@ -48,7 +48,7 @@ public class S3BucketTagger implements ResourceTagger {
                 .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
                 .withRegion(Regions.fromName(account.getRegions().get(0)))
                 .build();
-        s3Handler.instantiateS3(s3);
+        s3Handler.setS3Client(s3);
         log.info("S3 client instantiated");
     }
 

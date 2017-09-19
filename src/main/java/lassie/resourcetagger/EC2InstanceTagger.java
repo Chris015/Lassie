@@ -8,6 +8,7 @@ import com.amazonaws.services.ec2.model.*;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
+import lassie.awsHandlers.EC2Handler;
 import lassie.model.Log;
 import lassie.config.Account;
 import lassie.model.Event;
@@ -21,27 +22,32 @@ import java.util.List;
 public class EC2InstanceTagger implements ResourceTagger {
     private final Logger log = Logger.getLogger(EC2InstanceTagger.class);
 
-    private AmazonEC2 ec2;
+    private EC2Handler ec2Handler;
     private List<Event> events = new ArrayList<>();
+
+    public EC2InstanceTagger(EC2Handler ec2Handler) {
+        this.ec2Handler = ec2Handler;
+    }
 
     @Override
     public void tagResources(List<Log> logs) {
         for (Log log : logs) {
-            instantiateEc2Client(log.getAccount());
+            instantiateEC2Client(log.getAccount());
             parseJson(log.getFilePaths());
             filterTaggedResources(log.getAccount().getOwnerTag());
             tag(log.getAccount().getOwnerTag());
         }
     }
 
-    private void instantiateEc2Client(Account account) {
+    private void instantiateEC2Client(Account account) {
         log.info("Instantiating EC2 client");
-        BasicAWSCredentials awsCreds = new BasicAWSCredentials(account.getAccessKeyId(), account.getSecretAccessKey());
-        AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(awsCreds);
-        ec2 = AmazonEC2ClientBuilder.standard()
+        BasicAWSCredentials basicCredentials = new BasicAWSCredentials(account.getAccessKeyId(), account.getSecretAccessKey());
+        AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(basicCredentials);
+        AmazonEC2 ec2 = AmazonEC2ClientBuilder.standard()
                 .withCredentials(awsCredentials)
                 .withRegion(account.getRegions().get(0))
                 .build();
+        ec2Handler.setEc2Client(ec2);
         log.info("EC2 client instantiated");
     }
 
@@ -78,59 +84,27 @@ public class EC2InstanceTagger implements ResourceTagger {
         }
         log.info("Done parsing json");
     }
+
+
     private void filterTaggedResources(String ownerTag) {
         log.info("Filtering tagged EC2 instances");
         List<Event> untaggedEvents = new ArrayList<>();
-        List<Instance> instancesWithoutTags = describeInstances(ownerTag);
-        for (Instance instancesWithoutTag : instancesWithoutTags) {
-            for (Event event : events) {
-                String instanceId = instancesWithoutTag.getInstanceId();
-                String eventId = event.getId();
-                if (instanceId.equals(eventId)) {
-                    untaggedEvents.add(event);
-                }
+
+        for (Event event : events) {
+            if(!ec2Handler.instanceHasTag(event.getId(), ownerTag)) {
+                untaggedEvents.add(event);
             }
         }
         this.events = untaggedEvents;
         log.info("Done filtering tagged EC2 instances");
-
     }
 
-    private List<Instance> describeInstances(String ownerTag) {
-        log.info("Describing Instances");
-        List<Instance> instances = new ArrayList<>();
-        boolean done = false;
-        while (!done) {
-            DescribeInstancesRequest request = new DescribeInstancesRequest();
-            DescribeInstancesResult response = ec2.describeInstances(request);
-            for (Reservation reservation : response.getReservations()) {
-                for (Instance instance : reservation.getInstances()) {
-                    if (!hasTag(instance, ownerTag)) {
-                        instances.add(instance);
-                    }
-                }
-            }
-            request.setNextToken(response.getNextToken());
-            if (response.getNextToken() == null) {
-                done = true;
-            }
-        }
-        log.info("Found " + instances.size() + " instances without " + ownerTag);
-        return instances;
-    }
-
-    private boolean hasTag(Instance instance, String tag) {
-        log.trace(tag + " found: " + instance.getTags().stream().anyMatch(t -> t.getKey().equals(tag)));
-        return instance.getTags().stream().anyMatch(t -> t.getKey().equals(tag));
-    }
 
     private void tag(String ownerTag) {
         log.info("Tagging EC2 instances");
         for (Event event : events) {
-            CreateTagsRequest tagsRequest = new CreateTagsRequest()
-                    .withResources(event.getId())
-                    .withTags(new Tag(ownerTag, event.getOwner()));
-            ec2.createTags(tagsRequest);
+            ec2Handler.tagResource(event.getId(), new Tag(ownerTag, event.getOwner()));
+
             log.info("Tagged: " + event.getId() +
                     " with key: " + ownerTag +
                     " value: " + event.getOwner());
