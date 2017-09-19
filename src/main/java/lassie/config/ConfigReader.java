@@ -18,7 +18,7 @@ public class ConfigReader {
     public List<Account> getAccounts() {
         try {
             return objectMapper.readValue(
-                    new File(ClassLoader.getSystemResource("configuration.yaml").getPath()),
+                    new File("configuration.yaml"),
                     AccountsConfig.class).getAccounts();
         } catch (IOException e) {
             e.printStackTrace();
