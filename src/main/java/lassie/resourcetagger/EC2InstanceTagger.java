@@ -40,15 +40,7 @@ public class EC2InstanceTagger implements ResourceTagger {
     }
 
     private void instantiateEC2Client(Account account) {
-        log.info("Instantiating EC2 client");
-        BasicAWSCredentials basicCredentials = new BasicAWSCredentials(account.getAccessKeyId(), account.getSecretAccessKey());
-        AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(basicCredentials);
-        AmazonEC2 ec2 = AmazonEC2ClientBuilder.standard()
-                .withCredentials(awsCredentials)
-                .withRegion(account.getRegions().get(0))
-                .build();
-        ec2Handler.setEc2(ec2);
-        log.info("EC2 client instantiated");
+        ec2Handler.instantiateEc2Client(account.getAccessKeyId(), account.getSecretAccessKey(), account.getRegions().get(0));
     }
 
     private void parseJson(List<String> filePaths) {
