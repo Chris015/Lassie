@@ -14,10 +14,10 @@ public class EC2Handler {
     private final static Logger log = Logger.getLogger(EC2Handler.class);
     private AmazonEC2 ec2;
 
-    public void tagResource(String id, Tag tag) {
+    public void tagResource(String id, String ownerTag, String owner) {
         CreateTagsRequest tagsRequest = new CreateTagsRequest()
                 .withResources(id)
-                .withTags(tag);
+                .withTags(new Tag(ownerTag, owner));
         ec2.createTags(tagsRequest);
     }
 
