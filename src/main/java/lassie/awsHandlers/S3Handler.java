@@ -13,7 +13,7 @@ import java.util.Map;
 public class S3Handler {
     private AmazonS3 s3;
 
-    public void setS3Client(AmazonS3 s3) {
+    public void setS3(AmazonS3 s3) {
         this.s3 = s3;
     }
 

@@ -22,7 +22,7 @@ public class S3HandlerTest {
     public void setUp() throws Exception {
         this.s3 = mock(AmazonS3Client.class);
         this.s3Handler = new S3Handler();
-        this.s3Handler.setS3Client(s3);
+        this.s3Handler.setS3(s3);
     }
 
     @Test

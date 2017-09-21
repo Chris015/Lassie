@@ -48,7 +48,7 @@ public class S3BucketTagger implements ResourceTagger {
                 .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
                 .withRegion(Regions.fromName(account.getRegions().get(0)))
                 .build();
-        s3Handler.setS3Client(s3);
+        s3Handler.setS3(s3);
         log.info("S3 client instantiated");
     }
 

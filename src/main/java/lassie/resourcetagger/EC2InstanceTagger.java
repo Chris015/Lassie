@@ -47,7 +47,7 @@ public class EC2InstanceTagger implements ResourceTagger {
                 .withCredentials(awsCredentials)
                 .withRegion(account.getRegions().get(0))
                 .build();
-        ec2Handler.setEc2Client(ec2);
+        ec2Handler.setEc2(ec2);
         log.info("EC2 client instantiated");
     }
 

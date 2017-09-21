@@ -10,6 +10,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
+import lassie.awsHandlers.EC2Handler;
 import lassie.model.Log;
 import lassie.config.Account;
 import lassie.model.Event;
@@ -22,7 +23,7 @@ import java.util.List;
 
 public class EBSVolumeTagger implements ResourceTagger {
     private final Logger log = Logger.getLogger(EBSVolumeTagger.class);
-    private AmazonEC2 ec2;
+    private EC2Handler ec2Handler;
     private List<Event> events = new ArrayList<>();
 
     @Override
@@ -35,14 +36,19 @@ public class EBSVolumeTagger implements ResourceTagger {
         }
     }
 
+    public EBSVolumeTagger(EC2Handler ec2Handler) {
+        this.ec2Handler = ec2Handler;
+    }
+
     private void instantiateEc2Client(Account account) {
         log.info("Instantiating EC2 client");
         BasicAWSCredentials awsCreds = new BasicAWSCredentials(account.getAccessKeyId(), account.getSecretAccessKey());
         AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(awsCreds);
-        ec2 = AmazonEC2ClientBuilder.standard()
+        AmazonEC2 ec2 = AmazonEC2ClientBuilder.standard()
                 .withCredentials(awsCredentials)
                 .withRegion(account.getRegions().get(0))
                 .build();
+        ec2Handler.setEc2(ec2);
         log.info("EC2 client instantiated");
     }
 
@@ -80,54 +86,20 @@ public class EBSVolumeTagger implements ResourceTagger {
 
     private void filterTaggedResources(String ownerTag) {
         log.info("Filtering tagged EBS volume");
-        List<Event> untaggedEvents = new ArrayList<>();
-        List<Volume> volumesWithoutTags = describeVolumes(ownerTag);
-        for (Volume volumesWithoutTag : volumesWithoutTags) {
-            for (Event event : events) {
-                String volumeId = volumesWithoutTag.getVolumeId();
-                String eventId = event.getId();
-                if (volumeId.equals(eventId)) {
-                    untaggedEvents.add(event);
-                }
+        List<Event> untaggedVolumes = new ArrayList<>();
+        for (Event event : events) {
+            if (!ec2Handler.instanceHasTag(event.getId(), ownerTag)) {
+                untaggedVolumes.add(event);
             }
         }
-        this.events = untaggedEvents;
+        this.events = untaggedVolumes;
         log.info("Done filtering tagged EBS volumes");
-    }
-
-    private List<Volume> describeVolumes(String ownerTag) {
-        log.info("Describing volumes");
-        List<Volume> volumesWithoutTags = new ArrayList<>();
-        boolean done = false;
-        while (!done) {
-            DescribeVolumesRequest request = new DescribeVolumesRequest();
-            DescribeVolumesResult result = ec2.describeVolumes(request);
-            for (Volume volume : result.getVolumes()) {
-                if (!hasTag(volume, ownerTag)) {
-                    volumesWithoutTags.add(volume);
-                }
-            }
-            request.setNextToken(result.getNextToken());
-            if (result.getNextToken() == null) {
-                done = true;
-            }
-        }
-        log.info("Found " + volumesWithoutTags.size() + " EBS volumes without " + ownerTag);
-        return volumesWithoutTags;
-    }
-
-    private boolean hasTag(Volume volume, String tag) {
-        log.trace(tag + " found: " + volume.getTags().stream().anyMatch(t -> t.getKey().equals(tag)));
-        return volume.getTags().stream().anyMatch(t -> t.getKey().equals(tag));
     }
 
     private void tag(String ownerTag) {
         log.info("Tagging volumes");
         for (Event event : events) {
-            CreateTagsRequest tagsRequest = new CreateTagsRequest()
-                    .withResources(event.getId())
-                    .withTags(new Tag(ownerTag, event.getOwner()));
-            ec2.createTags(tagsRequest);
+            ec2Handler.tagResource(event.getId(), new Tag(ownerTag, event.getOwner()));
             log.info("Tagged: " + event.getId()
                     + " with key: " + ownerTag
                     + " value: " + event.getOwner());

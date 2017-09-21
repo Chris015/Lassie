@@ -11,7 +11,7 @@ public class EC2Handler {
     private static Logger log = Logger.getLogger(EC2Handler.class);
     private AmazonEC2 ec2;
 
-    public void setEc2Client(AmazonEC2 ec2) {
+    public void setEc2(AmazonEC2 ec2) {
         this.ec2 = ec2;
     }
 
@@ -69,5 +69,38 @@ public class EC2Handler {
         }
         return untaggedInstances;
     }
+
+
+    public boolean volumeHasTag(String id, String tag) {
+        List<Volume> volumesWithoutTags = getVolumesWithoutTags(tag);
+        return volumesWithoutTags.stream().noneMatch(volume -> volume.getVolumeId().equals(id));
+    }
+
+    private List<Volume> getVolumesWithoutTags(String tag) {
+        log.info("Describing volumes");
+        List<Volume> volumesWithoutTags = new ArrayList<>();
+        boolean done = false;
+        while (!done) {
+            DescribeVolumesRequest request = new DescribeVolumesRequest();
+            DescribeVolumesResult result = ec2.describeVolumes(request);
+            for (Volume volume : result.getVolumes()) {
+                if (!hasTag(volume, tag)) {
+                    volumesWithoutTags.add(volume);
+                }
+            }
+            request.setNextToken(result.getNextToken());
+            if (result.getNextToken() == null) {
+                done = true;
+            }
+        }
+        log.info("Found " + volumesWithoutTags.size() + " EBS volumes without " + tag);
+        return volumesWithoutTags;
+    }
+
+    private boolean hasTag(Volume volume, String tag) {
+        log.trace(tag + " found: " + volume.getTags().stream().anyMatch(t -> t.getKey().equals(tag)));
+        return volume.getTags().stream().anyMatch(t -> t.getKey().equals(tag));
+    }
+
 }
 
