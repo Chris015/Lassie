@@ -116,6 +116,7 @@ public class EC2InstanceTagger implements ResourceTagger {
             }
         }
         log.info("Found " + instances.size() + " instances without " + ownerTag);
+        instances.forEach(instance -> log.info(instance.getInstanceId()));
         return instances;
     }
 
