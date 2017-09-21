@@ -56,7 +56,7 @@ public class EC2InstanceTagger implements ResourceTagger {
                             .getAsJsonObject().get("userIdentity")
                             .getAsJsonObject().get("arn")
                             .getAsString();
-                    log.info("EC2 instance model created. Id: " + id + " Owner: " + owner);
+                    log.info("Event created with Id: " + id + " Owner: " + owner);
                     return new Event(id, owner);
                 };
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);

@@ -55,7 +55,7 @@ public class EBSVolumeTagger implements ResourceTagger {
                             .get("userIdentity")
                             .getAsJsonObject()
                             .get("arn").getAsString();
-                    log.info("EBS volume model created. Id: " + id + " Owner: " + owner);
+                    log.info("Event created with Id: " + id + " Owner: " + owner);
                     return new Event(id, owner);
                 };
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);

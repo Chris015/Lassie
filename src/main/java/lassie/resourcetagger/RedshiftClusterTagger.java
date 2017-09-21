@@ -59,7 +59,7 @@ public class RedshiftClusterTagger implements ResourceTagger {
                             .getAsJsonObject().get("userIdentity")
                             .getAsJsonObject().get("arn")
                             .getAsString();
-                    log.info("RedShift cluster model created. ARN: " + arn + " Owner: " + owner);
+                    log.info("Event created with id: " + arn + " Owner: " + owner);
                     return new Event(arn, owner);
                 };
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);
