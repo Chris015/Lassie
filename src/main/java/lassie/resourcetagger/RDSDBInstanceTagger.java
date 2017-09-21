@@ -1,9 +1,6 @@
 package lassie.resourcetagger;
 
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.rds.AmazonRDS;
-import com.amazonaws.services.rds.AmazonRDSClientBuilder;
 import com.amazonaws.services.rds.model.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

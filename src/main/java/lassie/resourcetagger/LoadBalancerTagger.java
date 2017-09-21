@@ -1,9 +1,5 @@
 package lassie.resourcetagger;
 
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancing;
-import com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClientBuilder;
 import com.amazonaws.services.elasticloadbalancingv2.model.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
