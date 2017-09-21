@@ -88,7 +88,7 @@ public class EBSVolumeTagger implements ResourceTagger {
         log.info("Filtering tagged EBS volume");
         List<Event> untaggedVolumes = new ArrayList<>();
         for (Event event : events) {
-            if (!ec2Handler.instanceHasTag(event.getId(), ownerTag)) {
+            if (!ec2Handler.volumeHasTag(event.getId(), ownerTag)) {
                 untaggedVolumes.add(event);
             }
         }

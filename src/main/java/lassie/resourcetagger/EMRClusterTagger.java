@@ -1,16 +1,11 @@
 package lassie.resourcetagger;
 
-import com.amazonaws.auth.AWSCredentials;
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduce;
-import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClientBuilder;
-import com.amazonaws.services.elasticmapreduce.model.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
+import lassie.awsHandlers.EMRHandler;
 import lassie.model.Log;
 import lassie.config.Account;
 import lassie.model.Event;
@@ -22,9 +17,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EMRClusterTagger implements ResourceTagger {
-    private final Logger log = Logger.getLogger(EMRClusterTagger.class);
-    private AmazonElasticMapReduce emr;
+    private final static Logger log = Logger.getLogger(EMRClusterTagger.class);
+    private EMRHandler emrHandler;
     private List<Event> events = new ArrayList<>();
+
+    public EMRClusterTagger(EMRHandler emrHandler) {
+        this.emrHandler = emrHandler;
+    }
 
     @Override
     public void tagResources(List<Log> logs) {
@@ -38,12 +37,7 @@ public class EMRClusterTagger implements ResourceTagger {
 
     private void instantiateEmrInstance(Account account) {
         log.info("Instantiating EMR client");
-        AWSCredentials awsCreds = new BasicAWSCredentials(account.getAccessKeyId(), account.getSecretAccessKey());
-        AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(awsCreds);
-        this.emr = AmazonElasticMapReduceClientBuilder.standard()
-                .withCredentials(awsCredentials)
-                .withRegion(account.getRegions().get(0))
-                .build();
+        emrHandler.instantiateEmrClient(account.getAccessKeyId(), account.getSecretAccessKey(), account.getRegions().get(0));
         log.info("EMR client instantiated");
     }
 
@@ -70,7 +64,8 @@ public class EMRClusterTagger implements ResourceTagger {
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);
                 Gson gson = gsonBuilder.setLenient().create();
                 List<Event> createDBInstanceEvents = gson.fromJson(
-                        json, new TypeToken<List<Event>>() {}.getType());
+                        json, new TypeToken<List<Event>>() {
+                        }.getType());
                 events.addAll(createDBInstanceEvents);
             } catch (IOException e) {
                 log.error("Could not parse json: ", e);
@@ -82,70 +77,23 @@ public class EMRClusterTagger implements ResourceTagger {
 
     private void filterTaggedResources(String ownerTag) {
         log.info("Filtering tagged EMR Clusters");
-        List<Cluster> clustersWithoutTags = describeClusters(ownerTag);
-        List<Event> untaggedResources = new ArrayList<>();
-        for (Cluster cluster : clustersWithoutTags) {
-            for (Event event : events) {
-                if (cluster.getId().equals(event.getId())) {
-                    untaggedResources.add(event);
-                }
-            }
-        }
-        this.events = untaggedResources;
+
+        List<Event> untaggedClusters = new ArrayList<>();
         for (Event event : events) {
-            System.out.println(event.getId() + " " + event.getOwner());
-        }
-        log.info("Done filtering tagged EMR clusters");
-    }
-
-    private List<Cluster> describeClusters(String ownerTag) {
-        log.info("Describing EMR clusters");
-        List<Cluster> clusters = new ArrayList<>();
-        ListClustersResult listClustersResult = emr.listClusters();
-        for (ClusterSummary clusterSummary : listClustersResult.getClusters()) {
-            DescribeClusterRequest request = new DescribeClusterRequest().withClusterId(clusterSummary.getId());
-            DescribeClusterResult result = emr.describeCluster(request);
-            if (isClusterActive(result.getCluster())) {
-                if (!hasTag(result.getCluster(), ownerTag)) {
-                    clusters.add(result.getCluster());
-                }
+            if (!emrHandler.clusterHasTag(event.getId(), ownerTag)) {
+                untaggedClusters.add(event);
             }
         }
-        log.info("Found " + clusters.size() + " clusters without " + ownerTag);
-        return clusters;
-    }
 
-    private boolean isClusterActive(Cluster cluster) {
-        log.info("Checking if cluster is active");
-        String clusterState = cluster.getStatus().getState();
-        if (clusterState.equals(ClusterState.TERMINATED.name())) {
-            log.trace("Cluster " + cluster + " is terminated");
-            return false;
-        } else if (clusterState.equals(ClusterState.TERMINATED_WITH_ERRORS.name())) {
-            log.trace("Cluster " + cluster + " is terminated with errors");
-            return false;
-        } else if (clusterState.equals(ClusterState.TERMINATING.name())) {
-            log.trace("Cluster " + cluster + " is terminating");
-            return false;
-        }
-        log.info("Cluster is active");
-        return true;
-    }
+        this.events = untaggedClusters;
 
-    private boolean hasTag(Cluster cluster, String tag) {
-        log.trace(tag + " found: " + cluster.getTags().stream().anyMatch(t -> t.getKey().equals(tag)));
-        return cluster.getTags().stream().anyMatch(t -> t.getKey().equals(tag));
+        log.info("Done filtering tagged EMR clusters");
     }
 
     private void tag(String ownerTag) {
         log.info("Tagging EMR clusters");
         for (Event event : events) {
-            DescribeClusterRequest request = new DescribeClusterRequest().withClusterId(event.getId());
-            DescribeClusterResult result = emr.describeCluster(request);
-            List<Tag> tags = result.getCluster().getTags();
-            tags.add(new Tag(ownerTag, event.getOwner()));
-            AddTagsRequest tagsRequest = new AddTagsRequest(event.getId(), tags);
-            emr.addTags(tagsRequest);
+            emrHandler.tag(event.getId(), ownerTag, event.getOwner());
             log.info("Tagged: " + event.getId()
                     + " with key: " + ownerTag
                     + " value: " + event.getOwner());
