@@ -1,9 +1,13 @@
 package lassie.awsHandlers;
 
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.BucketTaggingConfiguration;
-import com.amazonaws.services.s3.model.Tag;
 import com.amazonaws.services.s3.model.TagSet;
+import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,20 +15,17 @@ import java.util.List;
 import java.util.Map;
 
 public class S3Handler {
+    private static Logger log = Logger.getLogger(S3Handler.class);
     private AmazonS3 s3;
 
-    public void setS3(AmazonS3 s3) {
-        this.s3 = s3;
-    }
-
-    public void tagBucket(String bucketName, Tag tag) {
+    public void tagBucket(String bucketName, String key, String value) {
         Map<String, String> newTags = new HashMap<>();
 
         List<TagSet> existingTagSets = fetchExistingTagSets(bucketName);
         existingTagSets.forEach(existingTagSet -> newTags.putAll(existingTagSet.getAllTags()));
 
         List<TagSet> newTagSets = new ArrayList<>();
-        newTags.put(tag.getKey(), tag.getValue());
+        newTags.put(key, value);
         newTagSets.add(new TagSet(newTags));
 
         s3.setBucketTaggingConfiguration(bucketName, new BucketTaggingConfiguration(newTagSets));
@@ -52,5 +53,15 @@ public class S3Handler {
 
         }
         return false;
+    }
+
+    public void instantiateS3Client(String accessKeyId, String secretAccessKey, String region) {
+        log.info("Instantiating S3 client");
+        BasicAWSCredentials awsCredentials = new BasicAWSCredentials(accessKeyId, secretAccessKey);
+        this.s3 = AmazonS3ClientBuilder.standard()
+                .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
+                .withRegion(Regions.fromName(region))
+                .build();
+        log.info("S3 client instantiated");
     }
 }
