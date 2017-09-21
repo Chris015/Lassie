@@ -1,16 +1,11 @@
 package lassie.resourcetagger;
 
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
-import com.amazonaws.services.ec2.model.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
-import lassie.awsHandlers.EC2Handler;
+import lassie.awshandlers.EC2Handler;
 import lassie.model.Log;
 import lassie.config.Account;
 import lassie.model.Event;
@@ -41,7 +36,7 @@ public class EBSVolumeTagger implements ResourceTagger {
     }
 
     private void instantiateEc2Client(Account account) {
-        ec2Handler.instantiateEc2Client(account.getAccessKeyId(), account.getSecretAccessKey(), account.getRegions().get(0));
+        ec2Handler.instantiateEC2Client(account.getAccessKeyId(), account.getSecretAccessKey(), account.getRegions().get(0));
     }
 
     private void parseJson(List<String> filePaths) {
@@ -80,7 +75,7 @@ public class EBSVolumeTagger implements ResourceTagger {
         log.info("Filtering tagged EBS volume");
         List<Event> untaggedVolumes = new ArrayList<>();
         for (Event event : events) {
-            if (!ec2Handler.instanceHasTag(event.getId(), ownerTag)) {
+            if (!ec2Handler.volumeHasTag(event.getId(), ownerTag)) {
                 untaggedVolumes.add(event);
             }
         }

@@ -1,4 +1,4 @@
-package lassie.awsHandlers;
+package lassie.awshandlers;
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
@@ -14,13 +14,23 @@ public class EC2Handler {
     private final static Logger log = Logger.getLogger(EC2Handler.class);
     private AmazonEC2 ec2;
 
+    public void instantiateEC2Client(String accessKeyId, String secretAccessKey, String region) {
+        log.info("Instantiating EC2 client");
+        BasicAWSCredentials basicCredentials = new BasicAWSCredentials(accessKeyId, secretAccessKey);
+        AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(basicCredentials);
+        this.ec2 = AmazonEC2ClientBuilder.standard()
+                .withCredentials(awsCredentials)
+                .withRegion(region)
+                .build();
+        log.info("EC2 client instantiated");
+    }
+
     public void tagResource(String id, String key, String value) {
         CreateTagsRequest tagsRequest = new CreateTagsRequest()
                 .withResources(id)
                 .withTags(new Tag(key, value));
         ec2.createTags(tagsRequest);
     }
-
 
     public boolean instanceHasTag(String id, String tag) {
         List<Instance> untaggedInstances = getInstancesWithoutTag(tag);
@@ -69,7 +79,6 @@ public class EC2Handler {
         return untaggedInstances;
     }
 
-
     public boolean volumeHasTag(String id, String tag) {
         List<Volume> volumesWithoutTags = getVolumesWithoutTags(tag);
         return volumesWithoutTags.stream().noneMatch(volume -> volume.getVolumeId().equals(id));
@@ -99,17 +108,6 @@ public class EC2Handler {
     private boolean hasTag(Volume volume, String tag) {
         log.trace(tag + " found: " + volume.getTags().stream().anyMatch(t -> t.getKey().equals(tag)));
         return volume.getTags().stream().anyMatch(t -> t.getKey().equals(tag));
-    }
-
-    public void instantiateEc2Client(String accessKeyId, String secretAccessKey, String region) {
-        log.info("Instantiating EC2 client");
-        BasicAWSCredentials basicCredentials = new BasicAWSCredentials(accessKeyId, secretAccessKey);
-        AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(basicCredentials);
-        this.ec2 = AmazonEC2ClientBuilder.standard()
-                .withCredentials(awsCredentials)
-                .withRegion(region)
-                .build();
-        log.info("EC2 client instantiated");
     }
 }
 

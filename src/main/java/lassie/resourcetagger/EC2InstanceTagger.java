@@ -1,14 +1,9 @@
 package lassie.resourcetagger;
 
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
-import com.amazonaws.services.ec2.model.*;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
-import lassie.awsHandlers.EC2Handler;
+import lassie.awshandlers.EC2Handler;
 import lassie.model.Log;
 import lassie.config.Account;
 import lassie.model.Event;
@@ -40,7 +35,7 @@ public class EC2InstanceTagger implements ResourceTagger {
     }
 
     private void instantiateEC2Client(Account account) {
-        ec2Handler.instantiateEc2Client(account.getAccessKeyId(), account.getSecretAccessKey(), account.getRegions().get(0));
+        ec2Handler.instantiateEC2Client(account.getAccessKeyId(), account.getSecretAccessKey(), account.getRegions().get(0));
     }
 
     private void parseJson(List<String> filePaths) {
@@ -83,7 +78,7 @@ public class EC2InstanceTagger implements ResourceTagger {
         List<Event> untaggedEvents = new ArrayList<>();
 
         for (Event event : events) {
-            if(!ec2Handler.instanceHasTag(event.getId(), ownerTag)) {
+            if (!ec2Handler.instanceHasTag(event.getId(), ownerTag)) {
                 untaggedEvents.add(event);
             }
         }

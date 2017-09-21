@@ -1,4 +1,4 @@
-package lassie.awsHandlers;
+package lassie.awshandlers;
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
@@ -15,8 +15,18 @@ import java.util.List;
 import java.util.Map;
 
 public class S3Handler {
-    private static Logger log = Logger.getLogger(S3Handler.class);
+    private static final Logger log = Logger.getLogger(S3Handler.class);
     private AmazonS3 s3;
+
+    public void instantiateS3Client(String accessKeyId, String secretAccessKey, String region) {
+        log.info("Instantiating S3 client");
+        BasicAWSCredentials awsCredentials = new BasicAWSCredentials(accessKeyId, secretAccessKey);
+        this.s3 = AmazonS3ClientBuilder.standard()
+                .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
+                .withRegion(Regions.fromName(region))
+                .build();
+        log.info("S3 client instantiated");
+    }
 
     public void tagBucket(String bucketName, String key, String value) {
         Map<String, String> newTags = new HashMap<>();
@@ -40,28 +50,18 @@ public class S3Handler {
         return existingTagSets;
     }
 
-    public boolean bucketHasTag(String bucketName, String ownerTag) {
+    public boolean bucketHasTag(String bucketName, String tag) {
         if (s3.getBucketTaggingConfiguration(bucketName) == null) {
             return false;
         }
         BucketTaggingConfiguration configuration = s3.getBucketTaggingConfiguration(bucketName);
         List<TagSet> allTagSets = configuration.getAllTagSets();
         for (TagSet tagSet : allTagSets) {
-            if (tagSet.getAllTags().containsKey(ownerTag)) {
+            if (tagSet.getAllTags().containsKey(tag)) {
                 return true;
             }
 
         }
         return false;
-    }
-
-    public void instantiateS3Client(String accessKeyId, String secretAccessKey, String region) {
-        log.info("Instantiating S3 client");
-        BasicAWSCredentials awsCredentials = new BasicAWSCredentials(accessKeyId, secretAccessKey);
-        this.s3 = AmazonS3ClientBuilder.standard()
-                .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
-                .withRegion(Regions.fromName(region))
-                .build();
-        log.info("S3 client instantiated");
     }
 }

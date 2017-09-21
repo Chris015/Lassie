@@ -1,13 +1,11 @@
 package lassie.resourcetagger;
 
-import com.amazonaws.services.rds.AmazonRDS;
-import com.amazonaws.services.rds.model.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
-import lassie.awsHandlers.RDSHandler;
+import lassie.awshandlers.RDSHandler;
 import lassie.model.Log;
 import lassie.config.Account;
 import lassie.model.Event;
@@ -21,7 +19,6 @@ import java.util.List;
 
 public class RDSDBInstanceTagger implements ResourceTagger {
     private final Logger log = Logger.getLogger(RDSDBInstanceTagger.class);
-    private AmazonRDS rds;
     private List<Event> events = new ArrayList<>();
     private RDSHandler rdsHandler;
 
@@ -79,16 +76,13 @@ public class RDSDBInstanceTagger implements ResourceTagger {
     private void filterTaggedResources(String ownerTag) {
         log.info("Filtering tagged DB instances");
         List<Event> untaggedEvents = new ArrayList<>();
-        List<DBInstance> dbInstancesWithoutTag = rdsHandler.describeRDSInstances(ownerTag);
-        for (DBInstance dbInstance : dbInstancesWithoutTag) {
-            for (Event event : events) {
-                String dbId = dbInstance.getDBInstanceArn();
-                String eventId = event.getId();
-                if (dbId.equals(eventId)) {
-                    untaggedEvents.add(event);
-                }
+
+        for (Event event : events) {
+            if(!rdsHandler.dbHasTag(event.getId(), ownerTag)) {
+                untaggedEvents.add(event);
             }
         }
+
         log.info("Done filtering tagged DB instances");
         this.events = untaggedEvents;
     }
@@ -96,7 +90,7 @@ public class RDSDBInstanceTagger implements ResourceTagger {
     private void tag(String ownerTag) {
         log.info("Tagging DB instances");
         for (Event event : events) {
-        rdsHandler.tagResource(event.getId(), ownerTag, event.getOwner());
+            rdsHandler.tagResource(event.getId(), ownerTag, event.getOwner());
             log.info("Tagged: " + event.getId() + " with key: " + ownerTag + " value: " + event.getOwner());
         }
         this.events = new ArrayList<>();

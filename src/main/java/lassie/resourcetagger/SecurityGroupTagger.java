@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SecurityGroupTagger implements ResourceTagger {
-    Logger log = Logger.getLogger(SecurityGroupTagger.class);
+    private final static Logger log = Logger.getLogger(SecurityGroupTagger.class);
     private AmazonEC2 ec2;
     private List<Event> events = new ArrayList<>();
 
@@ -107,7 +107,7 @@ public class SecurityGroupTagger implements ResourceTagger {
                 securityGroups.add(securityGroup);
             }
         }
-        log.info("Found " + securityGroups.size() + " Security groups without tag");
+        log.info("Found " + securityGroups.size() + " Security groups without tagResource");
         return securityGroups;
     }
 

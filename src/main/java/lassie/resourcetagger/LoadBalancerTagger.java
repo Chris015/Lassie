@@ -1,12 +1,11 @@
 package lassie.resourcetagger;
 
-import com.amazonaws.services.elasticloadbalancingv2.model.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
-import lassie.awsHandlers.ELBHandler;
+import lassie.awshandlers.ELBHandler;
 import lassie.model.Log;
 import lassie.config.Account;
 import lassie.model.Event;
@@ -78,14 +77,10 @@ public class LoadBalancerTagger implements ResourceTagger {
     private void filterTaggedResources(String ownerTag) {
         log.info("Filtering tagged LoadBalancers");
         List<Event> untaggedEvents = new ArrayList<>();
-        List<LoadBalancer> loadBalancersWithoutTag = elbHandler.describeLoadBalancers(ownerTag);
-        for (LoadBalancer loadBalancer : loadBalancersWithoutTag) {
-            for (Event event : events) {
-                String arn = loadBalancer.getLoadBalancerArn();
-                String eventId = event.getId();
-                if (arn.equals(eventId)) {
-                    untaggedEvents.add(event);
-                }
+
+        for (Event event : events) {
+            if(!elbHandler.loadBalancerHasTag(event.getId(), ownerTag)) {
+                untaggedEvents.add(event);
             }
         }
         this.events = untaggedEvents;
@@ -95,7 +90,7 @@ public class LoadBalancerTagger implements ResourceTagger {
     private void tag(String ownerTag) {
         log.info("Tagging LoadBalancers");
         for (Event event : events) {
-            elbHandler.tagResources(event.getId(), ownerTag, event.getOwner());
+            elbHandler.tagResource(event.getId(), ownerTag, event.getOwner());
             log.info("Tagged: " + event.getId() +
                     " with key: " + ownerTag +
                     " value: " + event.getOwner());

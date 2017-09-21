@@ -1,4 +1,4 @@
-package lassie.awsHandlers;
+package lassie.awshandlers;
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
@@ -25,7 +25,22 @@ public class ELBHandler {
         log.info("ELB client instantiated");
     }
 
-    public List<LoadBalancer> describeLoadBalancers(String ownerTag) {
+    public void tagResource(String id, String key, String value) {
+        Tag tag = new Tag();
+        tag.setKey(key);
+        tag.setValue(value);
+        AddTagsRequest tagsRequest = new AddTagsRequest()
+                .withResourceArns(id)
+                .withTags(tag);
+        elb.addTags(tagsRequest);
+    }
+
+    public boolean loadBalancerHasTag(String id, String tag) {
+        List<LoadBalancer> loadBalancersWithoutTag = describeLoadBalancers(tag);
+        return loadBalancersWithoutTag.stream().noneMatch(loadBalancer -> loadBalancer.getLoadBalancerArn().equals(id));
+    }
+
+    private List<LoadBalancer> describeLoadBalancers(String tag) {
         log.info("Describing Load Balancers");
         List<LoadBalancer> loadBalancers = new ArrayList<>();
         DescribeLoadBalancersResult result = elb.describeLoadBalancers(new DescribeLoadBalancersRequest());
@@ -34,12 +49,12 @@ public class ELBHandler {
                     .withResourceArns(loadBalancer.getLoadBalancerArn());
             DescribeTagsResult tagsResult = elb.describeTags(tagsRequest);
             for (TagDescription tagDescription : tagsResult.getTagDescriptions()) {
-                if (!hasTag(tagDescription, ownerTag)) {
+                if (!hasTag(tagDescription, tag)) {
                     loadBalancers.add(loadBalancer);
                 }
             }
         }
-        log.info("Found " + loadBalancers.size() + " LoadBalancers without " + ownerTag);
+        log.info("Found " + loadBalancers.size() + " LoadBalancers without " + tag);
         loadBalancers.forEach(loadBalancer -> log.info(loadBalancer.getLoadBalancerName()));
         return loadBalancers;
     }
@@ -47,15 +62,5 @@ public class ELBHandler {
     private boolean hasTag(TagDescription tagDescription, String tag) {
         log.trace(tag + " found: " + tagDescription.getTags().stream().anyMatch(t -> t.getKey().equals(tag)));
         return tagDescription.getTags().stream().anyMatch(t -> t.getKey().equals(tag));
-    }
-
-    public void tagResources(String id, String ownerTag, String owner) {
-        Tag tag = new Tag();
-        tag.setKey(ownerTag);
-        tag.setValue(owner);
-        AddTagsRequest tagsRequest = new AddTagsRequest()
-                .withResourceArns(id)
-                .withTags(tag);
-        elb.addTags(tagsRequest);
     }
 }

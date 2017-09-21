@@ -1,4 +1,4 @@
-package lassie.awsHandlers;
+package lassie.awshandlers;
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
@@ -25,27 +25,6 @@ public class RDSHandler {
         log.info("RDS client instantiated");
     }
 
-    public List<DBInstance> describeRDSInstances(String ownerTag) {
-        log.info("Describing DB instances");
-        List<DBInstance> dbInstancesWithoutOwner = new ArrayList<>();
-        DescribeDBInstancesResult describeDBInstancesResult = rds.describeDBInstances(new DescribeDBInstancesRequest());
-        for (DBInstance dbInstance : describeDBInstancesResult.getDBInstances()) {
-            ListTagsForResourceRequest request = new ListTagsForResourceRequest()
-                    .withResourceName(dbInstance.getDBInstanceArn());
-            ListTagsForResourceResult response = rds.listTagsForResource(request);
-            if (!hasTag(response, ownerTag)) {
-                dbInstancesWithoutOwner.add(dbInstance);
-            }
-        }
-        log.info("Found " + dbInstancesWithoutOwner.size() + " DB instances without " + ownerTag);
-        return dbInstancesWithoutOwner;
-    }
-
-    private boolean hasTag(ListTagsForResourceResult response, String tag) {
-        log.trace(tag + " found: " + response.getTagList().stream().anyMatch(t -> t.getKey().equals(tag)));
-        return response.getTagList().stream().anyMatch(t -> t.getKey().equals(tag));
-    }
-
     public void tagResource(String id, String key, String value) {
         Tag tag = new Tag();
         tag.setKey(key);
@@ -54,5 +33,31 @@ public class RDSHandler {
                 .withResourceName(id)
                 .withTags(tag);
         rds.addTagsToResource(tagsRequest);
+    }
+
+    public boolean dbHasTag(String id, String tag) {
+        List<DBInstance> dbInstancesWithoutTag = describeRDSInstances(tag);
+        return dbInstancesWithoutTag.stream().noneMatch(dbInstance -> dbInstance.getDBInstanceArn().equals(id));
+    }
+
+    private List<DBInstance> describeRDSInstances(String tag) {
+        log.info("Describing DB instances");
+        List<DBInstance> dbInstancesWithoutOwner = new ArrayList<>();
+        DescribeDBInstancesResult describeDBInstancesResult = rds.describeDBInstances(new DescribeDBInstancesRequest());
+        for (DBInstance dbInstance : describeDBInstancesResult.getDBInstances()) {
+            ListTagsForResourceRequest request = new ListTagsForResourceRequest()
+                    .withResourceName(dbInstance.getDBInstanceArn());
+            ListTagsForResourceResult response = rds.listTagsForResource(request);
+            if (!hasTag(response, tag)) {
+                dbInstancesWithoutOwner.add(dbInstance);
+            }
+        }
+        log.info("Found " + dbInstancesWithoutOwner.size() + " DB instances without " + tag);
+        return dbInstancesWithoutOwner;
+    }
+
+    private boolean hasTag(ListTagsForResourceResult response, String tag) {
+        log.trace(tag + " found: " + response.getTagList().stream().anyMatch(t -> t.getKey().equals(tag)));
+        return response.getTagList().stream().anyMatch(t -> t.getKey().equals(tag));
     }
 }

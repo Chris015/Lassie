@@ -5,7 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
-import lassie.awsHandlers.S3Handler;
+import lassie.awshandlers.S3Handler;
 import lassie.model.Log;
 import lassie.config.Account;
 import lassie.model.Event;
@@ -17,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class S3BucketTagger implements ResourceTagger {
-    private static Logger log = Logger.getLogger(S3BucketTagger.class);
+    private final static Logger log = Logger.getLogger(S3BucketTagger.class);
     private S3Handler s3Handler;
     private List<Event> events = new ArrayList<>();
 

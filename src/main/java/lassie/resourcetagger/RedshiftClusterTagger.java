@@ -1,12 +1,11 @@
 package lassie.resourcetagger;
 
-import com.amazonaws.services.redshift.model.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
-import lassie.awsHandlers.RedshiftHandler;
+import lassie.awshandlers.RedshiftHandler;
 import lassie.model.Log;
 import lassie.config.Account;
 import lassie.model.Event;
@@ -80,15 +79,10 @@ public class RedshiftClusterTagger implements ResourceTagger {
     private void filterTaggedResources(String ownerTag) {
         log.info("Filtering tagged RedShift clusters");
         List<Event> untaggedEvents = new ArrayList<>();
-        List<Cluster> clustersWithoutTag = redshiftHandler.describeCluster(ownerTag);
-        for (Cluster cluster : clustersWithoutTag) {
-            for (Event event : events) {
-                String clusterId = cluster.getClusterIdentifier();
-                String eventId = event.getId();
-                eventId = eventId.substring(eventId.lastIndexOf(':') + 1, eventId.length());
-                if (clusterId.equals(eventId)) {
-                    untaggedEvents.add(event);
-                }
+
+        for (Event event : events) {
+            if(!redshiftHandler.clusterHasTag(event.getId(), ownerTag)) {
+                untaggedEvents.add(event);
             }
         }
         log.info("Done filtering tagged RedShift clusters");
