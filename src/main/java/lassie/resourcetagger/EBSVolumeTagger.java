@@ -41,15 +41,7 @@ public class EBSVolumeTagger implements ResourceTagger {
     }
 
     private void instantiateEc2Client(Account account) {
-        log.info("Instantiating EC2 client");
-        BasicAWSCredentials awsCreds = new BasicAWSCredentials(account.getAccessKeyId(), account.getSecretAccessKey());
-        AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(awsCreds);
-        AmazonEC2 ec2 = AmazonEC2ClientBuilder.standard()
-                .withCredentials(awsCredentials)
-                .withRegion(account.getRegions().get(0))
-                .build();
-        ec2Handler.setEc2(ec2);
-        log.info("EC2 client instantiated");
+        ec2Handler.instantiateEc2Client(account.getAccessKeyId(), account.getSecretAccessKey(), account.getRegions().get(0));
     }
 
     private void parseJson(List<String> filePaths) {
@@ -99,10 +91,8 @@ public class EBSVolumeTagger implements ResourceTagger {
     private void tag(String ownerTag) {
         log.info("Tagging volumes");
         for (Event event : events) {
-            ec2Handler.tagResource(event.getId(), new Tag(ownerTag, event.getOwner()));
-            log.info("Tagged: " + event.getId()
-                    + " with key: " + ownerTag
-                    + " value: " + event.getOwner());
+            ec2Handler.tagResource(event.getId(), ownerTag, event.getOwner());
+            log.info("Tagged: " + event.getId() + " with key: " + ownerTag + " value: " + event.getOwner());
         }
         this.events = new ArrayList<>();
         log.info("Tagging volumes complete");

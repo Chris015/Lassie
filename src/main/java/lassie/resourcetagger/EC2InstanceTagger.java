@@ -40,15 +40,7 @@ public class EC2InstanceTagger implements ResourceTagger {
     }
 
     private void instantiateEC2Client(Account account) {
-        log.info("Instantiating EC2 client");
-        BasicAWSCredentials basicCredentials = new BasicAWSCredentials(account.getAccessKeyId(), account.getSecretAccessKey());
-        AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(basicCredentials);
-        AmazonEC2 ec2 = AmazonEC2ClientBuilder.standard()
-                .withCredentials(awsCredentials)
-                .withRegion(account.getRegions().get(0))
-                .build();
-        ec2Handler.setEc2(ec2);
-        log.info("EC2 client instantiated");
+        ec2Handler.instantiateEc2Client(account.getAccessKeyId(), account.getSecretAccessKey(), account.getRegions().get(0));
     }
 
     private void parseJson(List<String> filePaths) {
@@ -99,15 +91,11 @@ public class EC2InstanceTagger implements ResourceTagger {
         log.info("Done filtering tagged EC2 instances");
     }
 
-
     private void tag(String ownerTag) {
         log.info("Tagging EC2 instances");
         for (Event event : events) {
-            ec2Handler.tagResource(event.getId(), new Tag(ownerTag, event.getOwner()));
-
-            log.info("Tagged: " + event.getId() +
-                    " with key: " + ownerTag +
-                    " value: " + event.getOwner());
+            ec2Handler.tagResource(event.getId(), ownerTag, event.getOwner());
+            log.info("Tagged: " + event.getId() + " with key: " + ownerTag + " value: " + event.getOwner());
         }
         this.events = new ArrayList<>();
         log.info("Done tagging EC2 instances");

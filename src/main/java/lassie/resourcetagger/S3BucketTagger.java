@@ -1,11 +1,5 @@
 package lassie.resourcetagger;
 
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.AmazonS3ClientBuilder;
-import com.amazonaws.services.s3.model.Tag;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
@@ -42,14 +36,7 @@ public class S3BucketTagger implements ResourceTagger {
     }
 
     private void instantiateS3Client(Account account) {
-        log.info("Instantiating S3 client");
-        BasicAWSCredentials awsCredentials = new BasicAWSCredentials(account.getAccessKeyId(), account.getSecretAccessKey());
-        AmazonS3 s3 = AmazonS3ClientBuilder.standard()
-                .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
-                .withRegion(Regions.fromName(account.getRegions().get(0)))
-                .build();
-        s3Handler.setS3(s3);
-        log.info("S3 client instantiated");
+        s3Handler.instantiateS3Client(account.getAccessKeyId(), account.getSecretAccessKey(), account.getRegions().get(0));
     }
 
     private void parseJson(List<String> filePaths) {
@@ -97,15 +84,9 @@ public class S3BucketTagger implements ResourceTagger {
 
     private void tag(String ownerTag) {
         log.info("Tagging Buckets");
-
         for (Event event : events) {
-
-            s3Handler.tagBucket(event.getId(), new Tag(ownerTag, event.getOwner()));
-
-            log.info("Tagged: " + event.getId()
-                    + " with key: " + ownerTag
-                    + " value: " + event.getOwner());
-
+            s3Handler.tagBucket(event.getId(), ownerTag, event.getOwner());
+            log.info("Tagged: " + event.getId() + " with key: " + ownerTag + " value: " + event.getOwner());
         }
         this.events = new ArrayList<>();
         log.info("Done tagging Buckets");

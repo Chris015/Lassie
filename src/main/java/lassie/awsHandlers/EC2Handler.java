@@ -1,6 +1,9 @@
 package lassie.awsHandlers;
 
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.ec2.AmazonEC2;
+import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
 import com.amazonaws.services.ec2.model.*;
 import org.apache.log4j.Logger;
 
@@ -8,17 +11,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EC2Handler {
-    private static Logger log = Logger.getLogger(EC2Handler.class);
+    private final static Logger log = Logger.getLogger(EC2Handler.class);
     private AmazonEC2 ec2;
 
-    public void setEc2(AmazonEC2 ec2) {
-        this.ec2 = ec2;
-    }
-
-    public void tagResource(String id, Tag tag) {
+    public void tagResource(String id, String key, String value) {
         CreateTagsRequest tagsRequest = new CreateTagsRequest()
                 .withResources(id)
-                .withTags(tag);
+                .withTags(new Tag(key, value));
         ec2.createTags(tagsRequest);
     }
 
@@ -102,5 +101,15 @@ public class EC2Handler {
         return volume.getTags().stream().anyMatch(t -> t.getKey().equals(tag));
     }
 
+    public void instantiateEc2Client(String accessKeyId, String secretAccessKey, String region) {
+        log.info("Instantiating EC2 client");
+        BasicAWSCredentials basicCredentials = new BasicAWSCredentials(accessKeyId, secretAccessKey);
+        AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(basicCredentials);
+        this.ec2 = AmazonEC2ClientBuilder.standard()
+                .withCredentials(awsCredentials)
+                .withRegion(region)
+                .build();
+        log.info("EC2 client instantiated");
+    }
 }
 
