@@ -10,6 +10,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
+import lassie.awshandlers.EC2Handler;
 import lassie.model.Log;
 import lassie.config.Account;
 import lassie.model.Event;
@@ -24,6 +25,11 @@ public class SecurityGroupTagger implements ResourceTagger {
     private final static Logger log = Logger.getLogger(SecurityGroupTagger.class);
     private AmazonEC2 ec2;
     private List<Event> events = new ArrayList<>();
+    EC2Handler ec2Handler;
+
+    public SecurityGroupTagger(EC2Handler ec2Handler) {
+        this.ec2Handler = ec2Handler;
+    }
 
     @Override
     public void tagResources(List<Log> logs) {
@@ -36,15 +42,7 @@ public class SecurityGroupTagger implements ResourceTagger {
     }
 
     private void instantiateEc2Client(Account account) {
-        log.info("Instantiating EC2 client");
-        BasicAWSCredentials awsCreds = new BasicAWSCredentials(account.getAccessKeyId(),
-                account.getSecretAccessKey());
-        AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(awsCreds);
-        this.ec2 = AmazonEC2ClientBuilder.standard()
-                .withCredentials(awsCredentials)
-                .withRegion(account.getRegions().get(0))
-                .build();
-        log.info("EC2 client instantiated");
+        ec2Handler.instantiateEC2Client(account.getAccessKeyId(), account.getSecretAccessKey(), account.getRegions().get(0));
     }
 
     private void parseJson(List<String> filePaths) {
@@ -83,49 +81,21 @@ public class SecurityGroupTagger implements ResourceTagger {
     private void filterTaggedResources(String ownerTag) {
         log.info("Filtering tagged Security groups");
         List<Event> untaggedEvents = new ArrayList<>();
-        List<SecurityGroup> securityGroupsWithoutTag = describeSecurityGroup(ownerTag);
-        for (SecurityGroup securityGroup : securityGroupsWithoutTag) {
-            for (Event event : events) {
-                String groupId = securityGroup.getGroupId();
-                String eventId = event.getId();
-                if (groupId.equals(eventId)) {
-                    untaggedEvents.add(event);
-                }
+
+        for (Event event : events) {
+            if(!ec2Handler.securityGroupHasTag(event.getId(), ownerTag)) {
+                untaggedEvents.add(event);
             }
         }
         log.info("Done filtering tagged Security groups");
         this.events = untaggedEvents;
     }
 
-    private List<SecurityGroup> describeSecurityGroup(String ownerTag) {
-        log.info("Describing Security groups");
-        List<SecurityGroup> securityGroups = new ArrayList<>();
-        DescribeSecurityGroupsRequest request = new DescribeSecurityGroupsRequest();
-        DescribeSecurityGroupsResult response = ec2.describeSecurityGroups(request);
-        for (SecurityGroup securityGroup : response.getSecurityGroups()) {
-            if (!hasTag(securityGroup, ownerTag)) {
-                securityGroups.add(securityGroup);
-            }
-        }
-        log.info("Found " + securityGroups.size() + " Security groups without tagResource");
-        return securityGroups;
-    }
-
-    private boolean hasTag(SecurityGroup securityGroup, String tag) {
-        log.trace(tag + " found: " +  securityGroup.getTags().stream().anyMatch(t -> t.getKey().equals(tag)));
-        return securityGroup.getTags().stream().anyMatch(t -> t.getKey().equals(tag));
-    }
-
     private void tag(String ownerTag) {
         log.info("Tagging Security groups");
         for (Event event : events) {
-            CreateTagsRequest tagsRequest = new CreateTagsRequest()
-                    .withResources(event.getId())
-                    .withTags(new Tag(ownerTag, event.getOwner()));
-            ec2.createTags(tagsRequest);
-            log.info("Tagged: " + event.getId() +
-                    " with key: " + ownerTag +
-                    " value: " + event.getOwner());
+            ec2Handler.tagResource(event.getId(), ownerTag, event.getOwner());
+            log.info("Tagged: " + event.getId() + " with key: " + ownerTag + " value: " + event.getOwner());
         }
         this.events = new ArrayList<>();
         log.info("Done tagging Security groups");

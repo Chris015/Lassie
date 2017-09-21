@@ -11,11 +11,10 @@ public class ResourceTaggerFactory {
     private RDSHandler rdsHandler = new RDSHandler();
     private ELBHandler elbHandler = new ELBHandler();
 
-
     public ResourceTagger getResourceTagger(String resourceType) throws UnsupportedResourceTypeException {
         switch (resourceType.toUpperCase()) {
             case "SECURITYGROUP":
-                return new SecurityGroupTagger();
+                return new SecurityGroupTagger(ec2Handler);
             case "S3BUCKET":
                 return new S3BucketTagger(s3Handler);
             case "EBSVOLUME":

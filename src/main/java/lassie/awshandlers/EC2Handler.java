@@ -37,6 +37,32 @@ public class EC2Handler {
         return untaggedInstances.stream().noneMatch(instance -> instance.getInstanceId().equals(id));
     }
 
+    public boolean volumeHasTag(String id, String tag) {
+        List<Volume> untaggedVolumes = getVolumesWithoutTags(tag);
+        return untaggedVolumes.stream().noneMatch(volume -> volume.getVolumeId().equals(id));
+    }
+
+    public boolean securityGroupHasTag(String id, String tag) {
+        List<SecurityGroup> untaggedSecurityGroups = getSecurityGroupsWithoutTag(tag);
+        return untaggedSecurityGroups.stream().noneMatch(securityGroup -> securityGroup.getGroupId().equals(id));
+    }
+
+
+
+    private List<SecurityGroup> getSecurityGroupsWithoutTag(String tag) {
+        log.info("Describing Security groups");
+        List<SecurityGroup> securityGroups = new ArrayList<>();
+        DescribeSecurityGroupsRequest request = new DescribeSecurityGroupsRequest();
+        DescribeSecurityGroupsResult response = ec2.describeSecurityGroups(request);
+        for (SecurityGroup securityGroup : response.getSecurityGroups()) {
+            if (securityGroup.getTags().stream().noneMatch(t -> t.getKey().equals(tag))) {
+                securityGroups.add(securityGroup);
+            }
+        }
+        log.info("Found " + securityGroups.size() + " Security groups without tagResource");
+        return securityGroups;
+    }
+
     private List<Instance> getInstancesWithoutTag(String tag) {
         List<Instance> instances = getInstances();
         return filterOutInstancesWithoutTag(instances, tag);
@@ -79,11 +105,6 @@ public class EC2Handler {
         return untaggedInstances;
     }
 
-    public boolean volumeHasTag(String id, String tag) {
-        List<Volume> volumesWithoutTags = getVolumesWithoutTags(tag);
-        return volumesWithoutTags.stream().noneMatch(volume -> volume.getVolumeId().equals(id));
-    }
-
     private List<Volume> getVolumesWithoutTags(String tag) {
         log.info("Describing volumes");
         List<Volume> volumesWithoutTags = new ArrayList<>();
@@ -92,7 +113,7 @@ public class EC2Handler {
             DescribeVolumesRequest request = new DescribeVolumesRequest();
             DescribeVolumesResult result = ec2.describeVolumes(request);
             for (Volume volume : result.getVolumes()) {
-                if (!hasTag(volume, tag)) {
+                if (volume.getTags().stream().noneMatch(t -> t.getKey().equals(tag))) {
                     volumesWithoutTags.add(volume);
                 }
             }
@@ -103,11 +124,6 @@ public class EC2Handler {
         }
         log.info("Found " + volumesWithoutTags.size() + " EBS volumes without " + tag);
         return volumesWithoutTags;
-    }
-
-    private boolean hasTag(Volume volume, String tag) {
-        log.trace(tag + " found: " + volume.getTags().stream().anyMatch(t -> t.getKey().equals(tag)));
-        return volume.getTags().stream().anyMatch(t -> t.getKey().equals(tag));
     }
 }
 
