@@ -2,7 +2,6 @@ package lassie.resourcetagger;
 
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.redshift.AmazonRedshift;
 import com.amazonaws.services.redshift.AmazonRedshiftClientBuilder;
 import com.amazonaws.services.redshift.model.*;
 import com.google.gson.Gson;
@@ -10,6 +9,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
+import lassie.awsHandlers.RedshiftHandler;
 import lassie.model.Log;
 import lassie.config.Account;
 import lassie.model.Event;
@@ -22,8 +22,12 @@ import java.util.List;
 
 public class RedshiftClusterTagger implements ResourceTagger {
     private final Logger log = Logger.getLogger(RedshiftClusterTagger.class);
-    private AmazonRedshift redshift;
+    private RedshiftHandler redshiftHandler;
     private List<Event> events = new ArrayList<>();
+
+    public RedshiftClusterTagger(RedshiftHandler redshiftHandler) {
+        this.redshiftHandler = redshiftHandler;
+    }
 
     @Override
     public void tagResources(List<Log> logs) {
@@ -36,15 +40,7 @@ public class RedshiftClusterTagger implements ResourceTagger {
     }
 
     private void instantiateRedshiftClient(Account account) {
-        log.info("Instantiating RedShift client");
-        BasicAWSCredentials awsCreds = new BasicAWSCredentials(account.getAccessKeyId(),
-                account.getSecretAccessKey());
-        AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(awsCreds);
-        redshift = AmazonRedshiftClientBuilder.standard()
-                .withCredentials(awsCredentials)
-                .withRegion(account.getRegions().get(0))
-                .build();
-        log.info("RedShift client instantiated");
+        redshiftHandler.instantiateRedshiftClient(account.getAccessKeyId(), account.getSecretAccessKey(), account.getRegions().get(0));
     }
 
     private void parseJson(Account account, List<String> filePaths) {
@@ -84,29 +80,10 @@ public class RedshiftClusterTagger implements ResourceTagger {
         log.info("Done parsing json");
     }
 
-    private List<Cluster> describeCluster(String ownerTag) {
-        log.info("Describing RedShift clusters");
-        List<Cluster> clusters = new ArrayList<>();
-        DescribeClustersRequest request = new DescribeClustersRequest();
-        DescribeClustersResult response = redshift.describeClusters(request);
-        for (Cluster cluster : response.getClusters()) {
-            if (!hasTag(cluster, ownerTag)) {
-                clusters.add(cluster);
-            }
-        }
-        log.info("Found " + clusters.size() + " RedShift clusters without + " + ownerTag);
-        return clusters;
-    }
-
-    private boolean hasTag(Cluster cluster, String tag) {
-        log.trace(tag + " found: " + cluster.getTags().stream().anyMatch(t -> t.getKey().equals(tag)));
-        return cluster.getTags().stream().anyMatch(t -> t.getKey().equals(tag));
-    }
-
     private void filterTaggedResources(String ownerTag) {
         log.info("Filtering tagged RedShift clusters");
         List<Event> untaggedEvents = new ArrayList<>();
-        List<Cluster> clustersWithoutTag = describeCluster(ownerTag);
+        List<Cluster> clustersWithoutTag = redshiftHandler.describeCluster(ownerTag);
         for (Cluster cluster : clustersWithoutTag) {
             for (Event event : events) {
                 String clusterId = cluster.getClusterIdentifier();
@@ -124,16 +101,8 @@ public class RedshiftClusterTagger implements ResourceTagger {
     private void tag(String ownerTag) {
         log.info("Tagging RedShift clusters");
         for (Event event : events) {
-            Tag tag = new Tag();
-            tag.setKey(ownerTag);
-            tag.setValue(event.getOwner());
-            CreateTagsRequest tagsRequest = new CreateTagsRequest();
-            tagsRequest.withResourceName(event.getId());
-            tagsRequest.withTags(tag);
-            redshift.createTags(tagsRequest);
-            log.info("Tagged: " + event.getId() +
-                    " with key: " + ownerTag +
-                    " value: " + event.getOwner());
+            redshiftHandler.tagResource(event.getId(), ownerTag, event.getOwner());
+            log.info("Tagged: " + event.getId() + " with key: " + ownerTag + " value: " + event.getOwner());
         }
         this.events = new ArrayList<>();
         log.info("Done tagging RedShift clusters");
