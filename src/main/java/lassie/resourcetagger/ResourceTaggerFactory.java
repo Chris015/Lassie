@@ -1,9 +1,6 @@
 package lassie.resourcetagger;
 
-import lassie.awsHandlers.EC2Handler;
-import lassie.awsHandlers.RDSHandler;
-import lassie.awsHandlers.RedshiftHandler;
-import lassie.awsHandlers.S3Handler;
+import lassie.awsHandlers.*;
 
 public class ResourceTaggerFactory {
 
@@ -11,6 +8,7 @@ public class ResourceTaggerFactory {
     private EC2Handler ec2Handler = new EC2Handler();
     private RedshiftHandler redshiftHandler = new RedshiftHandler();
     private RDSHandler rdsHandler = new RDSHandler();
+    private ELBHandler elbHandler = new ELBHandler();
 
     public ResourceTagger getResourceTagger(String resourceType) throws UnsupportedResourceTypeException {
         switch (resourceType.toUpperCase()) {
@@ -29,7 +27,7 @@ public class ResourceTaggerFactory {
             case "EMRCLUSTER":
                 return new EMRClusterTagger();
             case "LOADBALANCER":
-                return new LoadBalancerTagger();
+                return new LoadBalancerTagger(elbHandler);
         }
         throw new UnsupportedResourceTypeException(resourceType + " is not a supported resource type");
     }

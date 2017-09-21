@@ -10,6 +10,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
+import lassie.awsHandlers.ELBHandler;
 import lassie.model.Log;
 import lassie.config.Account;
 import lassie.model.Event;
@@ -22,8 +23,12 @@ import java.util.List;
 
 public class LoadBalancerTagger implements ResourceTagger {
     private final Logger log = Logger.getLogger(LoadBalancerTagger.class);
-    private AmazonElasticLoadBalancing elb;
     private List<Event> events = new ArrayList<>();
+    private ELBHandler elbHandler;
+
+    public LoadBalancerTagger(ELBHandler elbHandler) {
+        this.elbHandler = elbHandler;
+    }
 
     @Override
     public void tagResources(List<Log> logs) {
@@ -36,15 +41,7 @@ public class LoadBalancerTagger implements ResourceTagger {
     }
 
     private void instantiateClient(Account account) {
-        log.info("Instantiating ELB client");
-        BasicAWSCredentials awsCreds = new BasicAWSCredentials(account.getAccessKeyId(),
-                account.getSecretAccessKey());
-        AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(awsCreds);
-        this.elb = AmazonElasticLoadBalancingClientBuilder.standard()
-                .withCredentials(awsCredentials)
-                .withRegion(account.getRegions().get(0))
-                .build();
-        log.info("ELB client instantiated");
+        elbHandler.instantiateELBClient(account.getAccessKeyId(), account.getSecretAccessKey(), account.getRegions().get(0));
     }
 
     private void parseJson(List<String> filePaths) {
@@ -85,7 +82,7 @@ public class LoadBalancerTagger implements ResourceTagger {
     private void filterTaggedResources(String ownerTag) {
         log.info("Filtering tagged LoadBalancers");
         List<Event> untaggedEvents = new ArrayList<>();
-        List<LoadBalancer> loadBalancersWithoutTag = describeLoadBalancers(ownerTag);
+        List<LoadBalancer> loadBalancersWithoutTag = elbHandler.describeLoadBalancers(ownerTag);
         for (LoadBalancer loadBalancer : loadBalancersWithoutTag) {
             for (Event event : events) {
                 String arn = loadBalancer.getLoadBalancerArn();
@@ -99,40 +96,10 @@ public class LoadBalancerTagger implements ResourceTagger {
         log.info("Done filtering tagged LoadBalancers");
     }
 
-    private List<LoadBalancer> describeLoadBalancers(String ownerTag) {
-        log.info("Describing Load Balancers");
-        List<LoadBalancer> loadBalancers = new ArrayList<>();
-        DescribeLoadBalancersResult result = elb.describeLoadBalancers(new DescribeLoadBalancersRequest());
-        for (LoadBalancer loadBalancer : result.getLoadBalancers()) {
-            DescribeTagsRequest tagsRequest = new DescribeTagsRequest()
-                    .withResourceArns(loadBalancer.getLoadBalancerArn());
-            DescribeTagsResult tagsResult = elb.describeTags(tagsRequest);
-            for (TagDescription tagDescription : tagsResult.getTagDescriptions()) {
-                if (!hasTag(tagDescription, ownerTag)) {
-                    loadBalancers.add(loadBalancer);
-                }
-            }
-        }
-        log.info("Found " + loadBalancers.size() + " LoadBalancers without " + ownerTag);
-        loadBalancers.forEach(loadBalancer -> log.info(loadBalancer.getLoadBalancerName()));
-        return loadBalancers;
-    }
-
-    private boolean hasTag(TagDescription tagDescription, String tag) {
-        log.trace(tag + " found: " + tagDescription.getTags().stream().anyMatch(t -> t.getKey().equals(tag)));
-        return tagDescription.getTags().stream().anyMatch(t -> t.getKey().equals(tag));
-    }
-
-    private void tag(String ownerTag) { ;
+    private void tag(String ownerTag) {
         log.info("Tagging LoadBalancers");
         for (Event event : events) {
-            Tag tag = new Tag();
-            tag.setKey(ownerTag);
-            tag.setValue(event.getOwner());
-            AddTagsRequest tagsRequest = new AddTagsRequest()
-                    .withResourceArns(event.getId())
-                    .withTags(tag);
-            elb.addTags(tagsRequest);
+            elbHandler.tagResources(event.getId(), ownerTag, event.getOwner());
             log.info("Tagged: " + event.getId() +
                     " with key: " + ownerTag +
                     " value: " + event.getOwner());
