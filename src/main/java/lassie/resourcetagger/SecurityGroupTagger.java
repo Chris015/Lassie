@@ -1,10 +1,6 @@
 package lassie.resourcetagger;
 
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
-import com.amazonaws.services.ec2.model.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;
@@ -36,7 +32,7 @@ public class SecurityGroupTagger implements ResourceTagger {
         for (Log log : logs) {
             instantiateEc2Client(log.getAccount());
             parseJson(log.getFilePaths());
-            filterTaggedResources(log.getAccount().getOwnerTag());
+            filterEventsWithoutTag(log.getAccount().getOwnerTag());
             tag(log.getAccount().getOwnerTag());
         }
     }
@@ -78,17 +74,19 @@ public class SecurityGroupTagger implements ResourceTagger {
         log.info("Done parsing json");
     }
 
-    private void filterTaggedResources(String ownerTag) {
+    private void filterEventsWithoutTag(String ownerTag) {
         log.info("Filtering tagged Security groups");
-        List<Event> untaggedEvents = new ArrayList<>();
+        List<Event> untaggedSecurityGroups = new ArrayList<>();
+        List<String> untaggedSecurityGroupIds = ec2Handler.getIdsForSecurityGroupsWithoutTag(ownerTag);
 
         for (Event event : events) {
-            if(!ec2Handler.securityGroupHasTag(event.getId(), ownerTag)) {
-                untaggedEvents.add(event);
+            if(untaggedSecurityGroupIds.stream().anyMatch(id -> id.equals(event.getId()))){
+                untaggedSecurityGroups.add(event);
             }
         }
+
+        this.events = untaggedSecurityGroups;
         log.info("Done filtering tagged Security groups");
-        this.events = untaggedEvents;
     }
 
     private void tag(String ownerTag) {

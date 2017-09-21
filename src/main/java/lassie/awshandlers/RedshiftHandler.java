@@ -35,23 +35,18 @@ public class RedshiftHandler {
         redshift.createTags(tagsRequest);
     }
 
-    public boolean clusterHasTag(String id, String tag) {
-        List<Cluster> clustersWithoutTag = getClustersWithoutTag(tag);
-        return clustersWithoutTag.stream().noneMatch(cluster -> cluster.getClusterIdentifier().equals(id));
-    }
-
-    private List<Cluster> getClustersWithoutTag(String tag) {
+    public List<String> getIdsForUntaggedRedshiftClustersWithoutTag(String tag) {
         log.info("Describing RedShift clusters");
-        List<Cluster> clusters = new ArrayList<>();
+        List<String> untaggedCluserIds = new ArrayList<>();
         DescribeClustersRequest request = new DescribeClustersRequest();
         DescribeClustersResult response = redshift.describeClusters(request);
         for (Cluster cluster : response.getClusters()) {
             if (!hasTag(cluster, tag)) {
-                clusters.add(cluster);
+                untaggedCluserIds.add(cluster.getClusterIdentifier());
             }
         }
-        log.info("Found " + clusters.size() + " RedShift clusters without + " + tag);
-        return clusters;
+        log.info("Found " + untaggedCluserIds.size() + " RedShift clusters without + " + tag);
+        return untaggedCluserIds;
     }
 
     private boolean hasTag(Cluster cluster, String tag) {

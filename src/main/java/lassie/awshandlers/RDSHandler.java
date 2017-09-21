@@ -35,25 +35,20 @@ public class RDSHandler {
         rds.addTagsToResource(tagsRequest);
     }
 
-    public boolean dbHasTag(String id, String tag) {
-        List<DBInstance> dbInstancesWithoutTag = describeRDSInstances(tag);
-        return dbInstancesWithoutTag.stream().noneMatch(dbInstance -> dbInstance.getDBInstanceArn().equals(id));
-    }
-
-    private List<DBInstance> describeRDSInstances(String tag) {
+    public List<String> getIdsForDBInstancesWithoutTag(String tag) {
         log.info("Describing DB instances");
-        List<DBInstance> dbInstancesWithoutOwner = new ArrayList<>();
+        List<String> untaggedDbInstanceIds = new ArrayList<>();
         DescribeDBInstancesResult describeDBInstancesResult = rds.describeDBInstances(new DescribeDBInstancesRequest());
         for (DBInstance dbInstance : describeDBInstancesResult.getDBInstances()) {
             ListTagsForResourceRequest request = new ListTagsForResourceRequest()
                     .withResourceName(dbInstance.getDBInstanceArn());
             ListTagsForResourceResult response = rds.listTagsForResource(request);
             if (!hasTag(response, tag)) {
-                dbInstancesWithoutOwner.add(dbInstance);
+                untaggedDbInstanceIds.add(dbInstance.getDBInstanceArn());
             }
         }
-        log.info("Found " + dbInstancesWithoutOwner.size() + " DB instances without " + tag);
-        return dbInstancesWithoutOwner;
+        log.info("Found " + untaggedDbInstanceIds.size() + " DB instances without " + tag);
+        return untaggedDbInstanceIds;
     }
 
     private boolean hasTag(ListTagsForResourceResult response, String tag) {

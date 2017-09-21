@@ -31,7 +31,7 @@ public class RDSDBInstanceTagger implements ResourceTagger {
         for (Log log : logs) {
             instantiateRDSClient(log.getAccount());
             parseJson(log.getFilePaths());
-            filterTaggedResources(log.getAccount().getOwnerTag());
+            filterEventsWithoutTag(log.getAccount().getOwnerTag());
             tag(log.getAccount().getOwnerTag());
         }
     }
@@ -73,16 +73,15 @@ public class RDSDBInstanceTagger implements ResourceTagger {
         log.info("Done parsing json");
     }
 
-    private void filterTaggedResources(String ownerTag) {
+    private void filterEventsWithoutTag(String ownerTag) {
         log.info("Filtering tagged DB instances");
         List<Event> untaggedEvents = new ArrayList<>();
-
+        List<String> untaggedDBInstanceIds = rdsHandler.getIdsForDBInstancesWithoutTag(ownerTag);
         for (Event event : events) {
-            if(!rdsHandler.dbHasTag(event.getId(), ownerTag)) {
+            if(untaggedDBInstanceIds.stream().anyMatch(id -> id.equals(event.getId()))) {
                 untaggedEvents.add(event);
             }
         }
-
         log.info("Done filtering tagged DB instances");
         this.events = untaggedEvents;
     }

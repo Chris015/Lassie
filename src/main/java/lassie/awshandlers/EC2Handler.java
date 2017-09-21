@@ -32,27 +32,10 @@ public class EC2Handler {
         ec2.createTags(tagsRequest);
     }
 
-    public boolean instanceHasTag(String id, String tag) {
-        List<Instance> untaggedInstances = getInstancesWithoutTag(tag);
-        return untaggedInstances.stream().noneMatch(instance -> instance.getInstanceId().equals(id));
-    }
-
-    public boolean volumeHasTag(String id, String tag) {
-        List<Volume> untaggedVolumes = getVolumesWithoutTags(tag);
-        return untaggedVolumes.stream().noneMatch(volume -> volume.getVolumeId().equals(id));
-    }
-
-    public boolean securityGroupHasTag(String id, String tag) {
-        List<SecurityGroup> untaggedSecurityGroups = getSecurityGroupsWithoutTag(tag);
-        return untaggedSecurityGroups.stream().noneMatch(securityGroup -> securityGroup.getGroupId().equals(id));
-    }
-
-
-
-    private List<Instance> getInstancesWithoutTag(String tag) {
+    public List<String> getIdsForInstancesWithoutTag(String tag) {
         log.info("Getting instances without tags");
 
-        List<Instance> untaggedInstances = new ArrayList<>();
+        List<String> untaggedInstanceIds = new ArrayList<>();
         List<Instance> instances = new ArrayList<>();
 
         boolean done = false;
@@ -65,7 +48,7 @@ public class EC2Handler {
 
             for (Instance instance : instances) {
                 if(instance.getTags().stream().noneMatch(t -> t.getKey().equals(tag))) {
-                    untaggedInstances.add(instance);
+                    untaggedInstanceIds.add(instance.getInstanceId());
                 }
             }
 
@@ -75,33 +58,33 @@ public class EC2Handler {
             }
         }
         log.info("Getting instances without tags complete");
-        return untaggedInstances;
+        return untaggedInstanceIds;
     }
 
-    private List<SecurityGroup> getSecurityGroupsWithoutTag(String tag) {
+    public List<String> getIdsForSecurityGroupsWithoutTag(String tag) {
         log.info("Describing Security groups");
-        List<SecurityGroup> securityGroups = new ArrayList<>();
+        List<String> untaggedSecurityGroupIds = new ArrayList<>();
         DescribeSecurityGroupsRequest request = new DescribeSecurityGroupsRequest();
         DescribeSecurityGroupsResult response = ec2.describeSecurityGroups(request);
         for (SecurityGroup securityGroup : response.getSecurityGroups()) {
             if (securityGroup.getTags().stream().noneMatch(t -> t.getKey().equals(tag))) {
-                securityGroups.add(securityGroup);
+                untaggedSecurityGroupIds.add(securityGroup.getGroupId());
             }
         }
-        log.info("Found " + securityGroups.size() + " Security groups without tagResource");
-        return securityGroups;
+        log.info("Found " + untaggedSecurityGroupIds.size() + " Security groups without " + tag);
+        return untaggedSecurityGroupIds;
     }
 
-    private List<Volume> getVolumesWithoutTags(String tag) {
+    public List<String> getIdsForVolumesWithoutTag(String tag) {
         log.info("Describing volumes");
-        List<Volume> volumesWithoutTags = new ArrayList<>();
+        List<String> untaggedVolumesIds = new ArrayList<>();
         boolean done = false;
         while (!done) {
             DescribeVolumesRequest request = new DescribeVolumesRequest();
             DescribeVolumesResult result = ec2.describeVolumes(request);
             for (Volume volume : result.getVolumes()) {
                 if (volume.getTags().stream().noneMatch(t -> t.getKey().equals(tag))) {
-                    volumesWithoutTags.add(volume);
+                    untaggedVolumesIds.add(volume.getVolumeId());
                 }
             }
             request.setNextToken(result.getNextToken());
@@ -109,8 +92,8 @@ public class EC2Handler {
                 done = true;
             }
         }
-        log.info("Found " + volumesWithoutTags.size() + " EBS volumes without " + tag);
-        return volumesWithoutTags;
+        log.info("Found " + untaggedVolumesIds.size() + " EBS volumes without " + tag);
+        return untaggedVolumesIds;
     }
 }
 

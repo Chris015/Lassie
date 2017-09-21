@@ -30,7 +30,7 @@ public class LoadBalancerTagger implements ResourceTagger {
         for (Log log : logs) {
             instantiateClient(log.getAccount());
             parseJson(log.getFilePaths());
-            filterTaggedResources(log.getAccount().getOwnerTag());
+            filterEventsWithoutTag(log.getAccount().getOwnerTag());
             tag(log.getAccount().getOwnerTag());
         }
     }
@@ -74,16 +74,16 @@ public class LoadBalancerTagger implements ResourceTagger {
         log.info("Done parsing json");
     }
 
-    private void filterTaggedResources(String ownerTag) {
+    private void filterEventsWithoutTag(String ownerTag) {
         log.info("Filtering tagged LoadBalancers");
-        List<Event> untaggedEvents = new ArrayList<>();
-
+        List<Event> untaggedLoadBalancers = new ArrayList<>();
+        List<String> untaggedLoadBalancerIds = elbHandler.getIdsForLoadBalancersWithoutTag(ownerTag);
         for (Event event : events) {
-            if(!elbHandler.loadBalancerHasTag(event.getId(), ownerTag)) {
-                untaggedEvents.add(event);
+            if(untaggedLoadBalancerIds.stream().anyMatch(id -> id.equals(event.getId()))) {
+                untaggedLoadBalancers.add(event);
             }
         }
-        this.events = untaggedEvents;
+        this.events = untaggedLoadBalancers;
         log.info("Done filtering tagged LoadBalancers");
     }
 

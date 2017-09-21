@@ -41,15 +41,6 @@ public class S3Handler {
         s3.setBucketTaggingConfiguration(bucketName, new BucketTaggingConfiguration(newTagSets));
     }
 
-    private List<TagSet> fetchExistingTagSets(String bucketName) {
-        List<TagSet> existingTagSets = new ArrayList<>();
-        BucketTaggingConfiguration configuration = s3.getBucketTaggingConfiguration(bucketName);
-        if (configuration != null) {
-            existingTagSets = configuration.getAllTagSets();
-        }
-        return existingTagSets;
-    }
-
     public boolean bucketHasTag(String bucketName, String tag) {
         if (s3.getBucketTaggingConfiguration(bucketName) == null) {
             return false;
@@ -63,5 +54,14 @@ public class S3Handler {
 
         }
         return false;
+    }
+
+    private List<TagSet> fetchExistingTagSets(String bucketName) {
+        List<TagSet> existingTagSets = new ArrayList<>();
+        BucketTaggingConfiguration configuration = s3.getBucketTaggingConfiguration(bucketName);
+        if (configuration != null) {
+            existingTagSets = configuration.getAllTagSets();
+        }
+        return existingTagSets;
     }
 }

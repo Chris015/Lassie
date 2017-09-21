@@ -26,7 +26,7 @@ public class EBSVolumeTagger implements ResourceTagger {
         for (Log log : logs) {
             instantiateEc2Client(log.getAccount());
             parseJson(log.getFilePaths());
-            filterTaggedResources(log.getAccount().getOwnerTag());
+            filterEventsWithoutTag(log.getAccount().getOwnerTag());
             tag(log.getAccount().getOwnerTag());
         }
     }
@@ -71,11 +71,12 @@ public class EBSVolumeTagger implements ResourceTagger {
         log.info("Done parsing json");
     }
 
-    private void filterTaggedResources(String ownerTag) {
+    private void filterEventsWithoutTag(String ownerTag) {
         log.info("Filtering tagged EBS volume");
         List<Event> untaggedVolumes = new ArrayList<>();
+        List<String> untaggedVolumeIds = ec2Handler.getIdsForVolumesWithoutTag(ownerTag);
         for (Event event : events) {
-            if (!ec2Handler.volumeHasTag(event.getId(), ownerTag)) {
+            if(untaggedVolumeIds.stream().anyMatch(id -> id.equals(event.getId()))){
                 untaggedVolumes.add(event);
             }
         }

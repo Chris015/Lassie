@@ -36,19 +36,19 @@ public class EMRHandler {
 
     public List<String> getIdsForClustersWithoutTag(String tag) {
         log.info("Describing EMR clusters");
-        List<String> untaggedClusters = new ArrayList<>();
+        List<String> untaggedClusterIds = new ArrayList<>();
         ListClustersResult listClustersResult = emr.listClusters();
         for (ClusterSummary clusterSummary : listClustersResult.getClusters()) {
             DescribeClusterRequest request = new DescribeClusterRequest().withClusterId(clusterSummary.getId());
             DescribeClusterResult result = emr.describeCluster(request);
             if (isClusterActive(result.getCluster())) {
                 if (!hasTag(result.getCluster(), tag)) {
-                    untaggedClusters.add(result.getCluster().getId());
+                    untaggedClusterIds.add(result.getCluster().getId());
                 }
             }
         }
-        log.info("Found " + untaggedClusters.size() + " clusters without " + tag);
-        return untaggedClusters;
+        log.info("Found " + untaggedClusterIds.size() + " clusters without " + tag);
+        return untaggedClusterIds;
     }
 
     private boolean isClusterActive(Cluster cluster) {

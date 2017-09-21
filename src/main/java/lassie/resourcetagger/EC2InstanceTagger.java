@@ -29,7 +29,7 @@ public class EC2InstanceTagger implements ResourceTagger {
         for (Log log : logs) {
             instantiateEC2Client(log.getAccount());
             parseJson(log.getFilePaths());
-            filterTaggedResources(log.getAccount().getOwnerTag());
+            filterEventsWithoutTag(log.getAccount().getOwnerTag());
             tag(log.getAccount().getOwnerTag());
         }
     }
@@ -72,17 +72,16 @@ public class EC2InstanceTagger implements ResourceTagger {
         log.info("Done parsing json");
     }
 
-
-    private void filterTaggedResources(String ownerTag) {
+    private void filterEventsWithoutTag(String ownerTag) {
         log.info("Filtering tagged EC2 instances");
-        List<Event> untaggedEvents = new ArrayList<>();
-
+        List<Event> untaggedInstances = new ArrayList<>();
+        List<String> untaggedInstanceIds = ec2Handler.getIdsForInstancesWithoutTag(ownerTag);
         for (Event event : events) {
-            if (!ec2Handler.instanceHasTag(event.getId(), ownerTag)) {
-                untaggedEvents.add(event);
+            if(untaggedInstanceIds.stream().anyMatch(id -> id.equals(event.getId()))){
+                untaggedInstances.add(event);
             }
         }
-        this.events = untaggedEvents;
+        this.events = untaggedInstances;
         log.info("Done filtering tagged EC2 instances");
     }
 

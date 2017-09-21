@@ -30,7 +30,7 @@ public class S3BucketTagger implements ResourceTagger {
         for (Log log : logs) {
             instantiateS3Client(log.getAccount());
             parseJson(log.getFilePaths());
-            filterTaggedResources(log.getAccount().getOwnerTag());
+            filterEventsWithoutTag(log.getAccount().getOwnerTag());
             tag(log.getAccount().getOwnerTag());
         }
     }
@@ -70,7 +70,7 @@ public class S3BucketTagger implements ResourceTagger {
         log.info("Done parsing json");
     }
 
-    private void filterTaggedResources(String ownerTag) {
+    private void filterEventsWithoutTag(String ownerTag) {
         log.info("Filtering tagged Buckets");
         List<Event> untaggedBuckets = new ArrayList<>();
         for (Event event : events) {

@@ -35,14 +35,9 @@ public class ELBHandler {
         elb.addTags(tagsRequest);
     }
 
-    public boolean loadBalancerHasTag(String id, String tag) {
-        List<LoadBalancer> loadBalancersWithoutTag = describeLoadBalancers(tag);
-        return loadBalancersWithoutTag.stream().noneMatch(loadBalancer -> loadBalancer.getLoadBalancerArn().equals(id));
-    }
-
-    private List<LoadBalancer> describeLoadBalancers(String tag) {
+    public List<String> getIdsForLoadBalancersWithoutTag(String tag) {
         log.info("Describing Load Balancers");
-        List<LoadBalancer> loadBalancers = new ArrayList<>();
+        List<String> untaggedLoadBalancerIds = new ArrayList<>();
         DescribeLoadBalancersResult result = elb.describeLoadBalancers(new DescribeLoadBalancersRequest());
         for (LoadBalancer loadBalancer : result.getLoadBalancers()) {
             DescribeTagsRequest tagsRequest = new DescribeTagsRequest()
@@ -50,13 +45,13 @@ public class ELBHandler {
             DescribeTagsResult tagsResult = elb.describeTags(tagsRequest);
             for (TagDescription tagDescription : tagsResult.getTagDescriptions()) {
                 if (!hasTag(tagDescription, tag)) {
-                    loadBalancers.add(loadBalancer);
+                    untaggedLoadBalancerIds.add(loadBalancer.getLoadBalancerArn());
                 }
             }
         }
-        log.info("Found " + loadBalancers.size() + " LoadBalancers without " + tag);
-        loadBalancers.forEach(loadBalancer -> log.info(loadBalancer.getLoadBalancerName()));
-        return loadBalancers;
+        log.info("Found " + untaggedLoadBalancerIds.size() + " LoadBalancers without " + tag);
+        untaggedLoadBalancerIds.forEach(log::info);
+        return untaggedLoadBalancerIds;
     }
 
     private boolean hasTag(TagDescription tagDescription, String tag) {
