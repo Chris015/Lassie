@@ -1,10 +1,5 @@
 package lassie.resourcetagger;
 
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.ec2.AmazonEC2;
-import com.amazonaws.services.ec2.AmazonEC2ClientBuilder;
-import com.amazonaws.services.ec2.model.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonDeserializer;

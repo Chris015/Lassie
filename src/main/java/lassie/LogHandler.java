@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.zip.GZIPInputStream;
 
 public class LogHandler {
-    private final Logger log = Logger.getLogger(LogHandler.class);
+    private final static Logger log = Logger.getLogger(LogHandler.class);
     private AmazonS3 s3;
     private Path tmpFolderZipped;
     private Path tmpFolderUnzipped;

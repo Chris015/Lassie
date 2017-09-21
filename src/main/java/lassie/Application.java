@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Application {
-    private static Logger log = Logger.getLogger(Application.class);
+    private final static Logger log = Logger.getLogger(Application.class);
     private ConfigReader configReader;
     private LogHandler logHandler;
     private ResourceTaggerFactory resourceTaggerFactory;

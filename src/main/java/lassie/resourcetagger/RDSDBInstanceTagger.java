@@ -1,9 +1,7 @@
 package lassie.resourcetagger;
 
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.rds.AmazonRDS;
-import com.amazonaws.services.rds.AmazonRDSClientBuilder;
+
 import com.amazonaws.services.rds.model.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -99,7 +97,7 @@ public class RDSDBInstanceTagger implements ResourceTagger {
     private void tag(String ownerTag) {
         log.info("Tagging DB instances");
         for (Event event : events) {
-        rdsHandler.tagResource(event.getId(), ownerTag, event.getOwner());
+            rdsHandler.tagResource(event.getId(), ownerTag, event.getOwner());
             log.info("Tagged: " + event.getId() + " with key: " + ownerTag + " value: " + event.getOwner());
         }
         this.events = new ArrayList<>();

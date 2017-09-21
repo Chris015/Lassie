@@ -1,8 +1,5 @@
 package lassie.resourcetagger;
 
-import com.amazonaws.auth.AWSStaticCredentialsProvider;
-import com.amazonaws.auth.BasicAWSCredentials;
-import com.amazonaws.services.redshift.AmazonRedshiftClientBuilder;
 import com.amazonaws.services.redshift.model.*;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

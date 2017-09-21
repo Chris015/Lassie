@@ -123,7 +123,8 @@ public class LoadBalancerTagger implements ResourceTagger {
         return tagDescription.getTags().stream().anyMatch(t -> t.getKey().equals(tag));
     }
 
-    private void tag(String ownerTag) { ;
+    private void tag(String ownerTag) {
+        ;
         log.info("Tagging LoadBalancers");
         for (Event event : events) {
             Tag tag = new Tag();
