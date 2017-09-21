@@ -15,7 +15,7 @@ public class ResourceTaggerFactory {
             case "S3BUCKET":
                 return new S3BucketTagger(s3Handler);
             case "EBSVOLUME":
-                return new EBSVolumeTagger();
+                return new EBSVolumeTagger(ec2Handler);
             case "RDSDBINSTANCE":
                 return new RDSDBInstanceTagger();
             case "REDSHIFTCLUSTER":
