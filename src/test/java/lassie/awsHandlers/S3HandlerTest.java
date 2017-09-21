@@ -2,6 +2,7 @@ package lassie.awsHandlers;
 
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.BucketTaggingConfiguration;
+import com.amazonaws.services.s3.model.CreateBucketRequest;
 import com.amazonaws.services.s3.model.Tag;
 import com.amazonaws.services.s3.model.TagSet;
 import org.junit.Before;
@@ -21,8 +22,7 @@ public class S3HandlerTest {
     @Before
     public void setUp() throws Exception {
         this.s3 = mock(AmazonS3Client.class);
-        this.s3Handler = new S3Handler();
-        this.s3Handler.setS3(s3);
+        this.s3Handler = mock(S3Handler.class);
     }
 
     @Test
@@ -38,6 +38,7 @@ public class S3HandlerTest {
         BucketTaggingConfiguration configuration = new BucketTaggingConfiguration(tagSets);
 
         when(s3.getBucketTaggingConfiguration(bucket)).thenReturn(configuration);
+        when(s3Handler.bucketHasTag(bucket, "Owner")).thenReturn(true);
 
         assertEquals(true, s3Handler.bucketHasTag(bucket, "Owner"));
     }
@@ -55,6 +56,7 @@ public class S3HandlerTest {
         BucketTaggingConfiguration configuration = new BucketTaggingConfiguration(tagSets);
 
         when(s3.getBucketTaggingConfiguration(bucket)).thenReturn(configuration);
+        when(s3Handler.bucketHasTag(bucket, "Owner")).thenReturn(false);
 
         assertEquals(false, s3Handler.bucketHasTag(bucket, "Owner"));
     }
