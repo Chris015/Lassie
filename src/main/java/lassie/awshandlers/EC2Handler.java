@@ -49,6 +49,35 @@ public class EC2Handler {
 
 
 
+    private List<Instance> getInstancesWithoutTag(String tag) {
+        log.info("Getting instances without tags");
+
+        List<Instance> untaggedInstances = new ArrayList<>();
+        List<Instance> instances = new ArrayList<>();
+
+        boolean done = false;
+        while (!done) {
+            DescribeInstancesRequest request = new DescribeInstancesRequest();
+            DescribeInstancesResult response = ec2.describeInstances(request);
+
+            List<Reservation> reservations = response.getReservations();
+            reservations.forEach(reservation -> instances.addAll(reservation.getInstances()));
+
+            for (Instance instance : instances) {
+                if(instance.getTags().stream().noneMatch(t -> t.getKey().equals(tag))) {
+                    untaggedInstances.add(instance);
+                }
+            }
+
+            request.setNextToken(response.getNextToken());
+            if (response.getNextToken() == null) {
+                done = true;
+            }
+        }
+        log.info("Getting instances without tags complete");
+        return untaggedInstances;
+    }
+
     private List<SecurityGroup> getSecurityGroupsWithoutTag(String tag) {
         log.info("Describing Security groups");
         List<SecurityGroup> securityGroups = new ArrayList<>();
@@ -61,48 +90,6 @@ public class EC2Handler {
         }
         log.info("Found " + securityGroups.size() + " Security groups without tagResource");
         return securityGroups;
-    }
-
-    private List<Instance> getInstancesWithoutTag(String tag) {
-        List<Instance> instances = getInstances();
-        return filterOutInstancesWithoutTag(instances, tag);
-    }
-
-    private List<Instance> getInstances() {
-        log.info("Describing instances");
-        List<Instance> instances = new ArrayList<>();
-        List<Instance> runningInstances = new ArrayList<>();
-        boolean done = false;
-        while (!done) {
-            DescribeInstancesRequest request = new DescribeInstancesRequest();
-            DescribeInstancesResult response = ec2.describeInstances(request);
-
-            List<Reservation> reservations = response.getReservations();
-            reservations.forEach(reservation -> instances.addAll(reservation.getInstances()));
-
-            for (Instance instance : instances) {
-                if (!instance.getState().getName().equals(InstanceStateName.Terminated.name())) {
-                    runningInstances.add(instance);
-                }
-            }
-
-            request.setNextToken(response.getNextToken());
-            if (response.getNextToken() == null) {
-                done = true;
-            }
-        }
-        log.info("Describe instances complete");
-        return runningInstances;
-    }
-
-    private List<Instance> filterOutInstancesWithoutTag(List<Instance> instances, String tag) {
-        List<Instance> untaggedInstances = new ArrayList<>();
-        for (Instance instance : instances) {
-            if (instance.getTags().stream().noneMatch(t -> t.getKey().equals(tag))) {
-                untaggedInstances.add(instance);
-            }
-        }
-        return untaggedInstances;
     }
 
     private List<Volume> getVolumesWithoutTags(String tag) {

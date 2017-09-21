@@ -6,6 +6,7 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduce;
 import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClientBuilder;
 import com.amazonaws.services.elasticmapreduce.model.*;
+import lassie.model.Event;
 import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
@@ -33,26 +34,21 @@ public class EMRHandler {
         emr.addTags(tagsRequest);
     }
 
-    public boolean clusterHasTag(String id, String tag) {
-        List<Cluster> clustersWithoutTags = describeClusters(tag);
-        return clustersWithoutTags.stream().noneMatch(cluster -> cluster.getId().equals(id));
-    }
-
-    private List<Cluster> describeClusters(String tag) {
+    public List<String> getIdsForClustersWithoutTag(String tag) {
         log.info("Describing EMR clusters");
-        List<Cluster> clusters = new ArrayList<>();
+        List<String> untaggedClusters = new ArrayList<>();
         ListClustersResult listClustersResult = emr.listClusters();
         for (ClusterSummary clusterSummary : listClustersResult.getClusters()) {
             DescribeClusterRequest request = new DescribeClusterRequest().withClusterId(clusterSummary.getId());
             DescribeClusterResult result = emr.describeCluster(request);
             if (isClusterActive(result.getCluster())) {
                 if (!hasTag(result.getCluster(), tag)) {
-                    clusters.add(result.getCluster());
+                    untaggedClusters.add(result.getCluster().getId());
                 }
             }
         }
-        log.info("Found " + clusters.size() + " clusters without " + tag);
-        return clusters;
+        log.info("Found " + untaggedClusters.size() + " clusters without " + tag);
+        return untaggedClusters;
     }
 
     private boolean isClusterActive(Cluster cluster) {
