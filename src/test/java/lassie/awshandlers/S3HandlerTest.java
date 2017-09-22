@@ -15,7 +15,6 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 public class S3HandlerTest {
-
     private AmazonS3Client s3;
     private S3Handler s3Handler;
 

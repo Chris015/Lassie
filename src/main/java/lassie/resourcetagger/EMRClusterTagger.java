@@ -76,7 +76,7 @@ public class EMRClusterTagger implements ResourceTagger {
     }
 
     private void filterEventsWithoutTag(String ownerTag) {
-        log.info("Filtering tagged EMR Clusters");
+        log.info("Filtering EMR-clusters without: " + ownerTag);
         List<Event> untaggedClusters = new ArrayList<>();
 
         List<String> untaggedClusterIds = emrHandler.getIdsForClustersWithoutTag(ownerTag);
@@ -87,7 +87,7 @@ public class EMRClusterTagger implements ResourceTagger {
         }
 
         this.events = untaggedClusters;
-        log.info("Done filtering tagged EMR clusters");
+        log.info("Done filtering EMR-clusters");
     }
 
     private void tag(String ownerTag) {

@@ -51,7 +51,6 @@ public class S3Handler {
             if (tagSet.getAllTags().containsKey(tag)) {
                 return true;
             }
-
         }
         return false;
     }
