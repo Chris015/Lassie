@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.zip.GZIPInputStream;
 
 public class LogHandler {
-    private final Logger log = Logger.getLogger(LogHandler.class);
+    private final static Logger log = Logger.getLogger(LogHandler.class);
     private AmazonS3 s3;
     private Path tmpFolderZipped;
     private Path tmpFolderUnzipped;
@@ -189,7 +189,7 @@ public class LogHandler {
     public void clearLogs() {
         try {
             FileUtils.cleanDirectory(new File(tmpFolder));
-            log.info("Temp directory cleaned");
+            log.info("Temp-directory cleaned");
         } catch (IOException e) {
             log.error("Temp directory could not be cleaned: ", e);
             e.printStackTrace();

@@ -6,7 +6,7 @@ import java.time.LocalDate;
 
 
 public class DateInterpreter {
-    Logger log = Logger.getLogger(DateInterpreter.class);
+    private final static Logger log = Logger.getLogger(DateInterpreter.class);
     /**
      * Interprets the program arguments and returns a date. If the argument is a properly formatted date, the argument is
      * returned unmodified. The argument must be formatted accordingly: yyyy-MM-dd.

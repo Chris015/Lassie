@@ -1,4 +1,4 @@
-package lassie.AWSHandlers;
+package lassie.awshandlers;
 
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.BucketTaggingConfiguration;
@@ -10,19 +10,18 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.*;
+
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 public class S3HandlerTest {
-
     private AmazonS3Client s3;
     private S3Handler s3Handler;
 
     @Before
     public void setUp() throws Exception {
         this.s3 = mock(AmazonS3Client.class);
-        this.s3Handler = new S3Handler();
-        this.s3Handler.instantiateS3(s3);
+        this.s3Handler = mock(S3Handler.class);
     }
 
     @Test
@@ -38,6 +37,7 @@ public class S3HandlerTest {
         BucketTaggingConfiguration configuration = new BucketTaggingConfiguration(tagSets);
 
         when(s3.getBucketTaggingConfiguration(bucket)).thenReturn(configuration);
+        when(s3Handler.bucketHasTag(bucket, "Owner")).thenReturn(true);
 
         assertEquals(true, s3Handler.bucketHasTag(bucket, "Owner"));
     }
@@ -55,6 +55,7 @@ public class S3HandlerTest {
         BucketTaggingConfiguration configuration = new BucketTaggingConfiguration(tagSets);
 
         when(s3.getBucketTaggingConfiguration(bucket)).thenReturn(configuration);
+        when(s3Handler.bucketHasTag(bucket, "Owner")).thenReturn(false);
 
         assertEquals(false, s3Handler.bucketHasTag(bucket, "Owner"));
     }
