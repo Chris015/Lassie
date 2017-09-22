@@ -156,7 +156,8 @@ public class LogHandler {
         List<String> regions = new ArrayList<>();
         regions.add(region);
         logs.add(new Log(
-                new Account(account.getOwnerTag(),
+                new Account(account.isDryRun(),
+                        account.getOwnerTag(),
                         account.getAccessKeyId(),
                         account.getSecretAccessKey(),
                         account.getAccountId(),

@@ -1,5 +1,6 @@
 package lassie.awshandlers;
 
+import com.amazonaws.Request;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.ec2.AmazonEC2;
@@ -25,11 +26,16 @@ public class EC2Handler {
         log.info("EC2 client instantiated");
     }
 
-    public void tagResource(String id, String key, String value) {
+    public void tagResource(String id, String key, String value, boolean dryRun) {
+        if (dryRun) {
+            log.info("Dry run: " + dryRun + " Did not tag: "  + id + " with " + key + ": " + value);
+            return;
+        }
         CreateTagsRequest tagsRequest = new CreateTagsRequest()
                 .withResources(id)
                 .withTags(new Tag(key, value));
         ec2.createTags(tagsRequest);
+        log.info("Tagged: " + id + " with key: " + key + " value: " + value);
     }
 
     public String getTagValueForInstanceWithId(String tagKey, String instanceId) {
@@ -87,8 +93,8 @@ public class EC2Handler {
 
             List<Reservation> reservations = response.getReservations();
             reservations.forEach(reservation -> instances.addAll(reservation.getInstances()));
-            request.setNextToken(response.getNextToken());
 
+            request.setNextToken(response.getNextToken());
             if (response.getNextToken() == null) {
                 done = true;
             }

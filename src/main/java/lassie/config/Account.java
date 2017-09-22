@@ -5,7 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 public class Account {
-    private String OwnerTag;
+    private boolean dryRun;
+    private String ownerTag;
     private String accessKeyId;
     private String secretAccessKey;
     private String accountId;
@@ -18,8 +19,9 @@ public class Account {
     public Account() {
     }
 
-    public Account(String ownerTag, String accessKeyId, String secretAccessKey, String accountId, S3Url s3Url, String bucketRegion, List<String> resourceTypes, List<String> regions) {
-        OwnerTag = ownerTag;
+    public Account(boolean dryRun, String ownerTag, String accessKeyId, String secretAccessKey, String accountId, S3Url s3Url, String bucketRegion, List<String> resourceTypes, List<String> regions) {
+        this.dryRun = dryRun;
+        this.ownerTag = ownerTag;
         this.accessKeyId = accessKeyId;
         this.secretAccessKey = secretAccessKey;
         this.accountId = accountId;
@@ -29,12 +31,20 @@ public class Account {
         this.regions = regions;
     }
 
+    public boolean isDryRun() {
+        return dryRun;
+    }
+
+    public void setDryRun(boolean dryRun) {
+        this.dryRun = dryRun;
+    }
+
     public String getOwnerTag() {
-        return OwnerTag;
+        return ownerTag;
     }
 
     public void setOwnerTag(String ownerTag) {
-        OwnerTag = ownerTag;
+        this.ownerTag = ownerTag;
     }
 
     public String getAccessKeyId() {
