@@ -61,7 +61,8 @@ public class EBSVolumeTagger implements ResourceTagger {
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);
                 Gson gson = gsonBuilder.setLenient().create();
                 List<Event> createVolumeEvents = gson.fromJson(
-                        json, new TypeToken<List<Event>>() {}.getType());
+                        json, new TypeToken<List<Event>>() {
+                        }.getType());
                 events.addAll(createVolumeEvents);
             } catch (IOException e) {
                 log.error("Could nog parse json: ", e);
@@ -75,11 +76,29 @@ public class EBSVolumeTagger implements ResourceTagger {
         log.info("Filtering tagged EBS volume");
         List<Event> untaggedVolumes = new ArrayList<>();
         List<String> untaggedVolumeIds = ec2Handler.getIdsForVolumesWithoutTag(ownerTag);
+
         for (Event event : events) {
-            if(untaggedVolumeIds.stream().anyMatch(id -> id.equals(event.getId()))){
+            if (untaggedVolumeIds.stream().anyMatch(id -> id.equals(event.getId()))) {
                 untaggedVolumes.add(event);
             }
         }
+
+        try {
+            for (String id : untaggedVolumeIds) {
+                log.info("Can't find " + id + " in the log files. Checking if it's attached to an instance");
+                if (ec2Handler.volumeIsAttachedToInstance(id)) {
+                    String instanceId = ec2Handler.getIdForInstanceVolumeIsAttachedTo(id);
+                    log.info("Volume " + id + " is attached to instance: " + instanceId + ". Trying to fetch the " + ownerTag + " of the instance");
+
+                    String instanceOwner = ec2Handler.getTagValueForInstanceWithId(ownerTag, instanceId);
+                    untaggedVolumes.add(new Event(id, instanceOwner));
+                    log.info("Found " + ownerTag + ". Prepared volume for tagging");
+                }
+            }
+        } catch (IllegalArgumentException e) {
+            log.warn(e.getMessage() + ". Tag the instance before you try to tag the EBSVolume");
+        }
+
         this.events = untaggedVolumes;
         log.info("Done filtering tagged EBS volumes");
     }
