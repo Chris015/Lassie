@@ -30,7 +30,7 @@ public class EC2InstanceTagger implements ResourceTagger {
             instantiateEC2Client(log.getAccount());
             parseJson(log.getFilePaths());
             filterEventsWithoutTag(log.getAccount().getOwnerTag());
-            tag(log.getAccount().getOwnerTag());
+            tag(log.getAccount().getOwnerTag(), log.getAccount().isDryRun());
         }
     }
 
@@ -86,11 +86,13 @@ public class EC2InstanceTagger implements ResourceTagger {
 
     }
 
-    private void tag(String ownerTag) {
+    private void tag(String ownerTag, boolean dryRun) {
         log.info("Tagging EC2 instances");
+        if(events.size() == 0) {
+            log.info("No untagged EC2 instances found");
+        }
         for (Event event : events) {
-            ec2Handler.tagResource(event.getId(), ownerTag, event.getOwner());
-            log.info("Tagged: " + event.getId() + " with key: " + ownerTag + " value: " + event.getOwner());
+            ec2Handler.tagResource(event.getId(), ownerTag, event.getOwner(), dryRun);
         }
         this.events = new ArrayList<>();
         log.info("Done tagging EC2 instances");

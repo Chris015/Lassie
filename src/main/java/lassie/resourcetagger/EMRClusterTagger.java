@@ -31,7 +31,7 @@ public class EMRClusterTagger implements ResourceTagger {
             instantiateEmrInstance(log.getAccount());
             parseJson(log.getFilePaths());
             filterEventsWithoutTag(log.getAccount().getOwnerTag());
-            tag(log.getAccount().getOwnerTag());
+            tag(log.getAccount().getOwnerTag(), log.getAccount().isDryRun());
         }
     }
 
@@ -90,13 +90,13 @@ public class EMRClusterTagger implements ResourceTagger {
         log.info("Done filtering EMR-clusters");
     }
 
-    private void tag(String ownerTag) {
+    private void tag(String ownerTag, boolean dryRun) {
         log.info("Tagging EMR clusters");
+        if(events.size() == 0) {
+            log.info("No untagged EMRClusters found");
+        }
         for (Event event : events) {
-            emrHandler.tagResource(event.getId(), ownerTag, event.getOwner());
-            log.info("Tagged: " + event.getId()
-                    + " with key: " + ownerTag
-                    + " value: " + event.getOwner());
+            emrHandler.tagResource(event.getId(), ownerTag, event.getOwner(), dryRun);
         }
         this.events = new ArrayList<>();
         log.info("Done tagging EMR clusters");

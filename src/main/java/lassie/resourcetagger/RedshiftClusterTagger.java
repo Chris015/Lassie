@@ -31,7 +31,7 @@ public class RedshiftClusterTagger implements ResourceTagger {
             instantiateRedshiftClient(log.getAccount());
             parseJson(log.getAccount(), log.getFilePaths());
             filterEventsWithoutTag(log.getAccount().getOwnerTag());
-            tag(log.getAccount().getOwnerTag());
+            tag(log.getAccount().getOwnerTag(), log.getAccount().isDryRun());
         }
     }
 
@@ -90,11 +90,13 @@ public class RedshiftClusterTagger implements ResourceTagger {
         this.events = untaggedRedShiftClusters;
     }
 
-    private void tag(String ownerTag) {
+    private void tag(String ownerTag, boolean dryRun) {
         log.info("Tagging RedShift clusters");
+        if(events.size() == 0) {
+            log.info("No untagged Redshift clusters found");
+        }
         for (Event event : events) {
-            redshiftHandler.tagResource(event.getId(), ownerTag, event.getOwner());
-            log.info("Tagged: " + event.getId() + " with key: " + ownerTag + " value: " + event.getOwner());
+            redshiftHandler.tagResource(event.getId(), ownerTag, event.getOwner(), dryRun);
         }
         this.events = new ArrayList<>();
         log.info("Done tagging RedShift clusters");

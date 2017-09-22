@@ -28,7 +28,11 @@ public class S3Handler {
         log.info("S3 client instantiated");
     }
 
-    public void tagBucket(String bucketName, String key, String value) {
+    public void tagBucket(String bucketName, String key, String value, boolean dryRun) {
+        if (dryRun) {
+            log.info("Dry run: " + dryRun + " Did not tag: "  + bucketName + " with " + key + ": " + value);
+            return;
+        }
         Map<String, String> newTags = new HashMap<>();
 
         List<TagSet> existingTagSets = fetchExistingTagSets(bucketName);
@@ -39,6 +43,7 @@ public class S3Handler {
         newTagSets.add(new TagSet(newTags));
 
         s3.setBucketTaggingConfiguration(bucketName, new BucketTaggingConfiguration(newTagSets));
+        log.info("Tagged: " + bucketName + " with key: " + key + " value: " + value);
     }
 
     public boolean bucketHasTag(String bucketName, String tag) {

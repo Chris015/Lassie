@@ -25,13 +25,18 @@ public class EMRHandler {
                 .build();
     }
 
-    public void tagResource(String id, String key, String value) {
+    public void tagResource(String id, String key, String value, boolean dryRun) {
+        if (dryRun) {
+            log.info("Dry run: " + dryRun + " Did not tag: "  + id + " with " + key + ": " + value);
+            return;
+        }
         DescribeClusterRequest request = new DescribeClusterRequest().withClusterId(id);
         DescribeClusterResult result = emr.describeCluster(request);
         List<Tag> tags = result.getCluster().getTags();
         tags.add(new Tag(key, value));
         AddTagsRequest tagsRequest = new AddTagsRequest(id, tags);
         emr.addTags(tagsRequest);
+        log.info("Tagged: " + id + " with key: " + key + " value: " + value);
     }
 
     public List<String> getIdsForClustersWithoutTag(String tag) {

@@ -32,7 +32,7 @@ public class RDSDBInstanceTagger implements ResourceTagger {
             instantiateRDSClient(log.getAccount());
             parseJson(log.getFilePaths());
             filterEventsWithoutTag(log.getAccount().getOwnerTag());
-            tag(log.getAccount().getOwnerTag());
+            tag(log.getAccount().getOwnerTag(), log.getAccount().isDryRun());
         }
     }
 
@@ -86,11 +86,13 @@ public class RDSDBInstanceTagger implements ResourceTagger {
         this.events = untaggedEvents;
     }
 
-    private void tag(String ownerTag) {
+    private void tag(String ownerTag, boolean dryRun) {
         log.info("Tagging DB instances");
+        if(events.size() == 0) {
+            log.info("No untagged DB instances found");
+        }
         for (Event event : events) {
-            rdsHandler.tagResource(event.getId(), ownerTag, event.getOwner());
-            log.info("Tagged: " + event.getId() + " with key: " + ownerTag + " value: " + event.getOwner());
+            rdsHandler.tagResource(event.getId(), ownerTag, event.getOwner(), dryRun);
         }
         this.events = new ArrayList<>();
         log.info("Done tagging DB instances");

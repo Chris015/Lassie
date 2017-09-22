@@ -25,7 +25,11 @@ public class RedshiftHandler {
         log.info("RedShift client instantiated");
     }
 
-    public void tagResource(String id, String key, String value) {
+    public void tagResource(String id, String key, String value, boolean dryRun) {
+        if (dryRun) {
+            log.info("Dry run: " + dryRun + " Did not tag: "  + id + " with " + key + ": " + value);
+            return;
+        }
         Tag tag = new Tag();
         tag.setKey(key);
         tag.setValue(value);
@@ -33,6 +37,7 @@ public class RedshiftHandler {
         tagsRequest.withResourceName(id);
         tagsRequest.withTags(tag);
         redshift.createTags(tagsRequest);
+        log.info("Tagged: " + id + " with key: " + key + " value: " + value);
     }
 
     public List<String> getIdsForUntaggedRedshiftClustersWithoutTag(String tag) {
