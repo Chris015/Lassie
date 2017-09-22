@@ -25,7 +25,11 @@ public class ELBHandler {
         log.info("ELB client instantiated");
     }
 
-    public void tagResource(String id, String key, String value) {
+    public void tagResource(String id, String key, String value, boolean dryRun) {
+        if (dryRun) {
+            log.info("Dry run: " + dryRun + ". Did not tag: "  + id + " with " + key + ": " + value);
+            return;
+        }
         Tag tag = new Tag();
         tag.setKey(key);
         tag.setValue(value);

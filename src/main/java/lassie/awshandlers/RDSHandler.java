@@ -25,7 +25,11 @@ public class RDSHandler {
         log.info("RDS client instantiated");
     }
 
-    public void tagResource(String id, String key, String value) {
+    public void tagResource(String id, String key, String value, boolean dryRun) {
+        if (dryRun) {
+            log.info("Dry run: " + dryRun + " Did not tag: "  + id + " with " + key + ": " + value);
+            return;
+        }
         Tag tag = new Tag();
         tag.setKey(key);
         tag.setValue(value);
@@ -33,6 +37,7 @@ public class RDSHandler {
                 .withResourceName(id)
                 .withTags(tag);
         rds.addTagsToResource(tagsRequest);
+        log.info("Tagged: " + id + " with key: " + key + " value: " + value);
     }
 
     public List<String> getIdsForDBInstancesWithoutTag(String tag) {
