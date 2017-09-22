@@ -27,7 +27,7 @@ public class EBSVolumeTagger implements ResourceTagger {
             instantiateEc2Client(log.getAccount());
             parseJson(log.getFilePaths());
             filterEventsWithoutTag(log.getAccount().getOwnerTag());
-            tag(log.getAccount().getOwnerTag(), log.getAccount().isDryRun());
+            tag(log.getAccount().getOwnerTag());
         }
     }
 
@@ -103,13 +103,13 @@ public class EBSVolumeTagger implements ResourceTagger {
         log.info("Done filtering tagged EBS volumes");
     }
 
-    private void tag(String ownerTag, boolean dryRun) {
+    private void tag(String ownerTag) {
         log.info("Tagging volumes");
-        if(events.size() == 0) {
+        if (events.size() == 0) {
             log.info("No untagged Volumes found");
         }
         for (Event event : events) {
-            ec2Handler.tagResource(event.getId(), ownerTag, event.getOwner(), dryRun);
+            ec2Handler.tagResource(event.getId(), ownerTag, event.getOwner());
         }
         this.events = new ArrayList<>();
         log.info("Tagging volumes complete");

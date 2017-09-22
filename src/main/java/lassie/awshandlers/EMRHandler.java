@@ -6,11 +6,14 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduce;
 import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClientBuilder;
 import com.amazonaws.services.elasticmapreduce.model.*;
+import lassie.Application;
 import lassie.model.Event;
 import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static lassie.Application.DRY_RUN;
 
 public class EMRHandler {
     private final static Logger log = Logger.getLogger(EMRHandler.class);
@@ -25,9 +28,9 @@ public class EMRHandler {
                 .build();
     }
 
-    public void tagResource(String id, String key, String value, boolean dryRun) {
-        if (dryRun) {
-            log.info("Dry run: " + dryRun + " Did not tag: "  + id + " with " + key + ": " + value);
+    public void tagResource(String id, String key, String value) {
+        if (DRY_RUN) {
+            log.info("Dry run: " + DRY_RUN + ". Did not tag: " + id + " with " + key + ": " + value);
             return;
         }
         DescribeClusterRequest request = new DescribeClusterRequest().withClusterId(id);

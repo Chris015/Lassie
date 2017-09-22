@@ -5,10 +5,13 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancing;
 import com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClientBuilder;
 import com.amazonaws.services.elasticloadbalancingv2.model.*;
+import lassie.Application;
 import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static lassie.Application.DRY_RUN;
 
 public class ELBHandler {
     private static final Logger log = Logger.getLogger(ELBHandler.class);
@@ -25,9 +28,9 @@ public class ELBHandler {
         log.info("ELB client instantiated");
     }
 
-    public void tagResource(String id, String key, String value, boolean dryRun) {
-        if (dryRun) {
-            log.info("Dry run: " + dryRun + ". Did not tag: "  + id + " with " + key + ": " + value);
+    public void tagResource(String id, String key, String value) {
+        if (DRY_RUN) {
+            log.info("Dry run: " + DRY_RUN + ". Did not tag: " + id + " with " + key + ": " + value);
             return;
         }
         Tag tag = new Tag();

@@ -31,7 +31,7 @@ public class S3BucketTagger implements ResourceTagger {
             instantiateS3Client(log.getAccount());
             parseJson(log.getFilePaths());
             filterEventsWithoutTag(log.getAccount().getOwnerTag());
-            tag(log.getAccount().getOwnerTag(), log.getAccount().isDryRun());
+            tag(log.getAccount().getOwnerTag());
         }
     }
 
@@ -82,13 +82,13 @@ public class S3BucketTagger implements ResourceTagger {
         this.events = untaggedBuckets;
     }
 
-    private void tag(String ownerTag, boolean dryRun) {
+    private void tag(String ownerTag) {
         log.info("Tagging Buckets");
-        if(events.size() == 0) {
+        if (events.size() == 0) {
             log.info("No untagged Buckets found");
         }
         for (Event event : events) {
-            s3Handler.tagBucket(event.getId(), ownerTag, event.getOwner(), dryRun);
+            s3Handler.tagBucket(event.getId(), ownerTag, event.getOwner());
         }
         this.events = new ArrayList<>();
         log.info("Done tagging Buckets");

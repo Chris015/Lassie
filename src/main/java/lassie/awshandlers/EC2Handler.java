@@ -1,6 +1,5 @@
 package lassie.awshandlers;
 
-import com.amazonaws.Request;
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.ec2.AmazonEC2;
@@ -10,6 +9,8 @@ import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static lassie.Application.DRY_RUN;
 
 public class EC2Handler {
     private final static Logger log = Logger.getLogger(EC2Handler.class);
@@ -26,9 +27,9 @@ public class EC2Handler {
         log.info("EC2 client instantiated");
     }
 
-    public void tagResource(String id, String key, String value, boolean dryRun) {
-        if (dryRun) {
-            log.info("Dry run: " + dryRun + " Did not tag: "  + id + " with " + key + ": " + value);
+    public void tagResource(String id, String key, String value) {
+        if (DRY_RUN) {
+            log.info("Dry run: " + DRY_RUN + ". Did not tag: " + id + " with " + key + ": " + value);
             return;
         }
         CreateTagsRequest tagsRequest = new CreateTagsRequest()
@@ -113,6 +114,7 @@ public class EC2Handler {
             }
         }
         log.info("Found " + untaggedSecurityGroupIds.size() + " Security groups without " + tag);
+        untaggedSecurityGroupIds.forEach(log::info);
         return untaggedSecurityGroupIds;
     }
 

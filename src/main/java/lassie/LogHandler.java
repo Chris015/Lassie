@@ -125,7 +125,7 @@ public class LogHandler {
         log.info("Unzipping objects");
         List<String> filePaths = new ArrayList<>();
         for (String filename : filenames) {
-        log.trace("Unzipping object: " + filename);
+            log.trace("Unzipping object: " + filename);
             String fileInputPath = tmpFolderZipped + "/" + filename;
             String fileOutputPath = tmpFolderUnzipped + "/" + filename.substring(0, filename.length() - 3);
             try (FileInputStream fileInputStream = new FileInputStream(fileInputPath);
@@ -156,8 +156,7 @@ public class LogHandler {
         List<String> regions = new ArrayList<>();
         regions.add(region);
         logs.add(new Log(
-                new Account(account.isDryRun(),
-                        account.getOwnerTag(),
+                new Account(account.getOwnerTag(),
                         account.getAccessKeyId(),
                         account.getSecretAccessKey(),
                         account.getAccountId(),

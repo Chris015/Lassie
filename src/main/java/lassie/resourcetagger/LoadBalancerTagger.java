@@ -31,7 +31,7 @@ public class LoadBalancerTagger implements ResourceTagger {
             instantiateClient(log.getAccount());
             parseJson(log.getFilePaths());
             filterEventsWithoutTag(log.getAccount().getOwnerTag());
-            tag(log.getAccount().getOwnerTag(), log.getAccount().isDryRun());
+            tag(log.getAccount().getOwnerTag());
         }
     }
 
@@ -79,7 +79,7 @@ public class LoadBalancerTagger implements ResourceTagger {
         List<Event> untaggedLoadBalancers = new ArrayList<>();
         List<String> untaggedLoadBalancerIds = elbHandler.getIdsForLoadBalancersWithoutTag(ownerTag);
         for (Event event : events) {
-            if(untaggedLoadBalancerIds.stream().anyMatch(id -> id.equals(event.getId()))) {
+            if (untaggedLoadBalancerIds.stream().anyMatch(id -> id.equals(event.getId()))) {
                 untaggedLoadBalancers.add(event);
             }
         }
@@ -87,13 +87,13 @@ public class LoadBalancerTagger implements ResourceTagger {
         log.info("Done filtering tagged LoadBalancers");
     }
 
-    private void tag(String ownerTag, boolean dryRun) {
+    private void tag(String ownerTag) {
         log.info("Tagging LoadBalancers");
-        if(events.size() == 0) {
+        if (events.size() == 0) {
             log.info("No untagged LoadBalancers found");
         }
         for (Event event : events) {
-            elbHandler.tagResource(event.getId(), ownerTag, event.getOwner(), dryRun);
+            elbHandler.tagResource(event.getId(), ownerTag, event.getOwner());
             log.info("Tagged: " + event.getId() +
                     " with key: " + ownerTag +
                     " value: " + event.getOwner());
