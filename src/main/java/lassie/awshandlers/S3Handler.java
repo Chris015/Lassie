@@ -30,7 +30,7 @@ public class S3Handler {
 
     public void tagBucket(String bucketName, String key, String value, boolean dryRun) {
         if (dryRun) {
-            log.info("Dry run: " + dryRun + " Did not tag: "  + bucketName + " with " + key + ": " + value);
+            log.info("Dry run: " + dryRun + " Did not tag: " + bucketName + " with " + key + ": " + value);
             return;
         }
         Map<String, String> newTags = new HashMap<>();
@@ -47,9 +47,11 @@ public class S3Handler {
     }
 
     public boolean bucketHasTag(String bucketName, String tag) {
+
         if (s3.getBucketTaggingConfiguration(bucketName) == null) {
             return false;
         }
+
         BucketTaggingConfiguration configuration = s3.getBucketTaggingConfiguration(bucketName);
         List<TagSet> allTagSets = configuration.getAllTagSets();
         for (TagSet tagSet : allTagSets) {
