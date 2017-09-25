@@ -25,7 +25,32 @@ public class S3HandlerIT {
     private S3Handler s3Handler;
 
     @Test
-    public void bucketHasTagReturnsTrue() throws Exception {
+    public void bucketHasTagOwnerReturnsTrue() throws Exception {
+        // given
+        String bucket = "bucket";
+        Tag tag = new Tag("Owner", "John Doe");
+
+        List<TagSet> tagSets = new ArrayList<>();
+        TagSet tagSet = new TagSet();
+        tagSet.setTag(tag.getKey(), tag.getValue());
+        tagSets.add(tagSet);
+
+        BucketTaggingConfiguration configuration = new BucketTaggingConfiguration();
+        configuration.setTagSets(tagSets);
+
+        // when
+        when(s3.getBucketTaggingConfiguration(bucket))
+                .thenReturn(configuration);
+
+        boolean result = s3Handler.bucketHasTag(bucket, "Owner");
+
+        // then
+        assertEquals(true, result);
+
+    }
+
+    @Test
+    public void bucketHasTagCreatorReturnsFalse() throws Exception {
         // given
         String bucket = "bucket";
         Tag tag = new Tag("Owner", "John Doe");
@@ -43,31 +68,6 @@ public class S3HandlerIT {
                 .thenReturn(configuration);
 
         boolean result = s3Handler.bucketHasTag(bucket, "Creator");
-
-        // then
-        assertEquals(false, result);
-
-    }
-
-    @Test
-    public void bucketHasTagReturnsFalse() throws Exception {
-        // given
-        String bucket = "bucket";
-        Tag tag = new Tag("Creator", "John Doe");
-
-        List<TagSet> tagSets = new ArrayList<>();
-        TagSet tagSet = new TagSet();
-        tagSet.setTag(tag.getKey(), tag.getValue());
-        tagSets.add(tagSet);
-
-        BucketTaggingConfiguration configuration = new BucketTaggingConfiguration();
-        configuration.setTagSets(tagSets);
-
-        // when
-        when(s3.getBucketTaggingConfiguration(bucket))
-                .thenReturn(configuration);
-
-        boolean result = s3Handler.bucketHasTag(bucket, "Owner");
 
         // then
         assertEquals(false, result);
