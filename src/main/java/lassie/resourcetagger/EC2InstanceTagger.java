@@ -88,9 +88,11 @@ public class EC2InstanceTagger implements ResourceTagger {
 
     private void tag(String ownerTag) {
         log.info("Tagging EC2 instances");
+        if (events.size() == 0) {
+            log.info("No untagged EC2 instances found");
+        }
         for (Event event : events) {
             ec2Handler.tagResource(event.getId(), ownerTag, event.getOwner());
-            log.info("Tagged: " + event.getId() + " with key: " + ownerTag + " value: " + event.getOwner());
         }
         this.events = new ArrayList<>();
         log.info("Done tagging EC2 instances");

@@ -57,7 +57,7 @@ public class SecurityGroupTagger implements ResourceTagger {
                             .getAsJsonObject().get("userIdentity")
                             .getAsJsonObject().get("arn")
                             .getAsString();
-                    log.info("Event created with Id: "+ id + " Owner: " + owner);
+                    log.info("Event created with Id: " + id + " Owner: " + owner);
                     return new Event(id, owner);
                 };
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);
@@ -80,7 +80,7 @@ public class SecurityGroupTagger implements ResourceTagger {
         List<String> untaggedSecurityGroupIds = ec2Handler.getIdsForSecurityGroupsWithoutTag(ownerTag);
 
         for (Event event : events) {
-            if(untaggedSecurityGroupIds.stream().anyMatch(id -> id.equals(event.getId()))){
+            if (untaggedSecurityGroupIds.stream().anyMatch(id -> id.equals(event.getId()))) {
                 untaggedSecurityGroups.add(event);
             }
         }
@@ -91,9 +91,11 @@ public class SecurityGroupTagger implements ResourceTagger {
 
     private void tag(String ownerTag) {
         log.info("Tagging Security groups");
+        if (events.size() == 0) {
+            log.info("No untagged Security groups found");
+        }
         for (Event event : events) {
             ec2Handler.tagResource(event.getId(), ownerTag, event.getOwner());
-            log.info("Tagged: " + event.getId() + " with key: " + ownerTag + " value: " + event.getOwner());
         }
         this.events = new ArrayList<>();
         log.info("Done tagging Security groups");

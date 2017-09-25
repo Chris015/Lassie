@@ -13,6 +13,7 @@ import java.util.List;
 
 public class Application {
     private final static Logger log = Logger.getLogger(Application.class);
+    public static boolean DRY_RUN;
     private ConfigReader configReader;
     private LogHandler logHandler;
     private ResourceTaggerFactory resourceTaggerFactory;
@@ -21,6 +22,7 @@ public class Application {
     public Application(String[] args) {
         log.info("Application started");
         this.configReader = new ConfigReader();
+        DRY_RUN = configReader.getDryRun();
         this.logHandler = new LogHandler();
         this.resourceTaggerFactory = new ResourceTaggerFactory();
         this.fromDate = new DateInterpreter().interpret(args);

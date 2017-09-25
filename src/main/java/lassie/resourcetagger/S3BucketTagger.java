@@ -84,9 +84,11 @@ public class S3BucketTagger implements ResourceTagger {
 
     private void tag(String ownerTag) {
         log.info("Tagging Buckets");
+        if (events.size() == 0) {
+            log.info("No untagged Buckets found");
+        }
         for (Event event : events) {
             s3Handler.tagBucket(event.getId(), ownerTag, event.getOwner());
-            log.info("Tagged: " + event.getId() + " with key: " + ownerTag + " value: " + event.getOwner());
         }
         this.events = new ArrayList<>();
         log.info("Done tagging Buckets");

@@ -2,7 +2,6 @@ package lassie.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,22 +9,29 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ConfigReader {
-    private static Logger log = Logger.getLogger(ConfigReader.class);
     private ObjectMapper objectMapper;
+    private File configurationFile = new File("configuration.yaml");
 
     public ConfigReader() {
         this.objectMapper = new ObjectMapper(new YAMLFactory());
     }
 
     public List<Account> getAccounts() {
+        return getAccountConfig().getAccounts();
+    }
+
+    public boolean getDryRun() {
+        return getAccountConfig().isDryRun();
+    }
+
+    private AccountsConfig getAccountConfig() {
         try {
             return objectMapper.readValue(
-                    new File("configuration.yaml"),
-                    AccountsConfig.class).getAccounts();
+                    configurationFile,
+                    AccountsConfig.class);
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        return new ArrayList<>();
+        throw new NullPointerException("Unable to get Account Config");
     }
 }

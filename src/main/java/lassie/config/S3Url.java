@@ -23,7 +23,7 @@ public class S3Url {
         int aPos = theUrl.indexOf("/", 5);
 
         this.bucket = theUrl.substring(5, aPos);
-        this.key = theUrl.substring(aPos+1);
+        this.key = theUrl.substring(aPos + 1);
     }
 
     public void setBucket(String bucket) {

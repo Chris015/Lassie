@@ -14,6 +14,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static lassie.Application.DRY_RUN;
+
 public class S3Handler {
     private static final Logger log = Logger.getLogger(S3Handler.class);
     private AmazonS3 s3;
@@ -29,6 +31,10 @@ public class S3Handler {
     }
 
     public void tagBucket(String bucketName, String key, String value) {
+        if (DRY_RUN) {
+            log.info("Dry run: " + DRY_RUN + ". Did not tag: " + bucketName + " with " + key + ": " + value);
+            return;
+        }
         Map<String, String> newTags = new HashMap<>();
 
         List<TagSet> existingTagSets = fetchExistingTagSets(bucketName);
@@ -39,12 +45,15 @@ public class S3Handler {
         newTagSets.add(new TagSet(newTags));
 
         s3.setBucketTaggingConfiguration(bucketName, new BucketTaggingConfiguration(newTagSets));
+        log.info("Tagged: " + bucketName + " with key: " + key + " value: " + value);
     }
 
     public boolean bucketHasTag(String bucketName, String tag) {
+
         if (s3.getBucketTaggingConfiguration(bucketName) == null) {
             return false;
         }
+
         BucketTaggingConfiguration configuration = s3.getBucketTaggingConfiguration(bucketName);
         List<TagSet> allTagSets = configuration.getAllTagSets();
         for (TagSet tagSet : allTagSets) {

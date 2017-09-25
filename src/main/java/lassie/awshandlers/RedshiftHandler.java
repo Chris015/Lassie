@@ -5,10 +5,13 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.redshift.AmazonRedshift;
 import com.amazonaws.services.redshift.AmazonRedshiftClientBuilder;
 import com.amazonaws.services.redshift.model.*;
+import lassie.Application;
 import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static lassie.Application.DRY_RUN;
 
 public class RedshiftHandler {
     private static final Logger log = Logger.getLogger(RedshiftHandler.class);
@@ -26,6 +29,10 @@ public class RedshiftHandler {
     }
 
     public void tagResource(String id, String key, String value) {
+        if (DRY_RUN) {
+            log.info("Dry run: " + DRY_RUN + ". Did not tag: " + id + " with " + key + ": " + value);
+            return;
+        }
         Tag tag = new Tag();
         tag.setKey(key);
         tag.setValue(value);
@@ -33,6 +40,7 @@ public class RedshiftHandler {
         tagsRequest.withResourceName(id);
         tagsRequest.withTags(tag);
         redshift.createTags(tagsRequest);
+        log.info("Tagged: " + id + " with key: " + key + " value: " + value);
     }
 
     public List<String> getIdsForUntaggedRedshiftClustersWithoutTag(String tag) {
