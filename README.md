@@ -10,11 +10,11 @@ These instructions will get you a copy of the project up and running on your loc
 
 The program requires that you have set up logging in AWS and that log files for the currently running resources exists.
 
-And IAM user  with the following policy: see policy.txt
+And IAM user  with the following policy: see **policy.txt**
 
-A configuration file: see configuration.yaml
+A configuration file: see **configuration.yaml**
 
-A logging properties file. See logging.properties
+A logging properties file. See **logging.properties**
 
 Lassie uses maven to build and package a shaded jar, which can be run on your local machine.
 
