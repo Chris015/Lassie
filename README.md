@@ -30,8 +30,9 @@ run the jar with the following command
  java -jar lassie-1.0-SNAPSHOT-shaded.jar
 ```
 
-Examples
-The following command will fetch logs from one day back
+**Examples**
+
+Fetch logs from current date
 ```
 java -jar lassie-1.0-SNAPSHOT-shaded.jar
 ```
@@ -46,16 +47,9 @@ The following command will fetch logs from the current date and three days back
 java -jar lassie-1.0-SNAPSHOT-shaded.jar 3 
 ```
 
-
-## Deployment
-
-Add additional notes about how to deploy this on a live system
-
 ## Built With
 
-* [Dropwizard](http://www.dropwizard.io/1.0.2/docs/) - The web framework used
 * [Maven](https://maven.apache.org/) - Dependency Management
-* [ROME](https://rometools.github.io/rome/) - Used to generate RSS Feeds
 
 ## Authors
 
