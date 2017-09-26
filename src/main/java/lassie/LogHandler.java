@@ -107,7 +107,7 @@ public class LogHandler {
                  S3ObjectInputStream objectContent = s3Object.getObjectContent()) {
 
                 String filename = s3Object.getKey().substring(key.lastIndexOf('/') + 1, key.length());
-                log.trace("Downloading file: " + filename);
+                log.debug("Downloading file: " + filename);
                 Files.copy(objectContent,
                         Paths.get(tmpFolderZipped + "/" + filename),
                         StandardCopyOption.REPLACE_EXISTING);

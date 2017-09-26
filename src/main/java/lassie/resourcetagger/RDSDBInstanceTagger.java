@@ -89,7 +89,7 @@ public class RDSDBInstanceTagger implements ResourceTagger {
     private void tag(String ownerTag) {
         log.info("Tagging DB instances");
         if (events.size() == 0) {
-            log.info("No untagged DB instances found");
+            log.info("No untagged DB instances found in log files");
         }
         for (Event event : events) {
             rdsHandler.tagResource(event.getId(), ownerTag, event.getOwner());

@@ -106,7 +106,7 @@ public class EBSVolumeTagger implements ResourceTagger {
     private void tag(String ownerTag) {
         log.info("Tagging volumes");
         if (events.size() == 0) {
-            log.info("No untagged Volumes found");
+            log.info("No untagged Volumes found in log files");
         }
         for (Event event : events) {
             ec2Handler.tagResource(event.getId(), ownerTag, event.getOwner());

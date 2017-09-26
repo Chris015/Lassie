@@ -56,11 +56,12 @@ public class RDSHandler {
             }
         }
         log.info("Found " + untaggedDbInstanceIds.size() + " DB instances without " + tag);
+        untaggedDbInstanceIds.forEach(id -> log.info(id));
         return untaggedDbInstanceIds;
     }
 
     private boolean hasTag(ListTagsForResourceResult response, String tag) {
-        log.trace(tag + " found: " + response.getTagList().stream().anyMatch(t -> t.getKey().equals(tag)));
+        log.debug(tag + " found: " + response.getTagList().stream().anyMatch(t -> t.getKey().equals(tag)));
         return response.getTagList().stream().anyMatch(t -> t.getKey().equals(tag));
     }
 }

@@ -93,7 +93,7 @@ public class RedshiftClusterTagger implements ResourceTagger {
     private void tag(String ownerTag) {
         log.info("Tagging RedShift clusters");
         if (events.size() == 0) {
-            log.info("No untagged Redshift clusters found");
+            log.info("No untagged Redshift clusters found in log files");
         }
         for (Event event : events) {
             redshiftHandler.tagResource(event.getId(), ownerTag, event.getOwner());
