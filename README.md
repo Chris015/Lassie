@@ -22,7 +22,10 @@ Lassie uses maven to build and package a shaded jar, which can be run on your lo
 
 1. clone the project
 2. cd into the project folder
-3. package with Maven using this command; mvn package
+3. package with Maven using the following command
+```
+ mvn package
+```
 4. create a configuration.yaml file in the same directory as the jar. There is an example configuration file in the readme which you can use
 5. create a logging properties file in the same directory as the jar. There is an example properties file in the readme which you can use
 6. run the jar with the following command
