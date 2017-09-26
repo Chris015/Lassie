@@ -81,7 +81,8 @@ public class EC2Handler {
         }
 
 
-        log.info("Getting instances without tags complete");
+        log.info("Found " + untaggedInstanceIds.size() + " instances without " + tag);
+        untaggedInstanceIds.forEach(id -> log.info(id));
         return untaggedInstanceIds;
     }
 

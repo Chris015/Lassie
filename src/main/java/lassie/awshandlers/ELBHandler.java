@@ -57,12 +57,12 @@ public class ELBHandler {
             }
         }
         log.info("Found " + untaggedLoadBalancerIds.size() + " LoadBalancers without " + tag);
-        untaggedLoadBalancerIds.forEach(log::info);
+        untaggedLoadBalancerIds.forEach(id -> log.info(id));
         return untaggedLoadBalancerIds;
     }
 
     private boolean hasTag(TagDescription tagDescription, String tag) {
-        log.trace(tag + " found: " + tagDescription.getTags().stream().anyMatch(t -> t.getKey().equals(tag)));
+        log.debug(tag + " found: " + tagDescription.getTags().stream().anyMatch(t -> t.getKey().equals(tag)));
         return tagDescription.getTags().stream().anyMatch(t -> t.getKey().equals(tag));
     }
 }

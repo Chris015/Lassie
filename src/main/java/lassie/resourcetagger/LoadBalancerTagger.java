@@ -90,7 +90,7 @@ public class LoadBalancerTagger implements ResourceTagger {
     private void tag(String ownerTag) {
         log.info("Tagging LoadBalancers");
         if (events.size() == 0) {
-            log.info("No untagged LoadBalancers found");
+            log.info("No untagged LoadBalancers found in log files");
         }
         for (Event event : events) {
             elbHandler.tagResource(event.getId(), ownerTag, event.getOwner());

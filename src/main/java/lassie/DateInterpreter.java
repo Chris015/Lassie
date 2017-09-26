@@ -20,7 +20,7 @@ public class DateInterpreter {
     public String interpret(String[] programArguments) {
         log.info("Interpreting program arguments");
         if (programArguments.length == 0) {
-            log.trace("No arguments found. Returned current date");
+            log.debug("No arguments found. Returned current date");
             return LocalDate.now().toString();
         }
 
@@ -41,10 +41,10 @@ public class DateInterpreter {
         }
 
         if (argument.matches(validDate)) {
-            log.trace("Argument is a valid date. Returned the argument");
+            log.debug("Argument is a valid date. Returned the argument");
             return argument;
         }
-        log.trace("Argument is a valid number. Returned the current date minus the amount of days specified");
+        log.debug("Argument is a valid number. Returned the current date minus the amount of days specified");
         return LocalDate.now().minusDays(Integer.parseInt(argument)).toString();
     }
 }
