@@ -2,6 +2,15 @@
 
 Lassie is an automatic tagging service for AWS resources. It works by downloading log the files from your s3 bucket and extracting the user name of the account which started the resource.
 
+**Following resources are currently supported:**
+* Ec2Instance
+* S3Bucket
+* EbsVolume
+* RdsDbInstance
+* RedshiftCluster
+* EmrCluster
+* LoadBalancer
+
 ## Getting Started
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
