@@ -14,7 +14,7 @@ And IAM user  with the following policy: see **policy.txt**
 
 A configuration file: see **configuration.yaml**
 
-A logging properties file. See **logging.properties**
+A logging properties file: see **logging.properties**
 
 Lassie uses maven to build and package a shaded jar, which can be run on your local machine.
 
