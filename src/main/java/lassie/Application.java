@@ -20,6 +20,7 @@ public class Application {
     private String fromDate;
 
     public Application(String[] args) {
+        log.info("Application started");
         this.configReader = new ConfigReader();
         DRY_RUN = configReader.getDryRun();
         this.logHandler = new LogHandler();
@@ -28,7 +29,6 @@ public class Application {
     }
 
     public void run() {
-        log.info("Application started");
         List<Account> accounts = configReader.getAccounts();
         List<ResourceTagger> resourceTaggers = getResourceTaggers(accounts);
         List<Log> logs = logHandler.getLogs(fromDate, accounts);

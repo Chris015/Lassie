@@ -93,7 +93,7 @@ public class EMRClusterTagger implements ResourceTagger {
     private void tag(String ownerTag) {
         log.info("Tagging EMR clusters");
         if (events.size() == 0) {
-            log.info("No untagged EMRClusters found");
+            log.info("No untagged EMRClusters found in log files");
         }
         for (Event event : events) {
             emrHandler.tagResource(event.getId(), ownerTag, event.getOwner());

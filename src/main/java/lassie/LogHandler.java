@@ -52,7 +52,7 @@ public class LogHandler {
                     .withRegion(Regions.fromName(account.getBucketRegion()))
                     .build();
 
-            log.info("S3 Client created");
+            log.info("S3 Client for AWS logs download created");
 
             while (!start.isAfter(end)) {
                 totalDates.add(start);
@@ -63,7 +63,7 @@ public class LogHandler {
                 for (String region : account.getRegions()) {
                     List<S3ObjectSummary> summaries = getObjectSummaries(date.format(formatter), account, region);
                     List<String> filePaths = downloadLogs(account, summaries);
-                    logs.addAll(createLogs(account, region, filePaths));
+                    logs.add(createLog(account, region, filePaths));
                 }
             }
         }
@@ -72,7 +72,7 @@ public class LogHandler {
     }
 
     private List<S3ObjectSummary> getObjectSummaries(String date, Account account, String region) {
-        log.info("Getting object summaries from: "
+        log.debug("Getting object summaries from: "
                 + account.getS3Url().getBucket() + "/"
                 + account.getS3Url().getKey()
                 + "/AWSLogs/"
@@ -80,6 +80,7 @@ public class LogHandler {
                 + "CloudTrail/"
                 + region + "/"
                 + date + "/");
+        log.info("Getting object summaries for date: " + date);
         ListObjectsV2Request request = new ListObjectsV2Request()
                 .withBucketName(account.getS3Url().getBucket())
                 .withPrefix(account.getS3Url().getKey()
@@ -88,7 +89,7 @@ public class LogHandler {
                         + "CloudTrail/"
                         + region + "/"
                         + date + "/");
-        log.info("Get object summaries complete");
+        log.debug("Get object summaries complete");
         return s3.listObjectsV2(request).getObjectSummaries();
     }
 
@@ -98,7 +99,7 @@ public class LogHandler {
     }
 
     private List<String> downloadZip(Account account, List<S3ObjectSummary> summaries) {
-        log.info("Downloading zipped files");
+        log.debug("Downloading zipped files");
         List<String> fileNames = new ArrayList<>();
         for (S3ObjectSummary objectSummary : summaries) {
             String key = objectSummary.getKey();
@@ -106,7 +107,7 @@ public class LogHandler {
                  S3ObjectInputStream objectContent = s3Object.getObjectContent()) {
 
                 String filename = s3Object.getKey().substring(key.lastIndexOf('/') + 1, key.length());
-                log.trace("Downloading file: " + filename);
+                log.debug("Downloading file: " + filename);
                 Files.copy(objectContent,
                         Paths.get(tmpFolderZipped + "/" + filename),
                         StandardCopyOption.REPLACE_EXISTING);
@@ -117,15 +118,15 @@ public class LogHandler {
                 e.printStackTrace();
             }
         }
-        log.info("Download complete");
+        log.debug("Download complete");
         return fileNames;
     }
 
     private List<String> unzipObject(List<String> filenames) {
-        log.info("Unzipping objects");
+        log.debug("Unzipping objects");
         List<String> filePaths = new ArrayList<>();
         for (String filename : filenames) {
-            log.trace("Unzipping object: " + filename);
+        log.debug("Unzipping object: " + filename);
             String fileInputPath = tmpFolderZipped + "/" + filename;
             String fileOutputPath = tmpFolderUnzipped + "/" + filename.substring(0, filename.length() - 3);
             try (FileInputStream fileInputStream = new FileInputStream(fileInputPath);
@@ -146,16 +147,16 @@ public class LogHandler {
                 e.printStackTrace();
             }
         }
-        log.info("Unzipping objects complete");
+        log.debug("Unzipping objects complete");
         return filePaths;
     }
 
-    private List<Log> createLogs(Account account, String region, List<String> filePaths) {
-        log.info("Creating logs");
-        List<Log> logs = new ArrayList<>();
+    private Log createLog(Account account, String region, List<String> filePaths) {
+        log.debug("Creating log");
         List<String> regions = new ArrayList<>();
+
         regions.add(region);
-        logs.add(new Log(
+        Log logObject = new Log(
                 new Account(account.getOwnerTag(),
                         account.getAccessKeyId(),
                         account.getSecretAccessKey(),
@@ -164,13 +165,14 @@ public class LogHandler {
                         account.getBucketRegion(),
                         account.getResourceTypes(),
                         regions),
-                filePaths));
-        log.info("Logs created");
-        return logs;
+                filePaths);
+        log.debug("Log created");
+        return logObject;
+
     }
 
     private void createTmpFolders() {
-        log.info("Creating temp folders");
+        log.debug("Creating temp folders");
         try {
             if (!Files.isDirectory(Paths.get(tmpFolder))) {
                 Files.createDirectory(Paths.get(tmpFolder));
@@ -183,7 +185,7 @@ public class LogHandler {
             log.error("Temp folders could not be created: ", e);
             e.printStackTrace();
         }
-        log.info("Temp folders created successfully");
+        log.info("Temp folders created");
     }
 
     public void clearLogs() {

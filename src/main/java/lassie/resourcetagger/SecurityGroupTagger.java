@@ -92,7 +92,7 @@ public class SecurityGroupTagger implements ResourceTagger {
     private void tag(String ownerTag) {
         log.info("Tagging Security groups");
         if (events.size() == 0) {
-            log.info("No untagged Security groups found");
+            log.info("No untagged Security groups found in log files");
         }
         for (Event event : events) {
             ec2Handler.tagResource(event.getId(), ownerTag, event.getOwner());

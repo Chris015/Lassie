@@ -1,0 +1,22 @@
+# The program supports tagging for multple accounts.
+
+dryRun: true # Dry run feature for testing. Dry run will not tag your resources.
+accounts: # A list of accounts you want to use.
+  - ownerTag: Owner # Here you specify the key of the tag you want to set for the creator of the resource.
+    accessKeyId:
+    secretAccessKey:
+    accountId:
+    cloudTrailRoot: s3://bucket-name/your-folder # The bucket and folder in with your AWSLogs are stored.  
+    bucketRegion: eu-west-1 # Your bucket region.
+    resourceTypes: # List of supported resources. Uncomment the ones you want to use. Ex:
+      - Ec2Instance
+      #- SecurityGroup
+      #- S3Bucket
+      #- EbsVolume
+      #- RdsDbInstance
+      #- RedshiftCluster
+      #- EmrCluster
+      #- LoadBalancer
+    regions: # Here you specify a list of regions in with you want to tag the specified resources. Ex:
+      - eu-west-1
+      - ap-south-1

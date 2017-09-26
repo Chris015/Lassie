@@ -56,6 +56,7 @@ public class EMRHandler {
             }
         }
         log.info("Found " + untaggedClusterIds.size() + " clusters without " + tag);
+        untaggedClusterIds.forEach(id -> log.info(id));
         return untaggedClusterIds;
     }
 
@@ -72,7 +73,7 @@ public class EMRHandler {
     }
 
     private boolean hasTag(Cluster cluster, String tag) {
-        log.trace(tag + " found: " + cluster.getTags().stream().anyMatch(t -> t.getKey().equals(tag)));
+        log.debug(tag + " found: " + cluster.getTags().stream().anyMatch(t -> t.getKey().equals(tag)));
         return cluster.getTags().stream().anyMatch(t -> t.getKey().equals(tag));
     }
 }
