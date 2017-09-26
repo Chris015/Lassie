@@ -20,12 +20,12 @@ Lassie uses maven to build and package a shaded jar, which can be run on your lo
 
 ### Installing
 
-clone the project
-cd into the project folder
-package with Maven using this command; mvn package
-create a configuration.yaml file in the same directory as the jar. There is an example configuration file in the readme which you can use.
-create a logging properties file in the same directory as the jar. There is an example properties file in the readme which you can use.
-run the jar with the following command
+1. clone the project
+2. cd into the project folder
+3. package with Maven using this command; mvn package
+4. create a configuration.yaml file in the same directory as the jar. There is an example configuration file in the readme which you can use
+5. create a logging properties file in the same directory as the jar. There is an example properties file in the readme which you can use
+6. run the jar with the following command
 ```
  java -jar lassie-1.0-SNAPSHOT-shaded.jar
 ```
@@ -37,12 +37,12 @@ Fetch logs from current date
 java -jar lassie-1.0-SNAPSHOT-shaded.jar
 ```
 
-The following command will fetch logs from the 25 of September to the current date
+Fetch logs from the 25 of September to the current date
 ```
 java -jar lassie-1.0-SNAPSHOT-shaded.jar 2017-09-25 
 ```
 
-The following command will fetch logs from the current date and three days back
+Fetch logs from the current date and three days back
 ```
 java -jar lassie-1.0-SNAPSHOT-shaded.jar 3 
 ```
