@@ -3,9 +3,9 @@
 dryRun: true # Dry run feature for testing. Dry run will not tag your resources.
 accounts: # A list of accounts you want to use.
   - ownerTag: Owner # Here you specify the key of the tag you want to set for the creator of the resource.
-    accessKeyId: # Your acces key id here.
-    secretAccessKey: # Your secret access hey here.
-    accountId: 450698745687 # Your account id.
+    accessKeyId:
+    secretAccessKey:
+    accountId:
     cloudTrailRoot: s3://bucket-name/your-folder # The bucket and folder in with your AWSLogs are stored.  
     bucketRegion: eu-west-1 # Your bucket region.
     resourceTypes: # List of supported resources. Uncomment the ones you want to use. Ex:
