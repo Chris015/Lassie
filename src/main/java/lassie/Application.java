@@ -14,21 +14,23 @@ import java.util.List;
 public class Application {
     private final static Logger log = Logger.getLogger(Application.class);
     public static boolean DRY_RUN;
+    private final DateInterpreter dateInterpreter;
     private ConfigReader configReader;
     private LogHandler logHandler;
     private ResourceTaggerFactory resourceTaggerFactory;
     private String fromDate;
 
-    public Application(String[] args) {
+    public Application() {
         log.info("Application started");
         this.configReader = new ConfigReader();
         DRY_RUN = configReader.getDryRun();
         this.logHandler = new LogHandler();
         this.resourceTaggerFactory = new ResourceTaggerFactory();
-        this.fromDate = new DateInterpreter().interpret(args);
+        this.dateInterpreter = new DateInterpreter();
     }
 
-    public void run() {
+    public void run(String[] args) {
+        this.fromDate = dateInterpreter.interpret(args);
         List<Account> accounts = configReader.getAccounts();
         List<ResourceTagger> resourceTaggers = getResourceTaggers(accounts);
         List<Log> logs = logHandler.getLogs(fromDate, accounts);
