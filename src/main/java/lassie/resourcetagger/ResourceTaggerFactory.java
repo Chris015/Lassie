@@ -7,7 +7,7 @@ public class ResourceTaggerFactory {
     private S3Handler s3Handler = new S3Handler();
     private Ec2Handler ec2Handler = new EC2HandlerImpl();
     private EMRHandler emrHandler = new EMRHandlerImpl();
-    private RedshiftHandler redshiftHandler = new RedshiftHandler();
+    private RedshiftHandler redshiftHandler = new RedshiftHandlerImpl();
     private ELBHandler elbHandler = new ELBHandlerImpl();
     private RDSHandler rdsHandler = new RDSHandlerImpl();
 
