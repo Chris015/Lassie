@@ -179,8 +179,9 @@ public class LogHandler {
             }
 
             tmpFolderZipped = Files.createTempDirectory(Paths.get(tmpFolder + "/"), null);
+            log.debug("TmpFolderZipped: " + tmpFolderZipped);
             tmpFolderUnzipped = Files.createTempDirectory(Paths.get(tmpFolder + "/"), null);
-
+            log.debug("TmpFolderUnzipped: " + tmpFolderUnzipped);
         } catch (IOException e) {
             log.error("Temp folders could not be created: ", e);
             e.printStackTrace();
