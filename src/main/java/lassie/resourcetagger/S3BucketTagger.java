@@ -6,6 +6,7 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
 import lassie.awshandlers.S3Handler;
+import lassie.awshandlers.S3HandlerImpl;
 import lassie.model.Log;
 import lassie.config.Account;
 import lassie.model.Event;
