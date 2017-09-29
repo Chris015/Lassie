@@ -19,10 +19,10 @@ import java.util.List;
 public class RDSDBInstanceTagger implements ResourceTagger {
     private final Logger log = Logger.getLogger(RDSDBInstanceTagger.class);
     private List<Event> events = new ArrayList<>();
-    private RDSHandler rdsHandlerImpl;
+    private RDSHandler rdsHandler;
 
-    public RDSDBInstanceTagger(RDSHandler rdsHandlerImpl) {
-        this.rdsHandlerImpl = rdsHandlerImpl;
+    public RDSDBInstanceTagger(RDSHandler rdsHandler) {
+        this.rdsHandler = rdsHandler;
     }
 
     @Override
@@ -36,7 +36,7 @@ public class RDSDBInstanceTagger implements ResourceTagger {
     }
 
     private void instantiateRDSClient(Account account) {
-        rdsHandlerImpl.instantiateRDSClient(account.getAccessKeyId(), account.getSecretAccessKey(), account.getRegions().get(0));
+        rdsHandler.instantiateRDSClient(account.getAccessKeyId(), account.getSecretAccessKey(), account.getRegions().get(0));
     }
 
     private void parseJson(List<String> filePaths) {
@@ -75,7 +75,7 @@ public class RDSDBInstanceTagger implements ResourceTagger {
     private void filterEventsWithoutTag(String ownerTag) {
         log.info("Filtering tagged DB instances");
         List<Event> untaggedEvents = new ArrayList<>();
-        List<String> untaggedDBInstanceIds = rdsHandlerImpl.getIdsForDBInstancesWithoutTag(ownerTag);
+        List<String> untaggedDBInstanceIds = rdsHandler.getIdsForDBInstancesWithoutTag(ownerTag);
         for (Event event : events) {
             if (untaggedDBInstanceIds.stream().anyMatch(id -> id.equals(event.getId()))) {
                 untaggedEvents.add(event);
@@ -91,7 +91,7 @@ public class RDSDBInstanceTagger implements ResourceTagger {
             log.info("No untagged DB instances found in log files");
         }
         for (Event event : events) {
-            rdsHandlerImpl.tagResource(event.getId(), ownerTag, event.getOwner());
+            rdsHandler.tagResource(event.getId(), ownerTag, event.getOwner());
         }
         this.events = new ArrayList<>();
         log.info("Done tagging DB instances");
