@@ -4,7 +4,7 @@ import lassie.awshandlers.*;
 
 public class ResourceTaggerFactory {
 
-    private S3Handler s3Handler = new S3Handler();
+    private S3Handler s3Handler = new S3HandlerImpl();
     private EC2Handler ec2Handler = new EC2Handler();
     private EMRHandler emrHandler = new EMRHandler();
     private RedshiftHandler redshiftHandler = new RedshiftHandler();

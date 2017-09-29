@@ -1,7 +1,5 @@
 package lassie.awshandlers;
 
-import com.amazonaws.services.rds.model.*;
-
 import java.util.List;
 
 public interface RDSHandler {
@@ -10,6 +8,4 @@ public interface RDSHandler {
     void tagResource(String id, String key, String value);
 
     List<String> getIdsForDBInstancesWithoutTag(String tag);
-
-    boolean hasTag(ListTagsForResourceResult response, String tag);
 }

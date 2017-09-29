@@ -22,7 +22,7 @@ public class S3HandlerIT {
     @Mock
     private AmazonS3 s3;
     @InjectMocks
-    private S3Handler s3Handler;
+    private S3HandlerImpl s3Handler;
 
     @Test
     public void bucketHasTagOwnerReturnsTrue() throws Exception {
