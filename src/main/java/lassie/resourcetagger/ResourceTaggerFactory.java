@@ -8,8 +8,8 @@ public class ResourceTaggerFactory {
     private Ec2Handler ec2Handler = new EC2HandlerImpl();
     private EMRHandler emrHandler = new EMRHandler();
     private RedshiftHandler redshiftHandler = new RedshiftHandler();
-    private RDSHandler rdsHandler = new RDSHandler();
     private ELBHandler elbHandler = new ELBHandlerImpl();
+    private RDSHandler rdsHandler = new RDSHandlerImpl();
 
     public ResourceTagger getResourceTagger(String resourceType) throws UnsupportedResourceTypeException {
         switch (resourceType.toUpperCase()) {

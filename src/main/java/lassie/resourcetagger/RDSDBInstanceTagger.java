@@ -6,11 +6,10 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
 import lassie.awshandlers.RDSHandler;
-import lassie.model.Log;
 import lassie.config.Account;
 import lassie.model.Event;
+import lassie.model.Log;
 import org.apache.log4j.Logger;
-
 
 import java.io.File;
 import java.io.IOException;
@@ -20,10 +19,10 @@ import java.util.List;
 public class RDSDBInstanceTagger implements ResourceTagger {
     private final Logger log = Logger.getLogger(RDSDBInstanceTagger.class);
     private List<Event> events = new ArrayList<>();
-    private RDSHandler rdsHandler;
+    private RDSHandler rdsHandlerImpl;
 
-    public RDSDBInstanceTagger(RDSHandler rdsHandler) {
-        this.rdsHandler = rdsHandler;
+    public RDSDBInstanceTagger(RDSHandler rdsHandlerImpl) {
+        this.rdsHandlerImpl = rdsHandlerImpl;
     }
 
     @Override
@@ -37,7 +36,7 @@ public class RDSDBInstanceTagger implements ResourceTagger {
     }
 
     private void instantiateRDSClient(Account account) {
-        rdsHandler.instantiateRDSClient(account.getAccessKeyId(), account.getSecretAccessKey(), account.getRegions().get(0));
+        rdsHandlerImpl.instantiateRDSClient(account.getAccessKeyId(), account.getSecretAccessKey(), account.getRegions().get(0));
     }
 
     private void parseJson(List<String> filePaths) {
@@ -76,7 +75,7 @@ public class RDSDBInstanceTagger implements ResourceTagger {
     private void filterEventsWithoutTag(String ownerTag) {
         log.info("Filtering tagged DB instances");
         List<Event> untaggedEvents = new ArrayList<>();
-        List<String> untaggedDBInstanceIds = rdsHandler.getIdsForDBInstancesWithoutTag(ownerTag);
+        List<String> untaggedDBInstanceIds = rdsHandlerImpl.getIdsForDBInstancesWithoutTag(ownerTag);
         for (Event event : events) {
             if (untaggedDBInstanceIds.stream().anyMatch(id -> id.equals(event.getId()))) {
                 untaggedEvents.add(event);
@@ -92,7 +91,7 @@ public class RDSDBInstanceTagger implements ResourceTagger {
             log.info("No untagged DB instances found in log files");
         }
         for (Event event : events) {
-            rdsHandler.tagResource(event.getId(), ownerTag, event.getOwner());
+            rdsHandlerImpl.tagResource(event.getId(), ownerTag, event.getOwner());
         }
         this.events = new ArrayList<>();
         log.info("Done tagging DB instances");
