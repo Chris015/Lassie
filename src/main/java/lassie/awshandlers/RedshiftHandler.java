@@ -53,7 +53,7 @@ public class RedshiftHandler {
                 untaggedCluserIds.add(cluster.getClusterIdentifier());
             }
         }
-        log.info("Found " + untaggedCluserIds.size() + " RedShift clusters without + " + tag);
+        log.info("Found " + untaggedCluserIds.size() + " RedShift clusters without " + tag);
         untaggedCluserIds.forEach(id -> log.info(id));
         return untaggedCluserIds;
     }
