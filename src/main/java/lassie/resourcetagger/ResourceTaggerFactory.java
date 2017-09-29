@@ -5,11 +5,11 @@ import lassie.awshandlers.*;
 public class ResourceTaggerFactory {
 
     private S3Handler s3Handler = new S3Handler();
-    private EC2Handler ec2Handler = new EC2Handler();
+    private Ec2Handler ec2Handler = new EC2HandlerImpl();
     private EMRHandler emrHandler = new EMRHandler();
     private RedshiftHandler redshiftHandler = new RedshiftHandler();
     private RDSHandler rdsHandler = new RDSHandler();
-    private ELBHandler elbHandler = new ELBHandler();
+    private ELBHandler elbHandler = new ELBHandlerImpl();
 
     public ResourceTagger getResourceTagger(String resourceType) throws UnsupportedResourceTypeException {
         switch (resourceType.toUpperCase()) {

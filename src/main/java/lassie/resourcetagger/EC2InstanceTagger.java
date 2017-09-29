@@ -1,12 +1,14 @@
 package lassie.resourcetagger;
 
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
-import lassie.awshandlers.EC2Handler;
-import lassie.model.Log;
+import lassie.awshandlers.Ec2Handler;
 import lassie.config.Account;
 import lassie.model.Event;
+import lassie.model.Log;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -16,11 +18,10 @@ import java.util.List;
 
 public class EC2InstanceTagger implements ResourceTagger {
     private final Logger log = Logger.getLogger(EC2InstanceTagger.class);
-
-    private EC2Handler ec2Handler;
+    private Ec2Handler ec2Handler;
     private List<Event> events = new ArrayList<>();
 
-    public EC2InstanceTagger(EC2Handler ec2Handler) {
+    public EC2InstanceTagger(Ec2Handler ec2Handler) {
         this.ec2Handler = ec2Handler;
     }
 

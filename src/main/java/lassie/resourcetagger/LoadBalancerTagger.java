@@ -6,9 +6,9 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
 import lassie.awshandlers.ELBHandler;
-import lassie.model.Log;
 import lassie.config.Account;
 import lassie.model.Event;
+import lassie.model.Log;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -19,10 +19,10 @@ import java.util.List;
 public class LoadBalancerTagger implements ResourceTagger {
     private final Logger log = Logger.getLogger(LoadBalancerTagger.class);
     private List<Event> events = new ArrayList<>();
-    private ELBHandler elbHandler;
+    private ELBHandler elbHandlerImpl;
 
-    public LoadBalancerTagger(ELBHandler elbHandler) {
-        this.elbHandler = elbHandler;
+    public LoadBalancerTagger(ELBHandler elbHandlerImpl) {
+        this.elbHandlerImpl = elbHandlerImpl;
     }
 
     @Override
@@ -36,7 +36,7 @@ public class LoadBalancerTagger implements ResourceTagger {
     }
 
     private void instantiateClient(Account account) {
-        elbHandler.instantiateELBClient(account.getAccessKeyId(), account.getSecretAccessKey(), account.getRegions().get(0));
+        elbHandlerImpl.instantiateELBClient(account.getAccessKeyId(), account.getSecretAccessKey(), account.getRegions().get(0));
     }
 
     private void parseJson(List<String> filePaths) {
@@ -77,7 +77,7 @@ public class LoadBalancerTagger implements ResourceTagger {
     private void filterEventsWithoutTag(String ownerTag) {
         log.info("Filtering tagged LoadBalancers");
         List<Event> untaggedLoadBalancers = new ArrayList<>();
-        List<String> untaggedLoadBalancerIds = elbHandler.getIdsForLoadBalancersWithoutTag(ownerTag);
+        List<String> untaggedLoadBalancerIds = elbHandlerImpl.getIdsForLoadBalancersWithoutTag(ownerTag);
         for (Event event : events) {
             if (untaggedLoadBalancerIds.stream().anyMatch(id -> id.equals(event.getId()))) {
                 untaggedLoadBalancers.add(event);
@@ -93,7 +93,7 @@ public class LoadBalancerTagger implements ResourceTagger {
             log.info("No untagged LoadBalancers found in log files");
         }
         for (Event event : events) {
-            elbHandler.tagResource(event.getId(), ownerTag, event.getOwner());
+            elbHandlerImpl.tagResource(event.getId(), ownerTag, event.getOwner());
             log.info("Tagged: " + event.getId() +
                     " with key: " + ownerTag +
                     " value: " + event.getOwner());

@@ -12,8 +12,8 @@ import java.util.List;
 
 import static lassie.Application.DRY_RUN;
 
-public class EC2Handler {
-    private final static Logger log = Logger.getLogger(EC2Handler.class);
+public class EC2HandlerImpl implements Ec2Handler {
+    private final static Logger log = Logger.getLogger(EC2HandlerImpl.class);
     private AmazonEC2 ec2;
 
     public void instantiateEC2Client(String accessKeyId, String secretAccessKey, String region) {
