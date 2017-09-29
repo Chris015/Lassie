@@ -6,6 +6,7 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
 import lassie.awshandlers.EMRHandler;
+import lassie.awshandlers.EMRHandlerImpl;
 import lassie.model.Log;
 import lassie.config.Account;
 import lassie.model.Event;

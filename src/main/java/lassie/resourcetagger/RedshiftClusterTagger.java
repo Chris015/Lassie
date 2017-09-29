@@ -6,9 +6,9 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.reflect.TypeToken;
 import com.jayway.jsonpath.JsonPath;
 import lassie.awshandlers.RedshiftHandler;
-import lassie.model.Log;
 import lassie.config.Account;
 import lassie.model.Event;
+import lassie.model.Log;
 import org.apache.log4j.Logger;
 
 import java.io.File;
