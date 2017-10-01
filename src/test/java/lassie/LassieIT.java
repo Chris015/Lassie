@@ -34,7 +34,7 @@ public class LassieIT {
     }
 
     @Test
-    public void oneUntaggedInstance_invokedTagResourcesOnce() throws Exception {
+    public void oneUntaggedInstance_invokesTagResourcesOnce() throws Exception {
         //given
         prepareTaggingEc2InstancesTest();
 
@@ -45,8 +45,9 @@ public class LassieIT {
         //when
         application.run(new String[0]);
 
+        //then
         verify(ec2Handler, times(1))
-                .tagResource("i-06e9aaf9760467624","Owner", "john.doe");
+                .tagResource("i-06e9aaf9760467624", "Owner", "john.doe");
         verify(ec2Handler, times(0))
                 .tagResource("i-07a5bbg4326310341", "Owner", "jane.doe");
     }
@@ -64,7 +65,7 @@ public class LassieIT {
         //when
         application.run(new String[0]);
 
-        // then
+        //then
         verify(ec2Handler, times(1))
                 .tagResource("i-06e9aaf9760467624", "Owner", "john.doe");
 
