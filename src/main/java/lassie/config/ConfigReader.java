@@ -1,37 +1,11 @@
 package lassie.config;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
-public class ConfigReader {
-    private ObjectMapper objectMapper;
-    private File configurationFile = new File("configuration.yaml");
+public interface ConfigReader {
 
-    public ConfigReader() {
-        this.objectMapper = new ObjectMapper(new YAMLFactory());
-    }
+    List<Account> getAccounts();
 
-    public List<Account> getAccounts() {
-        return getAccountConfig().getAccounts();
-    }
+    boolean getDryRun();
 
-    public boolean getDryRun() {
-        return getAccountConfig().isDryRun();
-    }
-
-    private AccountsConfig getAccountConfig() {
-        try {
-            return objectMapper.readValue(
-                    configurationFile,
-                    AccountsConfig.class);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        throw new NullPointerException("Unable to get Account Config");
-    }
 }

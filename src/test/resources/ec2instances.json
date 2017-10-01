@@ -1,0 +1,34 @@
+{
+  "Records": [
+    {
+      "userIdentity": {
+        "arn": "arn:aws:iam::123456789:user/john.doe"
+      },
+      "eventName": "RunInstances",
+      "responseElements": {
+        "instancesSet": {
+          "items": [
+            {
+              "instanceId": "i-06e9aaf9760467624"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "userIdentity": {
+        "arn": "arn:aws:iam::987654321:user/jane.doe"
+      },
+      "eventName": "RunInstances",
+      "responseElements": {
+        "instancesSet": {
+          "items": [
+            {
+              "instanceId": "i-07a5bbg4326310341"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

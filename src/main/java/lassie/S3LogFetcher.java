@@ -25,17 +25,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
 
-public class LogHandler {
-    private final static Logger log = Logger.getLogger(LogHandler.class);
+public class S3LogFetcher implements LogFetcher {
+    private final static Logger log = Logger.getLogger(S3LogFetcher.class);
     private AmazonS3 s3;
     private Path tmpFolderZipped;
     private Path tmpFolderUnzipped;
     private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd");
     private String tmpFolder = "tmp";
-
-    public LogHandler() {
-        createTmpFolders();
-    }
 
     public List<Log> getLogs(String startDate, List<Account> accounts) {
         List<Log> logs = new ArrayList<>();
@@ -69,6 +65,34 @@ public class LogHandler {
         }
         log.info("Logs downloaded for all the given dates");
         return logs;
+    }
+
+    public void createTmpFolders() {
+        log.debug("Creating temp folders");
+        try {
+            if (!Files.isDirectory(Paths.get(tmpFolder))) {
+                Files.createDirectory(Paths.get(tmpFolder));
+            }
+
+            tmpFolderZipped = Files.createTempDirectory(Paths.get(tmpFolder + "/"), null);
+            log.debug("TmpFolderZipped: " + tmpFolderZipped);
+            tmpFolderUnzipped = Files.createTempDirectory(Paths.get(tmpFolder + "/"), null);
+            log.debug("TmpFolderUnzipped: " + tmpFolderUnzipped);
+        } catch (IOException e) {
+            log.error("Temp folders could not be created: ", e);
+            e.printStackTrace();
+        }
+        log.info("Temp folders created");
+    }
+
+    public void clearLogs() {
+        try {
+            FileUtils.cleanDirectory(new File(tmpFolder));
+            log.info("Temp-directory cleaned");
+        } catch (IOException e) {
+            log.error("Temp directory could not be cleaned: ", e);
+            e.printStackTrace();
+        }
     }
 
     private List<S3ObjectSummary> getObjectSummaries(String date, Account account, String region) {
@@ -126,7 +150,7 @@ public class LogHandler {
         log.debug("Unzipping objects");
         List<String> filePaths = new ArrayList<>();
         for (String filename : filenames) {
-        log.debug("Unzipping object: " + filename);
+            log.debug("Unzipping object: " + filename);
             String fileInputPath = tmpFolderZipped + "/" + filename;
             String fileOutputPath = tmpFolderUnzipped + "/" + filename.substring(0, filename.length() - 3);
             try (FileInputStream fileInputStream = new FileInputStream(fileInputPath);
@@ -169,33 +193,5 @@ public class LogHandler {
         log.debug("Log created");
         return logObject;
 
-    }
-
-    private void createTmpFolders() {
-        log.debug("Creating temp folders");
-        try {
-            if (!Files.isDirectory(Paths.get(tmpFolder))) {
-                Files.createDirectory(Paths.get(tmpFolder));
-            }
-
-            tmpFolderZipped = Files.createTempDirectory(Paths.get(tmpFolder + "/"), null);
-            log.debug("TmpFolderZipped: " + tmpFolderZipped);
-            tmpFolderUnzipped = Files.createTempDirectory(Paths.get(tmpFolder + "/"), null);
-            log.debug("TmpFolderUnzipped: " + tmpFolderUnzipped);
-        } catch (IOException e) {
-            log.error("Temp folders could not be created: ", e);
-            e.printStackTrace();
-        }
-        log.info("Temp folders created");
-    }
-
-    public void clearLogs() {
-        try {
-            FileUtils.cleanDirectory(new File(tmpFolder));
-            log.info("Temp-directory cleaned");
-        } catch (IOException e) {
-            log.error("Temp directory could not be cleaned: ", e);
-            e.printStackTrace();
-        }
     }
 }

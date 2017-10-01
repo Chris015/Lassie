@@ -9,7 +9,7 @@ accounts: # A list of accounts you want to use.
     cloudTrailRoot: s3://bucket-name/your-folder # The bucket and folder in with your AWSLogs are stored.  
     bucketRegion: eu-west-1 # Your bucket region.
     resourceTypes: # List of supported resources. Uncomment the ones you want to use. Ex:
-      - Ec2Instance
+      #- Ec2Instance
       #- SecurityGroup
       #- S3Bucket
       #- EbsVolume

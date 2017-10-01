@@ -98,4 +98,8 @@ public class EC2InstanceTagger implements ResourceTagger {
         this.events = new ArrayList<>();
         log.info("Done tagging EC2 instances");
     }
+
+    public Ec2Handler getEc2Handler() {
+        return ec2Handler;
+    }
 }
