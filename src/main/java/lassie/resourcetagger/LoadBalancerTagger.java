@@ -94,9 +94,6 @@ public class LoadBalancerTagger implements ResourceTagger {
         }
         for (Event event : events) {
             elbHandlerImpl.tagResource(event.getId(), ownerTag, event.getOwner());
-            log.info("Tagged: " + event.getId() +
-                    " with key: " + ownerTag +
-                    " value: " + event.getOwner());
         }
         this.events = new ArrayList<>();
         log.info("Done tagging LoadBalancers");
