@@ -30,6 +30,7 @@ public class LassieIT {
     private RedshiftHandler redshiftHandler;
     private ELBHandler elbHandler;
     private S3Handler s3Handler;
+    private RDSHandler rdsHandler;
 
     @Before
     public void setUp() throws Exception {
@@ -38,6 +39,7 @@ public class LassieIT {
         this.redshiftHandler = spy(new RedshiftHandlerMock());
         this.elbHandler = spy(new ELBHandlerMock());
         this.s3Handler = spy(new S3HandlerMock());
+        this.rdsHandler = spy(new RDSHandlerMock());
 
         ResourceTaggerFactory resourceTaggerFactory = new ResourceTaggerFactory();
         resourceTaggerFactory.setEc2Handler(ec2Handler);
@@ -45,6 +47,7 @@ public class LassieIT {
         resourceTaggerFactory.setRedshiftHandler(redshiftHandler);
         resourceTaggerFactory.setElbHandler(elbHandler);
         resourceTaggerFactory.setS3Handler(s3Handler);
+        resourceTaggerFactory.setRdsHandler(rdsHandler);
 
         this.application = new Application();
         this.application.setResourceTaggerFactory(resourceTaggerFactory);
@@ -211,6 +214,28 @@ public class LassieIT {
                 .tagResource(loadBalancersWithoutTag.get(0), OWNER_TAG, "johnny.doe");
         verify(elbHandler, times(0))
                 .tagResource(loadBalancersWithTag.get(0), OWNER_TAG, "jane.doe");
+    }
+
+    @Test
+    public void untaggedDBInstance_areTagged() throws Exception {
+        //given
+        prepareTest("rdsdbinstance", "rdsdbinstances.json");
+        List<String> untaggedDBInstances = new ArrayList<>();
+        untaggedDBInstances.add("arn:aws:rds:eu-west-1:123456789012:db:mysql-db1");
+        RDSHandlerMock.dbInstancesWithoutTag = untaggedDBInstances;
+
+        List<String> taggedDBInstances = new ArrayList<>();
+        taggedDBInstances.add("arn:aws:rds:eu-west-1:123456789012:db:mysql-db2");
+        RDSHandlerMock.dbInstancesWithTag = taggedDBInstances;
+
+        //when
+        application.run(args);
+
+        //then
+        verify(rdsHandler, times(1))
+                .tagResource(untaggedDBInstances.get(0), OWNER_TAG, "jane.doe");
+        verify(rdsHandler, times(0))
+                .tagResource(taggedDBInstances.get(0), OWNER_TAG, "johnny.doe");
     }
 
     @Test
