@@ -26,11 +26,13 @@ public class EC2InstanceTagger implements ResourceTagger {
     }
 
     @Override
-    public void tagResources(Log log) {
-        instantiateEC2Client(log.getAccount());
+    public void tagResources(Account account) {
+        instantiateEC2Client(account);
+        for (Log log : account.getLogs()) {
         parseJson(log.getFilePaths());
-        filterEventsWithoutTag(log.getAccount().getOwnerTag());
-        tag(log.getAccount().getOwnerTag());
+        filterEventsWithoutTag(account.getOwnerTag());
+        tag(account.getOwnerTag());
+        }
     }
 
     private void instantiateEC2Client(Account account) {

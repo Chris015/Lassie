@@ -8,12 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class LogFetcherMock implements LogFetcher {
-    public static List<Log> logs = new ArrayList<>();
 
     @Override
-    public List<Log> getLogs(String startDate, List<Account> accounts) {
-        return logs;
-    }
+    public void addLogsToAccount(String startDate, List<Account> accounts) {}
 
     @Override
     public void createTmpFolders() {
