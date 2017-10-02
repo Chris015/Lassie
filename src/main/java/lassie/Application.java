@@ -47,7 +47,6 @@ public class Application {
         for (Log log : logs) {
             Account account = log.getAccount();
             List<String> resourceTypes = account.getResourceTypes();
-            System.out.println("RESOURCE TYPES FOR ACCOUNT" + account.getRegions().get(0) + " " + resourceTypes);
             List<ResourceTagger> resourceTaggers = createResourceTaggers(resourceTypes);
 
             for (ResourceTagger resourceTagger : resourceTaggers) {
