@@ -1,0 +1,30 @@
+{
+  "Records": [
+    {
+      "userIdentity": {
+        "arn": "arn:aws:iam::123456789:user/jane.doe"
+      },
+      "eventName": "CreateLoadBalancer",
+      "responseElements": {
+        "loadBalancers": [
+          {
+            "loadBalancerArn": "arn:aws:elasticloadbalancing:ap-south-1:12345:loadbalancer/app/test/d21fc16f3efsa23a"
+          }
+        ]
+      }
+    },
+    {
+      "userIdentity": {
+        "arn": "arn:aws:iam::123456789:user/johnny.doe"
+      },
+      "eventName": "CreateLoadBalancer",
+      "responseElements": {
+        "loadBalancers": [
+          {
+            "loadBalancerArn": "arn:aws:elasticloadbalancing:ap-south-1:12345:loadbalancer/app/test/e7d9fcc49ebff18b"
+          }
+        ]
+      }
+    }
+  ]
+}

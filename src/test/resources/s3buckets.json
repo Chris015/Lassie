@@ -1,0 +1,22 @@
+{
+  "Records": [
+    {
+      "userIdentity": {
+        "arn": "arn:aws:iam::123456789:user/jane.doe"
+      },
+      "eventName": "CreateBucket",
+      "requestParameters": {
+        "bucketName": "BucketOne"
+      }
+    },
+    {
+      "userIdentity": {
+        "arn": "arn:aws:iam::123456789:user/johnny.doe"
+      },
+      "eventName": "CreateBucket",
+      "requestParameters": {
+        "bucketName": "BucketTwo"
+      }
+    }
+  ]
+}
