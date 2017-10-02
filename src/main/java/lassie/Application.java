@@ -26,6 +26,9 @@ public class Application {
 
     public Application() {
         log.info("Application started");
+        String mockModeProperty = System.getProperties().getProperty("mockmode");
+        if (mockModeProperty != null)
+            mockMode = System.getProperties().getProperty("mockmode").equals("true");
         this.configReader = mockMode ? new ConfigReaderMock() : new ConfigReaderImpl();
         DRY_RUN = configReader.getDryRun();
         this.logFetcher = mockMode ? new LogFetcherMock() : new S3LogFetcher();
@@ -34,9 +37,6 @@ public class Application {
     }
 
     public void run(String[] args) {
-        String mockModeProperty = System.getProperties().getProperty("mockmode");
-        if (mockModeProperty != null)
-            mockMode = System.getProperties().getProperty("mockmode").equals("true");
         this.fromDate = dateInterpreter.interpret(args);
         List<Account> accounts = configReader.getAccounts();
         logFetcher.createTmpFolders();
