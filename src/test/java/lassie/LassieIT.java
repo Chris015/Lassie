@@ -4,20 +4,23 @@ import com.amazonaws.services.ec2.model.Instance;
 import com.amazonaws.services.ec2.model.SecurityGroup;
 import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ec2.model.Volume;
+import com.amazonaws.services.elasticmapreduce.model.Cluster;
+import lassie.awshandlers.EMRHandler;
 import lassie.awshandlers.Ec2Handler;
+import lassie.awshandlers.RedshiftHandler;
 import lassie.config.Account;
-import lassie.mocks.ConfigReaderMock;
-import lassie.mocks.EC2HandlerMock;
-import lassie.mocks.LogFetcherMock;
+import lassie.mocks.*;
 import lassie.model.Log;
 import lassie.resourcetagger.ResourceTaggerFactory;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
-import static java.util.Collections.*;
-import static org.junit.Assert.*;
+import static java.util.Collections.singletonList;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 public class LassieIT {
@@ -25,12 +28,19 @@ public class LassieIT {
     private String[] args = new String[0];
     private Application application;
     private Ec2Handler ec2Handler;
+    private EMRHandler emrHandler;
+    private RedshiftHandler redshiftHandler;
 
     @Before
     public void setUp() throws Exception {
         this.ec2Handler = spy(new EC2HandlerMock());
+        this.emrHandler = spy(new EMRHandlerMock());
+        this.redshiftHandler = spy(new RedshiftHandlerMock());
+
         ResourceTaggerFactory resourceTaggerFactory = new ResourceTaggerFactory();
         resourceTaggerFactory.setEc2Handler(ec2Handler);
+        resourceTaggerFactory.setEmrHandler(emrHandler);
+        resourceTaggerFactory.setRedshiftHandler(redshiftHandler);
 
         this.application = new Application();
         this.application.setResourceTaggerFactory(resourceTaggerFactory);
@@ -39,7 +49,7 @@ public class LassieIT {
     @Test
     public void untaggedInstances_areTagged() throws Exception {
         //given
-        prepareEc2Test("ec2instance", "ec2Instances.json");
+        prepareTest("ec2instance", "ec2Instances.json");
 
         HashMap<String, Instance> instances = EC2HandlerMock.instances;
         Instance instance = instances.get("i-07a5bbg4326310341");
@@ -67,7 +77,7 @@ public class LassieIT {
     @Test
     public void untaggedSecurityGroups_areTagged() throws Exception {
         //given
-        prepareEc2Test("securitygroup", "securitygroups.json");
+        prepareTest("securitygroup", "securitygroups.json");
 
         HashMap<String, SecurityGroup> securityGroups = EC2HandlerMock.securityGroups;
         SecurityGroup securityGroup = securityGroups.get("s-9831ba2f192s2");
@@ -93,7 +103,7 @@ public class LassieIT {
     @Test
     public void untaggedVolumes_areTagged() throws Exception {
         //given
-        prepareEc2Test("ebsvolume", "ebsvolumes.json");
+        prepareTest("ebsvolume", "ebsvolumes.json");
 
         HashMap<String, Volume> volumes = EC2HandlerMock.volumes;
         Volume volume = volumes.get("v-203412c121a31");
@@ -126,7 +136,58 @@ public class LassieIT {
         assertEquals("john.doe", tag.getValue());
     }
 
-    private void prepareEc2Test(String resourceType, String fileName) {
+    @Test
+    public void untaggedEMRClusters_areTagged() throws Exception {
+        //given
+        prepareTest("emrcluster", "emrclusters.json");
+        HashMap<String, Cluster> clusters = EMRHandlerMock.clusters;
+        Cluster cluster = clusters.get("j-123c12b123a12");
+        assertEquals(1, cluster.getTags().size());
+
+        cluster = clusters.get("j-321a21c321b21");
+        assertEquals(0, cluster.getTags().size());
+
+        //when
+        application.run(args);
+
+        //then
+        verify(emrHandler, times(0))
+                .tagResource("j-123c12b123a12", OWNER_TAG, "jane.doe");
+        verify(emrHandler, times(1))
+                .tagResource("j-321a21c321b21", OWNER_TAG, "johnny.doe");
+
+        com.amazonaws.services.elasticmapreduce.model.Tag tag = clusters.get("j-321a21c321b21").getTags().get(0);
+        assertEquals(OWNER_TAG, tag.getKey());
+        assertEquals("johnny.doe", tag.getValue());
+    }
+
+    @Test
+    public void untaggedRedshiftClusters_areTagged() throws Exception {
+        //given
+        prepareTest("redshiftcluster", "redshiftclusters.json");
+        HashMap<String, com.amazonaws.services.redshift.model.Cluster> clusters = RedshiftHandlerMock.clusters;
+
+        com.amazonaws.services.redshift.model.Cluster cluster = clusters.get("arn:aws:redshift:ap-south-1:12345:cluster:r-109812b123a21");
+        assertEquals(1, cluster.getTags().size());
+
+        cluster = clusters.get("arn:aws:redshift:ap-south-1:12345:cluster:r-203412c121a31");
+        assertEquals(0, cluster.getTags().size());
+
+        //when
+        application.run(args);
+
+        //then
+        verify(redshiftHandler, times(0))
+                .tagResource("arn:aws:redshift:ap-south-1:12345:cluster:r-109812b123a21", OWNER_TAG, "jane.doe");
+        verify(redshiftHandler, times(1))
+                .tagResource("arn:aws:redshift:ap-south-1:12345:cluster:r-203412c121a31", OWNER_TAG, "johnny.doe");
+
+        com.amazonaws.services.redshift.model.Tag tag = clusters.get("arn:aws:redshift:ap-south-1:12345:cluster:r-203412c121a31").getTags().get(0);
+        assertEquals(OWNER_TAG, tag.getKey());
+        assertEquals("johnny.doe", tag.getValue());
+    }
+
+    private void prepareTest(String resourceType, String fileName) {
         List<Account> accounts = new ArrayList<>();
         Account account = createAccount(singletonList(resourceType));
         accounts.add(account);
@@ -146,8 +207,9 @@ public class LassieIT {
         Account account = new Account();
         account.setSecretAccessKey("");
         account.setAccessKeyId("");
+        account.setAccountId("12345");
         account.setOwnerTag(OWNER_TAG);
-        account.setRegions(singletonList(""));
+        account.setRegions(singletonList("ap-south-1"));
         account.setResourceTypes(resourceTypes);
         return account;
     }

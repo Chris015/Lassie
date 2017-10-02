@@ -56,4 +56,24 @@ public class ResourceTaggerFactory {
     public void setEc2Handler(Ec2Handler ec2Handler) {
         this.ec2Handler = ec2Handler;
     }
+
+    public void setEmrHandler(EMRHandler emrHandler) {
+        this.emrHandler = emrHandler;
+    }
+
+    public void setRedshiftHandler(RedshiftHandler redshiftHandler) {
+        this.redshiftHandler = redshiftHandler;
+    }
+
+    public void setElbHandler(ELBHandler elbHandler) {
+        this.elbHandler = elbHandler;
+    }
+
+    public void setS3Handler(S3Handler s3Handler) {
+        this.s3Handler = s3Handler;
+    }
+
+    public void setRdsHandler(RDSHandler rdsHandler) {
+        this.rdsHandler = rdsHandler;
+    }
 }

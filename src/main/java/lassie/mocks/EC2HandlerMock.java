@@ -136,7 +136,6 @@ public class EC2HandlerMock implements lassie.awshandlers.Ec2Handler {
                 instancesWithoutTag.add(instance.getInstanceId());
             }
         }
-
         return instancesWithoutTag;
     }
 
