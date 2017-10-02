@@ -39,6 +39,7 @@ public class ELBHandlerImpl implements ELBHandler {
                 .withResourceArns(id)
                 .withTags(tag);
         elb.addTags(tagsRequest);
+        log.info("Tagged: " + id + " with key: " + key + " value: " + value);
     }
 
     public List<String> getIdsForLoadBalancersWithoutTag(String tag) {
