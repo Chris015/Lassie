@@ -7,6 +7,7 @@ import com.amazonaws.services.ec2.model.Volume;
 import com.amazonaws.services.elasticmapreduce.model.Cluster;
 import lassie.awshandlers.EMRHandler;
 import lassie.awshandlers.Ec2Handler;
+import lassie.awshandlers.RDSHandler;
 import lassie.awshandlers.RedshiftHandler;
 import lassie.config.Account;
 import lassie.mocks.*;
@@ -30,17 +31,20 @@ public class LassieIT {
     private Ec2Handler ec2Handler;
     private EMRHandler emrHandler;
     private RedshiftHandler redshiftHandler;
+    private RDSHandler rdsHandler;
 
     @Before
     public void setUp() throws Exception {
         this.ec2Handler = spy(new EC2HandlerMock());
         this.emrHandler = spy(new EMRHandlerMock());
         this.redshiftHandler = spy(new RedshiftHandlerMock());
+        this.rdsHandler = spy(new RDSHandlerMock());
 
         ResourceTaggerFactory resourceTaggerFactory = new ResourceTaggerFactory();
         resourceTaggerFactory.setEc2Handler(ec2Handler);
         resourceTaggerFactory.setEmrHandler(emrHandler);
         resourceTaggerFactory.setRedshiftHandler(redshiftHandler);
+        resourceTaggerFactory.setRdsHandler(rdsHandler);
 
         this.application = new Application();
         this.application.setResourceTaggerFactory(resourceTaggerFactory);
@@ -185,6 +189,26 @@ public class LassieIT {
         com.amazonaws.services.redshift.model.Tag tag = clusters.get("arn:aws:redshift:ap-south-1:12345:cluster:r-203412c121a31").getTags().get(0);
         assertEquals(OWNER_TAG, tag.getKey());
         assertEquals("johnny.doe", tag.getValue());
+    }
+
+    @Test
+    public void untaggedDBInstance_areTagged() throws Exception {
+        //given
+        prepareTest("rdsdbinstance", "rdsdbinstances.json");
+        List<String> untaggedDBInstances = new ArrayList<>();
+        untaggedDBInstances.add("arn:aws:rds:eu-west-1:123456789012:db:mysql-db1");
+        RDSHandlerMock.dbInstancesWithoutTag = untaggedDBInstances;
+
+        List<String> taggedDBInstances = new ArrayList<>();
+        taggedDBInstances.add("arn:aws:rds:eu-west-1:123456789012:db:mysql-db2");
+        RDSHandlerMock.dbInstancesWithTag = taggedDBInstances;
+
+        //when
+        application.run(args);
+
+        //then
+        verify(rdsHandler, times(1)).tagResource(untaggedDBInstances.get(0), OWNER_TAG, "jane.doe");
+        verify(rdsHandler, times(0)).tagResource(taggedDBInstances.get(0), OWNER_TAG, "johnny.doe");
     }
 
     private void prepareTest(String resourceType, String fileName) {
