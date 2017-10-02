@@ -5,10 +5,7 @@ import com.amazonaws.services.ec2.model.SecurityGroup;
 import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ec2.model.Volume;
 import com.amazonaws.services.elasticmapreduce.model.Cluster;
-import lassie.awshandlers.ELBHandler;
-import lassie.awshandlers.EMRHandler;
-import lassie.awshandlers.Ec2Handler;
-import lassie.awshandlers.RedshiftHandler;
+import lassie.awshandlers.*;
 import lassie.config.Account;
 import lassie.mocks.*;
 import lassie.model.Log;
@@ -32,6 +29,7 @@ public class LassieIT {
     private EMRHandler emrHandler;
     private RedshiftHandler redshiftHandler;
     private ELBHandler elbHandler;
+    private S3Handler s3Handler;
 
     @Before
     public void setUp() throws Exception {
@@ -39,12 +37,14 @@ public class LassieIT {
         this.emrHandler = spy(new EMRHandlerMock());
         this.redshiftHandler = spy(new RedshiftHandlerMock());
         this.elbHandler = spy(new ELBHandlerMock());
+        this.s3Handler = spy(new S3HandlerMock());
 
         ResourceTaggerFactory resourceTaggerFactory = new ResourceTaggerFactory();
         resourceTaggerFactory.setEc2Handler(ec2Handler);
         resourceTaggerFactory.setEmrHandler(emrHandler);
         resourceTaggerFactory.setRedshiftHandler(redshiftHandler);
         resourceTaggerFactory.setElbHandler(elbHandler);
+        resourceTaggerFactory.setS3Handler(s3Handler);
 
         this.application = new Application();
         this.application.setResourceTaggerFactory(resourceTaggerFactory);
@@ -195,13 +195,13 @@ public class LassieIT {
     public void untaggedLoadBalancers_areTagged() throws Exception {
         //given
         prepareTest("loadbalancer", "loadbalancers.json");
-        List<String> loadBalancersWithoutTag = new ArrayList<>();
-        loadBalancersWithoutTag.add("arn:aws:elasticloadbalancing:ap-south-1:12345:loadbalancer/app/test/e7d9fcc49ebff18b");
-        ELBHandlerMock.loadBalancersWithoutTag = loadBalancersWithoutTag;
-
         List<String> loadBalancersWithTag = new ArrayList<>();
         loadBalancersWithTag.add("arn:aws:elasticloadbalancing:ap-south-1:12345:loadbalancer/app/test/d21fc16f3efsa23a");
         ELBHandlerMock.loadBalancersWithTag = loadBalancersWithTag;
+
+        List<String> loadBalancersWithoutTag = new ArrayList<>();
+        loadBalancersWithoutTag.add("arn:aws:elasticloadbalancing:ap-south-1:12345:loadbalancer/app/test/e7d9fcc49ebff18b");
+        ELBHandlerMock.loadBalancersWithoutTag = loadBalancersWithoutTag;
 
         //when
         application.run(args);
@@ -211,6 +211,29 @@ public class LassieIT {
                 .tagResource(loadBalancersWithoutTag.get(0), OWNER_TAG, "johnny.doe");
         verify(elbHandler, times(0))
                 .tagResource(loadBalancersWithTag.get(0), OWNER_TAG, "jane.doe");
+    }
+
+    @Test
+    public void untagged3Buckets_areTagged() throws Exception {
+        //given
+        prepareTest("s3bucket", "s3buckets.json");
+
+        List<String> bucketsWithTag = new ArrayList<>();
+        bucketsWithTag.add("BucketOne");
+        S3HandlerMock.bucketsWithTag = bucketsWithTag;
+
+        List<String> bucketsWithoutTag = new ArrayList<>();
+        bucketsWithoutTag.add("BucketTwo");
+        S3HandlerMock.bucketsWithoutTag = bucketsWithoutTag;
+
+        //when
+        application.run(args);
+
+        //then
+        verify(s3Handler, times(1))
+                .tagBucket("BucketTwo", OWNER_TAG, "johnny.doe");
+        verify(s3Handler, times(0))
+                .tagBucket("BucketOne", OWNER_TAG, "jane.doe");
     }
 
     private void prepareTest(String resourceType, String fileName) {
