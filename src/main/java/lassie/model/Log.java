@@ -1,20 +1,18 @@
 package lassie.model;
 
-import lassie.config.Account;
-
 import java.util.List;
 
 public class Log {
-    private Account account;
+    private String region;
     private List<String> filePaths;
 
-    public Log(Account account, List<String> filePaths) {
-        this.account = account;
+    public Log(String region, List<String> filePaths) {
+        this.region = region;
         this.filePaths = filePaths;
     }
 
-    public Account getAccount() {
-        return account;
+    public String getRegion() {
+        return region;
     }
 
     public List<String> getFilePaths() {

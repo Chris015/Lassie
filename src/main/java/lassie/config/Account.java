@@ -1,7 +1,9 @@
 package lassie.config;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lassie.model.Log;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Account {
@@ -14,6 +16,7 @@ public class Account {
     private String bucketRegion;
     private List<String> resourceTypes;
     private List<String> regions;
+    private List<Log> logs = new ArrayList<>();
 
     public Account() {
     }
@@ -27,6 +30,14 @@ public class Account {
         this.bucketRegion = bucketRegion;
         this.resourceTypes = resourceTypes;
         this.regions = regions;
+    }
+
+    public void addLog(Log log) {
+        this.logs.add(log);
+    }
+
+    public List<Log> getLogs() {
+        return this.logs;
     }
 
     public String getOwnerTag() {

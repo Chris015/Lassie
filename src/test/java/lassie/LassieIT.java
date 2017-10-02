@@ -271,10 +271,8 @@ public class LassieIT {
         List<String> filePaths = new ArrayList<>();
         filePaths.add(ClassLoader.getSystemResource(fileName).getPath());
 
-        List<Log> logs = new ArrayList<>();
-        Log log = new Log(account, filePaths);
-        logs.add(log);
-        LogFetcherMock.logs = logs;
+        Log log = new Log(account.getRegions().get(0), filePaths);
+        account.addLog(log);
     }
 
     private Account createAccount(List<String> resourceTypes) {
