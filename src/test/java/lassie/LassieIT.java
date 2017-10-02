@@ -5,21 +5,22 @@ import com.amazonaws.services.ec2.model.SecurityGroup;
 import com.amazonaws.services.ec2.model.Tag;
 import com.amazonaws.services.ec2.model.Volume;
 import com.amazonaws.services.elasticmapreduce.model.Cluster;
+import lassie.awshandlers.EMRHandler;
 import lassie.awshandlers.Ec2Handler;
+import lassie.awshandlers.RedshiftHandler;
 import lassie.config.Account;
-import lassie.mocks.ConfigReaderMock;
-import lassie.mocks.EC2HandlerMock;
-import lassie.mocks.EMRHandlerMock;
-import lassie.mocks.LogFetcherMock;
+import lassie.mocks.*;
 import lassie.model.Log;
 import lassie.resourcetagger.ResourceTaggerFactory;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
-import static java.util.Collections.*;
-import static org.junit.Assert.*;
+import static java.util.Collections.singletonList;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 public class LassieIT {
@@ -27,16 +28,19 @@ public class LassieIT {
     private String[] args = new String[0];
     private Application application;
     private Ec2Handler ec2Handler;
-    private EMRHandlerMock emrHandler;
+    private EMRHandler emrHandler;
+    private RedshiftHandler redshiftHandler;
 
     @Before
     public void setUp() throws Exception {
         this.ec2Handler = spy(new EC2HandlerMock());
         this.emrHandler = spy(new EMRHandlerMock());
+        this.redshiftHandler = spy(new RedshiftHandlerMock());
 
         ResourceTaggerFactory resourceTaggerFactory = new ResourceTaggerFactory();
         resourceTaggerFactory.setEc2Handler(ec2Handler);
         resourceTaggerFactory.setEmrHandler(emrHandler);
+        resourceTaggerFactory.setRedshiftHandler(redshiftHandler);
 
         this.application = new Application();
         this.application.setResourceTaggerFactory(resourceTaggerFactory);
@@ -157,6 +161,32 @@ public class LassieIT {
         assertEquals("johnny.doe", tag.getValue());
     }
 
+    @Test
+    public void untaggedRedshiftClusters_areTagged() throws Exception {
+        //given
+        prepareTest("redshiftcluster", "redshiftclusters.json");
+        HashMap<String, com.amazonaws.services.redshift.model.Cluster> clusters = RedshiftHandlerMock.clusters;
+
+        com.amazonaws.services.redshift.model.Cluster cluster = clusters.get("arn:aws:redshift:ap-south-1:12345:cluster:r-109812b123a21");
+        assertEquals(1, cluster.getTags().size());
+
+        cluster = clusters.get("arn:aws:redshift:ap-south-1:12345:cluster:r-203412c121a31");
+        assertEquals(0, cluster.getTags().size());
+
+        //when
+        application.run(args);
+
+        //then
+        verify(redshiftHandler, times(0))
+                .tagResource("arn:aws:redshift:ap-south-1:12345:cluster:r-109812b123a21", OWNER_TAG, "jane.doe");
+        verify(redshiftHandler, times(1))
+                .tagResource("arn:aws:redshift:ap-south-1:12345:cluster:r-203412c121a31", OWNER_TAG, "johnny.doe");
+
+        com.amazonaws.services.redshift.model.Tag tag = clusters.get("arn:aws:redshift:ap-south-1:12345:cluster:r-203412c121a31").getTags().get(0);
+        assertEquals(OWNER_TAG, tag.getKey());
+        assertEquals("johnny.doe", tag.getValue());
+    }
+
     private void prepareTest(String resourceType, String fileName) {
         List<Account> accounts = new ArrayList<>();
         Account account = createAccount(singletonList(resourceType));
@@ -177,8 +207,9 @@ public class LassieIT {
         Account account = new Account();
         account.setSecretAccessKey("");
         account.setAccessKeyId("");
+        account.setAccountId("12345");
         account.setOwnerTag(OWNER_TAG);
-        account.setRegions(singletonList(""));
+        account.setRegions(singletonList("ap-south-1"));
         account.setResourceTypes(resourceTypes);
         return account;
     }
