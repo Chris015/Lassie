@@ -1,0 +1,22 @@
+{
+  "Records": [
+    {
+      "userIdentity": {
+        "arn": "arn:aws:iam::123456789:user/jane.doe"
+      },
+      "eventName": "CreateDBInstance",
+      "responseElements": {
+        "dBInstanceArn": "arn:aws:rds:eu-west-1:123456789012:db:mysql-db1"
+      }
+    },
+    {
+      "userIdentity": {
+        "arn": "arn:aws:iam::123456789:user/johnny.doe"
+      },
+      "eventName": "CreateDBInstance",
+      "responseElements": {
+        "dBInstanceArn": "arn:aws:rds:eu-west-1:123456789012:db:mysql-db2"
+      }
+    }
+  ]
+}

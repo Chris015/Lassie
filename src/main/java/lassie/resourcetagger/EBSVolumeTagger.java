@@ -14,6 +14,7 @@ import org.apache.log4j.Logger;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class EBSVolumeTagger implements ResourceTagger {
@@ -73,8 +74,9 @@ public class EBSVolumeTagger implements ResourceTagger {
     }
 
     private void filterEventsWithoutTag(String ownerTag) {
-        log.info("Filtering tagged EBS volume");
+        log.info("Filtering tagged EBS volumes");
         List<Event> untaggedVolumes = new ArrayList<>();
+
         List<String> untaggedVolumeIds = ec2Handler.getIdsForVolumesWithoutTag(ownerTag);
 
         for (Event event : events) {
@@ -83,8 +85,10 @@ public class EBSVolumeTagger implements ResourceTagger {
             }
         }
 
+        List<String> volumesWithoutEvents = new ArrayList<>();
+        volumesWithoutEvents.addAll(getIdsForUntaggedVolumesWithoutEvents(untaggedVolumeIds));
         try {
-            for (String id : untaggedVolumeIds) {
+            for (String id : volumesWithoutEvents) {
                 log.info("Can't find " + id + " in the log files. Checking if it's attached to an instance");
                 if (ec2Handler.volumeIsAttachedToInstance(id)) {
                     String instanceId = ec2Handler.getIdForInstanceVolumeIsAttachedTo(id);
@@ -101,6 +105,17 @@ public class EBSVolumeTagger implements ResourceTagger {
 
         this.events = untaggedVolumes;
         log.info("Done filtering tagged EBS volumes");
+    }
+
+    private List<String> getIdsForUntaggedVolumesWithoutEvents(List<String> untaggedVolumeIds) {
+        List<String> volumesWithoutEvents = new ArrayList<>();
+
+        for (String untaggedVolumeId : untaggedVolumeIds) {
+            if (events.stream().noneMatch(event -> event.getId().equals(untaggedVolumeId))) {
+                volumesWithoutEvents.add(untaggedVolumeId);
+            }
+        }
+        return volumesWithoutEvents;
     }
 
     private void tag(String ownerTag) {

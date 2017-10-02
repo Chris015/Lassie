@@ -1,0 +1,22 @@
+{
+  "Records": [
+    {
+      "userIdentity": {
+        "arn": "arn:aws:iam::123456789:user/jane.doe"
+      },
+      "eventName": "RunJobFlow",
+      "responseElements": {
+        "jobFlowId": "j-123c12b123a12"
+      }
+    },
+    {
+      "userIdentity": {
+        "arn": "arn:aws:iam::123456789:user/johnny.doe"
+      },
+      "eventName": "RunJobFlow",
+      "responseElements": {
+        "jobFlowId": "j-321a21c321b21"
+      }
+    }
+  ]
+}
