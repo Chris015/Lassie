@@ -27,13 +27,11 @@ public class S3BucketTagger implements ResourceTagger {
     }
 
     @Override
-    public void tagResources(List<Log> logs) {
-        for (Log log : logs) {
-            instantiateS3Client(log.getAccount());
-            parseJson(log.getFilePaths());
-            filterEventsWithoutTag(log.getAccount().getOwnerTag());
-            tag(log.getAccount().getOwnerTag());
-        }
+    public void tagResources(Log log) {
+        instantiateS3Client(log.getAccount());
+        parseJson(log.getFilePaths());
+        filterEventsWithoutTag(log.getAccount().getOwnerTag());
+        tag(log.getAccount().getOwnerTag());
     }
 
     private void instantiateS3Client(Account account) {

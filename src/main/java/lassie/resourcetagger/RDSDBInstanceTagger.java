@@ -26,13 +26,11 @@ public class RDSDBInstanceTagger implements ResourceTagger {
     }
 
     @Override
-    public void tagResources(List<Log> logs) {
-        for (Log log : logs) {
-            instantiateRDSClient(log.getAccount());
-            parseJson(log.getFilePaths());
-            filterEventsWithoutTag(log.getAccount().getOwnerTag());
-            tag(log.getAccount().getOwnerTag());
-        }
+    public void tagResources(Log log) {
+        instantiateRDSClient(log.getAccount());
+        parseJson(log.getFilePaths());
+        filterEventsWithoutTag(log.getAccount().getOwnerTag());
+        tag(log.getAccount().getOwnerTag());
     }
 
     private void instantiateRDSClient(Account account) {

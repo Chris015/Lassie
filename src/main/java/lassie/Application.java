@@ -36,29 +36,36 @@ public class Application {
     public void run(String[] args) {
         this.fromDate = dateInterpreter.interpret(args);
         List<Account> accounts = configReader.getAccounts();
-        List<ResourceTagger> resourceTaggers = createResourceTaggers(accounts);
         logFetcher.createTmpFolders();
         List<Log> logs = logFetcher.getLogs(fromDate, accounts);
-        resourceTaggers.forEach(resourceTagger -> resourceTagger.tagResources(logs));
+        tagResources(logs);
         logFetcher.clearLogs();
         log.info("Application completed");
     }
 
-    private List<ResourceTagger> createResourceTaggers(List<Account> accounts) {
+    private void tagResources(List<Log> logs) {
+        for (Log log : logs) {
+            Account account = log.getAccount();
+            List<String> resourceTypes = account.getResourceTypes();
+            System.out.println("RESOURCE TYPES FOR ACCOUNT" + account.getRegions().get(0) + " " + resourceTypes);
+            List<ResourceTagger> resourceTaggers = createResourceTaggers(resourceTypes);
+
+            for (ResourceTagger resourceTagger : resourceTaggers) {
+                resourceTagger.tagResources(log);
+            }
+        }
+    }
+
+    private List<ResourceTagger> createResourceTaggers(List<String> resourceTypes) {
         log.info("Creating resource taggers");
         List<ResourceTagger> resourceTaggers = new ArrayList<>();
-        List<String> resourceTypes = new ArrayList<>();
-
-        for (Account account : accounts) {
-            resourceTypes.addAll(account.getResourceTypes());
-        }
-        try {
-            for (String resourceType : resourceTypes) {
+        for (String resourceType : resourceTypes) {
+            try {
                 resourceTaggers.add(resourceTaggerFactory.getResourceTagger(resourceType));
+            } catch (UnsupportedResourceTypeException e) {
+                log.warn("Unsupported resource request.", e);
+                e.printStackTrace();
             }
-        } catch (UnsupportedResourceTypeException e) {
-            log.warn("Unsupported resource request.", e);
-            e.printStackTrace();
         }
         log.info("Resource taggers created");
         return resourceTaggers;

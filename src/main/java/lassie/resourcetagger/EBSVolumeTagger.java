@@ -22,13 +22,11 @@ public class EBSVolumeTagger implements ResourceTagger {
     private List<Event> events = new ArrayList<>();
 
     @Override
-    public void tagResources(List<Log> logs) {
-        for (Log log : logs) {
-            instantiateEc2Client(log.getAccount());
-            parseJson(log.getFilePaths());
-            filterEventsWithoutTag(log.getAccount().getOwnerTag());
-            tag(log.getAccount().getOwnerTag());
-        }
+    public void tagResources(Log log) {
+        instantiateEc2Client(log.getAccount());
+        parseJson(log.getFilePaths());
+        filterEventsWithoutTag(log.getAccount().getOwnerTag());
+        tag(log.getAccount().getOwnerTag());
     }
 
     public EBSVolumeTagger(Ec2Handler ec2Handler) {

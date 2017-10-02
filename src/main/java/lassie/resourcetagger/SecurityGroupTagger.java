@@ -26,13 +26,11 @@ public class SecurityGroupTagger implements ResourceTagger {
     }
 
     @Override
-    public void tagResources(List<Log> logs) {
-        for (Log log : logs) {
+    public void tagResources(Log log) {
             instantiateEc2Client(log.getAccount());
             parseJson(log.getFilePaths());
             filterEventsWithoutTag(log.getAccount().getOwnerTag());
             tag(log.getAccount().getOwnerTag());
-        }
     }
 
     private void instantiateEc2Client(Account account) {

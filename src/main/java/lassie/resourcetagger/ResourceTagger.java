@@ -5,5 +5,5 @@ import lassie.model.Log;
 import java.util.List;
 
 public interface ResourceTagger {
-    void tagResources(List<Log> logs);
+    void tagResources(Log log);
 }
