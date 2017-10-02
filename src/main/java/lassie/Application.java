@@ -16,7 +16,7 @@ import java.util.List;
 
 public class Application {
     private final static Logger log = Logger.getLogger(Application.class);
-    public static boolean mockMode = System.getProperties().getProperty("mockmode").equals("true");
+    public static boolean mockMode = false;
     public static boolean DRY_RUN;
     private final DateInterpreter dateInterpreter;
     private ConfigReader configReader;
@@ -34,6 +34,9 @@ public class Application {
     }
 
     public void run(String[] args) {
+        String mockModeProperty = System.getProperties().getProperty("mockmode");
+        if (mockModeProperty != null)
+            mockMode = System.getProperties().getProperty("mockmode").equals("true");
         this.fromDate = dateInterpreter.interpret(args);
         List<Account> accounts = configReader.getAccounts();
         logFetcher.createTmpFolders();
@@ -56,6 +59,9 @@ public class Application {
     }
 
     private List<ResourceTagger> createResourceTaggers(List<String> resourceTypes) {
+        if (resourceTypes == null)
+            throw new IllegalArgumentException("No resource types found in config file");
+
         log.info("Creating resource taggers");
         List<ResourceTagger> resourceTaggers = new ArrayList<>();
         for (String resourceType : resourceTypes) {

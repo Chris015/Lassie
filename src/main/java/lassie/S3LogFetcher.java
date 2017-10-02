@@ -43,12 +43,13 @@ public class S3LogFetcher implements LogFetcher {
         for (Account account : accounts) {
             BasicAWSCredentials awsCredentials = new BasicAWSCredentials(account.getAccessKeyId(),
                     account.getSecretAccessKey());
+            log.info("Instantiating S3 client");
             this.s3 = AmazonS3ClientBuilder.standard()
                     .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
                     .withRegion(Regions.fromName(account.getBucketRegion()))
                     .build();
 
-            log.info("S3 Client for AWS logs download created");
+            log.info("S3 client instantiated");
 
             while (!start.isAfter(end)) {
                 totalDates.add(start);
