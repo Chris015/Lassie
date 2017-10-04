@@ -26,11 +26,13 @@ public class RedshiftClusterTagger implements ResourceTagger {
     }
 
     @Override
-    public void tagResources(Log log) {
-        instantiateRedshiftClient(log.getAccount());
-        parseJson(log.getAccount(), log.getFilePaths());
-        filterEventsWithoutTag(log.getAccount().getOwnerTag());
-        tag(log.getAccount().getOwnerTag());
+    public void tagResources(Account account) {
+        instantiateRedshiftClient(account);
+        for (Log log : account.getLogs()) {
+            parseJson(account, log.getFilePaths());
+            filterEventsWithoutTag(account.getOwnerTag());
+            tag(account.getOwnerTag());
+        }
     }
 
     private void instantiateRedshiftClient(Account account) {

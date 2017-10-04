@@ -33,8 +33,7 @@ public class S3LogFetcher implements LogFetcher {
     private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy/MM/dd");
     private String tmpFolder = "tmp";
 
-    public List<Log> getLogs(String startDate, List<Account> accounts) {
-        List<Log> logs = new ArrayList<>();
+    public void addLogsToAccount(String startDate, List<Account> accounts) {
         LocalDate end = LocalDate.now();
         LocalDate start = LocalDate.parse(startDate);
         List<LocalDate> totalDates = new ArrayList<>();
@@ -60,12 +59,11 @@ public class S3LogFetcher implements LogFetcher {
                 for (String region : account.getRegions()) {
                     List<S3ObjectSummary> summaries = getObjectSummaries(date.format(formatter), account, region);
                     List<String> filePaths = downloadLogs(account, summaries);
-                    logs.add(createLog(account, region, filePaths));
+                    account.addLog(createLog(region, filePaths));
                 }
             }
         }
         log.info("Logs downloaded for all the given dates");
-        return logs;
     }
 
     public void createTmpFolders() {
@@ -176,21 +174,9 @@ public class S3LogFetcher implements LogFetcher {
         return filePaths;
     }
 
-    private Log createLog(Account account, String region, List<String> filePaths) {
+    private Log createLog(String region, List<String> filePaths) {
         log.debug("Creating log");
-        List<String> regions = new ArrayList<>();
-
-        regions.add(region);
-        Log logObject = new Log(
-                new Account(account.getOwnerTag(),
-                        account.getAccessKeyId(),
-                        account.getSecretAccessKey(),
-                        account.getAccountId(),
-                        account.getS3Url(),
-                        account.getBucketRegion(),
-                        account.getResourceTypes(),
-                        regions),
-                filePaths);
+        Log logObject = new Log(region, filePaths);
         log.debug("Log created");
         return logObject;
 

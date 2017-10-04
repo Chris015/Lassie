@@ -27,11 +27,13 @@ public class EMRClusterTagger implements ResourceTagger {
     }
 
     @Override
-    public void tagResources(Log log) {
-        instantiateEmrInstance(log.getAccount());
-        parseJson(log.getFilePaths());
-        filterEventsWithoutTag(log.getAccount().getOwnerTag());
-        tag(log.getAccount().getOwnerTag());
+    public void tagResources(Account account) {
+        instantiateEmrInstance(account);
+        for (Log log : account.getLogs()) {
+            parseJson(log.getFilePaths());
+            filterEventsWithoutTag(account.getOwnerTag());
+            tag(account.getOwnerTag());
+        }
     }
 
     private void instantiateEmrInstance(Account account) {

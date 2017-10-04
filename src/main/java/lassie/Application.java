@@ -5,7 +5,6 @@ import lassie.config.ConfigReader;
 import lassie.config.ConfigReaderImpl;
 import lassie.mocks.ConfigReaderMock;
 import lassie.mocks.LogFetcherMock;
-import lassie.model.Log;
 import lassie.resourcetagger.ResourceTagger;
 import lassie.resourcetagger.ResourceTaggerFactory;
 import lassie.resourcetagger.UnsupportedResourceTypeException;
@@ -39,22 +38,22 @@ public class Application {
         List<Account> accounts = configReader.getAccounts();
         logFetcher.createTmpFolders();
         String fromDate = dateInterpreter.interpret(args);
-        List<Log> logs = logFetcher.getLogs(fromDate, accounts);
-        tagResources(logs);
+        logFetcher.addLogsToAccount(fromDate, accounts);
+        tagResources(accounts);
         logFetcher.clearLogs();
         log.info("Application completed");
     }
 
-    private void tagResources(List<Log> logs) {
-        for (Log log : logs) {
-            Account account = log.getAccount();
+    private void tagResources(List<Account> accounts) {
+        for (Account account : accounts) {
             List<String> resourceTypes = account.getResourceTypes();
             List<ResourceTagger> resourceTaggers = createResourceTaggers(resourceTypes);
 
             for (ResourceTagger resourceTagger : resourceTaggers) {
-                resourceTagger.tagResources(log);
+                resourceTagger.tagResources(account);
             }
         }
+
     }
 
     private List<ResourceTagger> createResourceTaggers(List<String> resourceTypes) {

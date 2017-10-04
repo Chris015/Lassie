@@ -1,9 +1,7 @@
 package lassie.resourcetagger;
 
-import lassie.model.Log;
-
-import java.util.List;
+import lassie.config.Account;
 
 public interface ResourceTagger {
-    void tagResources(Log log);
+    void tagResources(Account account);
 }
