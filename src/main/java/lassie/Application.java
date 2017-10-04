@@ -22,7 +22,6 @@ public class Application {
     private ConfigReader configReader;
     private LogFetcher logFetcher;
     private ResourceTaggerFactory resourceTaggerFactory;
-    private String fromDate;
 
     public Application() {
         log.info("Application started");
@@ -37,9 +36,9 @@ public class Application {
     }
 
     public void run(String[] args) {
-        this.fromDate = dateInterpreter.interpret(args);
         List<Account> accounts = configReader.getAccounts();
         logFetcher.createTmpFolders();
+        String fromDate = dateInterpreter.interpret(args);
         List<Log> logs = logFetcher.getLogs(fromDate, accounts);
         tagResources(logs);
         logFetcher.clearLogs();
