@@ -36,24 +36,24 @@ Lassie uses maven to build and package a shaded jar, which can be run on your lo
 4. create a logging properties file in the same directory as the jar. There is an example properties file in the readme which you can use
 5. run the jar with the following command
 ```
- java -Dlog4j.configuration=file:log4j.properties -jar lassie-1.0-SNAPSHOT-shaded.jar 
+ java -Dlog4j.configurationFile="log4j2.xml" -jar lassie-1.0-SNAPSHOT-shaded.jar 
 ```
 
 **Examples**
 
 Fetch logs from current date
 ```
- java -Dlog4j.configuration=file:log4j.properties -jar lassie-1.0-SNAPSHOT-shaded.jar 
+ java -Dlog4j.configurationFile="log4j2.xml" -jar lassie-1.0-SNAPSHOT-shaded.jar 
 ```
 
 Fetch logs from the 25 of September to the current date
 ```
- java -Dlog4j.configuration=file:log4j.properties -jar lassie-1.0-SNAPSHOT-shaded.jar 2017-09-25
+ java -Dlog4j.configurationFile="log4j2.xml" -jar lassie-1.0-SNAPSHOT-shaded.jar 2017-09-25
 ```
 
 Fetch logs from the current date and three days back
 ```
- java -Dlog4j.configuration=file:log4j.properties -jar lassie-1.0-SNAPSHOT-shaded.jar 3
+ java -Dlog4j.configurationFile="log4j2.xml" -jar lassie-1.0-SNAPSHOT-shaded.jar 3
 ```
 
 ## Built With
