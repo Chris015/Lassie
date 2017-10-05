@@ -1,12 +1,13 @@
 package lassie.mocks;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class RDSHandlerMock implements lassie.awshandlers.RDSHandler {
-    private final static Logger log = Logger.getLogger(RDSHandlerMock.class);
+    private static final Logger logger = LogManager.getLogger(RDSHandlerMock.class);
     public static List<String> dbInstancesWithoutTag = new ArrayList<>();
     public static List <String> dbInstancesWithTag = new ArrayList<>();
 
@@ -16,7 +17,7 @@ public class RDSHandlerMock implements lassie.awshandlers.RDSHandler {
 
     @Override
     public void tagResource(String id, String key, String value) {
-        log.info("Tagged: " + id + " with key: " + key + " value: " + value);
+        logger.info("Tagged: {} with key: {} value: {}", id, key, value);
     }
 
     @Override

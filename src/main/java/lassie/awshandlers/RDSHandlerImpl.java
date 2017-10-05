@@ -5,7 +5,8 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.rds.AmazonRDS;
 import com.amazonaws.services.rds.AmazonRDSClientBuilder;
 import com.amazonaws.services.rds.model.*;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,23 +14,23 @@ import java.util.List;
 import static lassie.Application.DRY_RUN;
 
 public class RDSHandlerImpl implements RDSHandler {
-    private static final Logger log = Logger.getLogger(RDSHandlerImpl.class);
+    private static final Logger logger = LogManager.getLogger(RDSHandlerImpl.class);
     private AmazonRDS rds;
 
     public void instantiateRDSClient(String accessKeyId, String secretAccessKey, String region) {
-        log.info("Instantiating RDS client");
+        logger.info("Instantiating RDS client");
         BasicAWSCredentials awsCreds = new BasicAWSCredentials(accessKeyId, secretAccessKey);
         AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(awsCreds);
         this.rds = AmazonRDSClientBuilder.standard()
                 .withCredentials(awsCredentials)
                 .withRegion(region)
                 .build();
-        log.info("RDS client instantiated");
+        logger.info("RDS client instantiated");
     }
 
     public void tagResource(String id, String key, String value) {
         if (DRY_RUN) {
-            log.info("Dry run: " + DRY_RUN + ". Did not tag: " + id + " with " + key + ": " + value);
+            logger.info("Dry run: {}. Did not tag: {} with {}: {}", DRY_RUN, id, key, value);
             return;
         }
         Tag tag = new Tag();
@@ -39,11 +40,11 @@ public class RDSHandlerImpl implements RDSHandler {
                 .withResourceName(id)
                 .withTags(tag);
         rds.addTagsToResource(tagsRequest);
-        log.info("Tagged: " + id + " with key: " + key + " value: " + value);
+        logger.info("Tagged: {} with key: {} value: {}", id, key, value);
     }
 
     public List<String> getIdsForDBInstancesWithoutTag(String tag) {
-        log.info("Describing DB instances");
+        logger.info("Describing DB instances");
         List<String> untaggedDbInstanceIds = new ArrayList<>();
         DescribeDBInstancesResult describeDBInstancesResult = rds.describeDBInstances(new DescribeDBInstancesRequest());
         for (DBInstance dbInstance : describeDBInstancesResult.getDBInstances()) {
@@ -54,13 +55,13 @@ public class RDSHandlerImpl implements RDSHandler {
                 untaggedDbInstanceIds.add(dbInstance.getDBInstanceArn());
             }
         }
-        log.info("Found " + untaggedDbInstanceIds.size() + " DB instances without " + tag);
-        untaggedDbInstanceIds.forEach(id -> log.info(id));
+        logger.info("Found {} DB instances without {}", untaggedDbInstanceIds.size(), tag);
+        untaggedDbInstanceIds.forEach(logger::info);
         return untaggedDbInstanceIds;
     }
 
     private boolean hasTag(ListTagsForResourceResult response, String tag) {
-        log.debug(tag + " found: " + response.getTagList().stream().anyMatch(t -> t.getKey().equals(tag)));
+        logger.debug(tag + " found: " + response.getTagList().stream().anyMatch(t -> t.getKey().equals(tag)));
         return response.getTagList().stream().anyMatch(t -> t.getKey().equals(tag));
     }
 }

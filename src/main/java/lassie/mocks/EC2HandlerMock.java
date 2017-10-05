@@ -1,12 +1,13 @@
 package lassie.mocks;
 
 import com.amazonaws.services.ec2.model.*;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.*;
 
 public class EC2HandlerMock implements lassie.awshandlers.Ec2Handler {
-    private final static Logger log = Logger.getLogger(EC2HandlerMock.class);
+    private static final Logger logger = LogManager.getLogger(EC2HandlerMock.class);
     public static HashMap<String, Instance> instances = new HashMap<>();
     public static HashMap<String, SecurityGroup> securityGroups = new HashMap<>();
     public static HashMap<String, Volume> volumes = new HashMap<>();
@@ -113,7 +114,7 @@ public class EC2HandlerMock implements lassie.awshandlers.Ec2Handler {
             default:
                 return;
         }
-        log.info("Tagged: " + id + " with key: " + key + " value: " + value);
+        logger.info("Tagged: {} with key: {} value: {}", id, key, value);
     }
 
     @Override

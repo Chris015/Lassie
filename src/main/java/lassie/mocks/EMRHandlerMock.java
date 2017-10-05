@@ -2,14 +2,15 @@ package lassie.mocks;
 
 import com.amazonaws.services.elasticmapreduce.model.Cluster;
 import com.amazonaws.services.elasticmapreduce.model.Tag;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 public class EMRHandlerMock implements lassie.awshandlers.EMRHandler {
-    private final static Logger log = Logger.getLogger(EMRHandlerMock.class);
+    private static final Logger logger = LogManager.getLogger(EMRHandlerMock.class);
     public static HashMap<String,Cluster> clusters = new HashMap<>();
 
     public EMRHandlerMock() {
@@ -43,7 +44,7 @@ public class EMRHandlerMock implements lassie.awshandlers.EMRHandler {
         cluster.setTags(tags);
 
         clusters.put(cluster.getId(), cluster);
-        log.info("Tagged: " + id + " with key: " + key + " value: " + value);
+        logger.info("Tagged: {} with key: {} value: {}", id, key, value);
     }
 
     @Override

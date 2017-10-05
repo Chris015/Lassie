@@ -1,12 +1,12 @@
 package lassie;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.time.LocalDate;
 
-
 public class DateInterpreter {
-    private final static Logger log = Logger.getLogger(DateInterpreter.class);
+    private static final Logger logger = LogManager.getLogger(DateInterpreter.class);
 
     /**
      * Interprets the program arguments and returns a date. If the argument is a properly formatted date, the argument is
@@ -18,14 +18,14 @@ public class DateInterpreter {
      * @return a date
      */
     public String interpret(String[] programArguments) {
-        log.info("Interpreting program arguments");
+        logger.info("Interpreting program arguments");
         if (programArguments.length == 0) {
-            log.debug("No arguments found. Returned current date");
+            logger.debug("No arguments found. Returned current date");
             return LocalDate.now().toString();
         }
 
         if (programArguments.length > 1) {
-            log.warn(new IllegalArgumentException("Only one argument allowed. Got: " + programArguments.length));
+            logger.warn(new IllegalArgumentException("Only one argument allowed. Got: " + programArguments.length));
             throw new IllegalArgumentException("Only one argument allowed. Got: " + programArguments.length);
         }
 
@@ -33,7 +33,7 @@ public class DateInterpreter {
         String validDate = "^\\d{4}-(0?0[1-9]|1[012])-(0?0[1-9]|[12][0-9]|3[01])$";
         String validNumber = "^\\d+$";
         if (!argument.matches(validDate) && !argument.matches(validNumber)) {
-            log.warn(new IllegalArgumentException("Malformed argument: " + argument
+            logger.warn(new IllegalArgumentException("Malformed argument: " + argument
                     + ".\nExpected a date (yyyy-MM-dd) or a number representing the amount of days back from current date."));
             throw new IllegalArgumentException("Malformed argument: " + argument
                     + ".\nExpected a date (yyyy-MM-dd) or a number representing the amount of days back from current date."
@@ -41,10 +41,11 @@ public class DateInterpreter {
         }
 
         if (argument.matches(validDate)) {
-            log.debug("Argument is a valid date. Returned the argument");
+            logger.debug("Argument is a valid date. Returned the argument");
             return argument;
         }
-        log.debug("Argument is a valid number. Returned the current date minus the amount of days specified");
+        logger.debug("Argument is a valid number. Returned the current date minus the amount of days specified");
+        logger.info("Done interpreting program arguments");
         return LocalDate.now().minusDays(Integer.parseInt(argument)).toString();
     }
 }

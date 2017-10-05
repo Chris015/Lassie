@@ -6,7 +6,8 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduce;
 import com.amazonaws.services.elasticmapreduce.AmazonElasticMapReduceClientBuilder;
 import com.amazonaws.services.elasticmapreduce.model.*;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +15,7 @@ import java.util.List;
 import static lassie.Application.DRY_RUN;
 
 public class EMRHandlerImpl implements EMRHandler {
-    private final static Logger log = Logger.getLogger(EMRHandlerImpl.class);
+    private final static Logger logger = LogManager.getLogger(EMRHandlerImpl.class);
     private AmazonElasticMapReduce emr;
 
     public void instantiateEMRClient(String accessKeyId, String secretAccessKey, String region) {
@@ -28,7 +29,7 @@ public class EMRHandlerImpl implements EMRHandler {
 
     public void tagResource(String id, String key, String value) {
         if (DRY_RUN) {
-            log.info("Dry run: " + DRY_RUN + ". Did not tag: " + id + " with " + key + ": " + value);
+            logger.info("Dry run: {}. Did not tag: {} with {}: {}", DRY_RUN, id, key, value);
             return;
         }
         DescribeClusterRequest request = new DescribeClusterRequest().withClusterId(id);
@@ -37,11 +38,11 @@ public class EMRHandlerImpl implements EMRHandler {
         tags.add(new Tag(key, value));
         AddTagsRequest tagsRequest = new AddTagsRequest(id, tags);
         emr.addTags(tagsRequest);
-        log.info("Tagged: " + id + " with key: " + key + " value: " + value);
+        logger.info("Tagged: {} with key: {} value: {}", id, key, value);
     }
 
     public List<String> getIdsForClustersWithoutTag(String tag) {
-        log.info("Describing EMR clusters");
+        logger.info("Describing EMR clusters");
         List<String> untaggedClusterIds = new ArrayList<>();
         ListClustersResult listClustersResult = emr.listClusters();
         for (ClusterSummary clusterSummary : listClustersResult.getClusters()) {
@@ -53,8 +54,8 @@ public class EMRHandlerImpl implements EMRHandler {
                 }
             }
         }
-        log.info("Found " + untaggedClusterIds.size() + " clusters without " + tag);
-        untaggedClusterIds.forEach(id -> log.info(id));
+        logger.info("Found {} clusters without: {}", untaggedClusterIds.size(), tag);
+        untaggedClusterIds.forEach(logger::info);
         return untaggedClusterIds;
     }
 
@@ -71,7 +72,7 @@ public class EMRHandlerImpl implements EMRHandler {
     }
 
     private boolean hasTag(Cluster cluster, String tag) {
-        log.debug(tag + " found: " + cluster.getTags().stream().anyMatch(t -> t.getKey().equals(tag)));
+        logger.debug(tag + " found: " + cluster.getTags().stream().anyMatch(t -> t.getKey().equals(tag)));
         return cluster.getTags().stream().anyMatch(t -> t.getKey().equals(tag));
     }
 }

@@ -8,13 +8,14 @@ import lassie.mocks.LogFetcherMock;
 import lassie.resourcetagger.ResourceTagger;
 import lassie.resourcetagger.ResourceTaggerFactory;
 import lassie.resourcetagger.UnsupportedResourceTypeException;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class Application {
-    private final static Logger log = Logger.getLogger(Application.class);
+    private final static Logger logger = LogManager.getLogger(Application.class);
     public static boolean mockMode = false;
     public static boolean DRY_RUN;
     private final DateInterpreter dateInterpreter;
@@ -23,7 +24,7 @@ public class Application {
     private ResourceTaggerFactory resourceTaggerFactory;
 
     public Application() {
-        log.info("Application started");
+        logger.info("Application started");
         String mockModeProperty = System.getProperties().getProperty("mockmode");
         if (mockModeProperty != null)
             mockMode = System.getProperties().getProperty("mockmode").equals("true");
@@ -41,7 +42,7 @@ public class Application {
         logFetcher.addLogsToAccount(fromDate, accounts);
         tagResources(accounts);
         logFetcher.clearLogs();
-        log.info("Application completed");
+        logger.info("Application completed");
     }
 
     private void tagResources(List<Account> accounts) {
@@ -60,17 +61,17 @@ public class Application {
         if (resourceTypes == null)
             throw new IllegalArgumentException("No resource types found in config file");
 
-        log.info("Creating resource taggers");
+        logger.info("Creating resource taggers");
         List<ResourceTagger> resourceTaggers = new ArrayList<>();
         for (String resourceType : resourceTypes) {
             try {
                 resourceTaggers.add(resourceTaggerFactory.getResourceTagger(resourceType));
             } catch (UnsupportedResourceTypeException e) {
-                log.warn("Unsupported resource request.", e);
+                logger.warn("Unsupported resource type: ", e);
                 e.printStackTrace();
             }
         }
-        log.info("Resource taggers created");
+        logger.info("Resource taggers created");
         return resourceTaggers;
     }
 

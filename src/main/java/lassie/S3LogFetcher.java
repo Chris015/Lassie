@@ -9,7 +9,8 @@ import com.amazonaws.services.s3.model.*;
 import lassie.config.Account;
 import lassie.model.Log;
 import org.apache.commons.io.FileUtils;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -26,7 +27,7 @@ import java.util.List;
 import java.util.zip.GZIPInputStream;
 
 public class S3LogFetcher implements LogFetcher {
-    private final static Logger log = Logger.getLogger(S3LogFetcher.class);
+    private static final Logger logger = LogManager.getLogger(S3LogFetcher.class);
     private AmazonS3 s3;
     private Path tmpFolderZipped;
     private Path tmpFolderUnzipped;
@@ -37,18 +38,18 @@ public class S3LogFetcher implements LogFetcher {
         LocalDate end = LocalDate.now();
         LocalDate start = LocalDate.parse(startDate);
         List<LocalDate> totalDates = new ArrayList<>();
-        log.info("Getting logs for dates: " + startDate + " to " + end);
+        logger.info("Getting logs for dates: {} to {}", start, end);
 
         for (Account account : accounts) {
             BasicAWSCredentials awsCredentials = new BasicAWSCredentials(account.getAccessKeyId(),
                     account.getSecretAccessKey());
-            log.info("Instantiating S3 client");
+            logger.info("Instantiating S3 client");
             this.s3 = AmazonS3ClientBuilder.standard()
                     .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
                     .withRegion(Regions.fromName(account.getBucketRegion()))
                     .build();
 
-            log.info("S3 client instantiated");
+            logger.info("S3 client instantiated");
 
             while (!start.isAfter(end)) {
                 totalDates.add(start);
@@ -63,47 +64,39 @@ public class S3LogFetcher implements LogFetcher {
                 }
             }
         }
-        log.info("Logs downloaded for all the given dates");
+        logger.info("Logs downloaded for all the given dates");
     }
 
     public void createTmpFolders() {
-        log.debug("Creating temp folders");
+        logger.debug("Creating temp folders");
         try {
             if (!Files.isDirectory(Paths.get(tmpFolder))) {
                 Files.createDirectory(Paths.get(tmpFolder));
             }
 
             tmpFolderZipped = Files.createTempDirectory(Paths.get(tmpFolder + "/"), null);
-            log.debug("TmpFolderZipped: " + tmpFolderZipped);
+            logger.debug("TmpFolderZipped: {}", tmpFolderZipped);
             tmpFolderUnzipped = Files.createTempDirectory(Paths.get(tmpFolder + "/"), null);
-            log.debug("TmpFolderUnzipped: " + tmpFolderUnzipped);
+            logger.debug("TmpFolderUnzipped: {}", tmpFolderUnzipped);
         } catch (IOException e) {
-            log.error("Temp folders could not be created: ", e);
+            logger.error("Temp folders could not be created: ", e);
             e.printStackTrace();
         }
-        log.info("Temp folders created");
+        logger.info("Temp folders created");
     }
 
     public void clearLogs() {
         try {
             FileUtils.cleanDirectory(new File(tmpFolder));
-            log.info("Temp-directory cleaned");
+            logger.info("Temp-directory cleaned");
         } catch (IOException e) {
-            log.error("Temp directory could not be cleaned: ", e);
+            logger.error("Temp directory could not be cleaned: ", e);
             e.printStackTrace();
         }
     }
 
     private List<S3ObjectSummary> getObjectSummaries(String date, Account account, String region) {
-        log.debug("Getting object summaries from: "
-                + account.getS3Url().getBucket() + "/"
-                + account.getS3Url().getKey()
-                + "/AWSLogs/"
-                + account.getAccountId() + "/"
-                + "CloudTrail/"
-                + region + "/"
-                + date + "/");
-        log.info("Getting object summaries for date: " + date);
+        logger.info("Getting object summaries for date: {}", date);
         ListObjectsV2Request request = new ListObjectsV2Request()
                 .withBucketName(account.getS3Url().getBucket())
                 .withPrefix(account.getS3Url().getKey()
@@ -112,7 +105,7 @@ public class S3LogFetcher implements LogFetcher {
                         + "CloudTrail/"
                         + region + "/"
                         + date + "/");
-        log.debug("Get object summaries complete");
+        logger.debug("Get object summaries complete");
         return s3.listObjectsV2(request).getObjectSummaries();
     }
 
@@ -122,7 +115,7 @@ public class S3LogFetcher implements LogFetcher {
     }
 
     private List<String> downloadZip(Account account, List<S3ObjectSummary> summaries) {
-        log.debug("Downloading zipped files");
+        logger.debug("Downloading zipped files");
         List<String> fileNames = new ArrayList<>();
         for (S3ObjectSummary objectSummary : summaries) {
             String key = objectSummary.getKey();
@@ -130,26 +123,26 @@ public class S3LogFetcher implements LogFetcher {
                  S3ObjectInputStream objectContent = s3Object.getObjectContent()) {
 
                 String filename = s3Object.getKey().substring(key.lastIndexOf('/') + 1, key.length());
-                log.debug("Downloading file: " + filename);
+                logger.debug("Downloading file: {}", filename);
                 Files.copy(objectContent,
                         Paths.get(tmpFolderZipped + "/" + filename),
                         StandardCopyOption.REPLACE_EXISTING);
                 fileNames.add(filename);
 
             } catch (IOException e) {
-                log.error("Could not download file: ", e);
+                logger.error("Could not download file: ", e);
                 e.printStackTrace();
             }
         }
-        log.debug("Download complete");
+        logger.debug("Download complete");
         return fileNames;
     }
 
     private List<String> unzipObject(List<String> filenames) {
-        log.debug("Unzipping objects");
+        logger.debug("Unzipping objects");
         List<String> filePaths = new ArrayList<>();
         for (String filename : filenames) {
-            log.debug("Unzipping object: " + filename);
+            logger.debug("Unzipping object: {}", filename);
             String fileInputPath = tmpFolderZipped + "/" + filename;
             String fileOutputPath = tmpFolderUnzipped + "/" + filename.substring(0, filename.length() - 3);
             try (FileInputStream fileInputStream = new FileInputStream(fileInputPath);
@@ -166,19 +159,19 @@ public class S3LogFetcher implements LogFetcher {
                 filePaths.add(fileOutputPath);
 
             } catch (IOException e) {
-                log.error("Could not unzip file: " + filename, e);
+                logger.error("Could not unzip file: {}", filename, e);
                 e.printStackTrace();
             }
         }
-        log.debug("Unzipping objects complete");
+        logger.debug("Unzipping objects complete");
         return filePaths;
     }
 
     private Log createLog(String region, List<String> filePaths) {
-        log.debug("Creating log");
-        Log logObject = new Log(region, filePaths);
-        log.debug("Log created");
-        return logObject;
+        logger.debug("Creating log");
+        Log log = new Log(region, filePaths);
+        logger.debug("Log created");
+        return log;
 
     }
 }

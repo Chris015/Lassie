@@ -5,7 +5,8 @@ import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancing;
 import com.amazonaws.services.elasticloadbalancingv2.AmazonElasticLoadBalancingClientBuilder;
 import com.amazonaws.services.elasticloadbalancingv2.model.*;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,23 +14,23 @@ import java.util.List;
 import static lassie.Application.DRY_RUN;
 
 public class ELBHandlerImpl implements ELBHandler {
-    private static final Logger log = Logger.getLogger(ELBHandlerImpl.class);
+    private static final Logger logger = LogManager.getLogger(ELBHandlerImpl.class);
     private AmazonElasticLoadBalancing elb;
 
     public void instantiateELBClient(String accessKeyId, String secretAccessKey, String region) {
-        log.info("Instantiating ELB client");
+        logger.info("Instantiating ELB client");
         BasicAWSCredentials awsCreds = new BasicAWSCredentials(accessKeyId, secretAccessKey);
         AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(awsCreds);
         this.elb = AmazonElasticLoadBalancingClientBuilder.standard()
                 .withCredentials(awsCredentials)
                 .withRegion(region)
                 .build();
-        log.info("ELB client instantiated");
+        logger.info("ELB client instantiated");
     }
 
     public void tagResource(String id, String key, String value) {
         if (DRY_RUN) {
-            log.info("Dry run: " + DRY_RUN + ". Did not tag: " + id + " with " + key + ": " + value);
+            logger.info("Dry run: {}. Did not tag: {} with {}: {}", DRY_RUN, id, key, value);
             return;
         }
         Tag tag = new Tag();
@@ -39,11 +40,11 @@ public class ELBHandlerImpl implements ELBHandler {
                 .withResourceArns(id)
                 .withTags(tag);
         elb.addTags(tagsRequest);
-        log.info("Tagged: " + id + " with key: " + key + " value: " + value);
+        logger.info("Tagged: {} with key: {} value: {}", id, key, value);
     }
 
     public List<String> getIdsForLoadBalancersWithoutTag(String tag) {
-        log.info("Describing Load Balancers");
+        logger.info("Describing Load Balancers");
         List<String> untaggedLoadBalancerIds = new ArrayList<>();
         DescribeLoadBalancersResult result = elb.describeLoadBalancers(new DescribeLoadBalancersRequest());
         for (LoadBalancer loadBalancer : result.getLoadBalancers()) {
@@ -56,13 +57,13 @@ public class ELBHandlerImpl implements ELBHandler {
                 }
             }
         }
-        log.info("Found " + untaggedLoadBalancerIds.size() + " LoadBalancers without " + tag);
-        untaggedLoadBalancerIds.forEach(id -> log.info(id));
+        logger.info("Found {} LoadBalancers without: {}", untaggedLoadBalancerIds.size(), tag);
+        untaggedLoadBalancerIds.forEach(logger::info);
         return untaggedLoadBalancerIds;
     }
 
     private boolean hasTag(TagDescription tagDescription, String tag) {
-        log.debug(tag + " found: " + tagDescription.getTags().stream().anyMatch(t -> t.getKey().equals(tag)));
+        logger.debug(tag + " found: " + tagDescription.getTags().stream().anyMatch(t -> t.getKey().equals(tag)));
         return tagDescription.getTags().stream().anyMatch(t -> t.getKey().equals(tag));
     }
 }

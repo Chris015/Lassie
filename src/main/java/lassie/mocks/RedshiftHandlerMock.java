@@ -2,14 +2,15 @@ package lassie.mocks;
 
 import com.amazonaws.services.redshift.model.Cluster;
 import com.amazonaws.services.redshift.model.Tag;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 public class RedshiftHandlerMock implements lassie.awshandlers.RedshiftHandler {
-    private final static Logger log = Logger.getLogger(RedshiftHandlerMock.class);
+    private static final Logger logger = LogManager.getLogger(RedshiftHandlerMock.class);
     public static HashMap<String, Cluster> clusters = new HashMap<>();
 
     public RedshiftHandlerMock() {
@@ -47,7 +48,7 @@ public class RedshiftHandlerMock implements lassie.awshandlers.RedshiftHandler {
         Cluster cluster = clusters.get(id);
         cluster.setTags(tags);
 
-        log.info("Tagged: " + id + " with key: " + key + " value: " + value);
+        logger.info("Tagged: {} with key: {} value: {}", id, key, value);
     }
 
     @Override

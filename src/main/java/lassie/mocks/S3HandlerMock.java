@@ -1,12 +1,13 @@
 package lassie.mocks;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class S3HandlerMock implements lassie.awshandlers.S3Handler {
-    private final static Logger log = Logger.getLogger(S3HandlerMock.class);
+    private final static Logger logger = LogManager.getLogger(S3HandlerMock.class);
     public static List<String> bucketsWithTag = new ArrayList<>();
     public static List<String> bucketsWithoutTag = new ArrayList<>();
 
@@ -16,7 +17,7 @@ public class S3HandlerMock implements lassie.awshandlers.S3Handler {
 
     @Override
     public void tagBucket(String bucketName, String key, String value) {
-        log.info("Tagged: " + bucketName + " with key: " + key + " value: " + value);
+        logger.info("Tagged: {} with key: {} value: {}", bucketName, key, value);
     }
 
     @Override

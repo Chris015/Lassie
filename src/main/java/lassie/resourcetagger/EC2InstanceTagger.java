@@ -9,7 +9,8 @@ import lassie.awshandlers.Ec2Handler;
 import lassie.config.Account;
 import lassie.model.Event;
 import lassie.model.Log;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -17,7 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EC2InstanceTagger implements ResourceTagger {
-    private final Logger log = Logger.getLogger(EC2InstanceTagger.class);
+    private static final Logger logger = LogManager.getLogger(EC2InstanceTagger.class);
     private Ec2Handler ec2Handler;
     private List<Event> events = new ArrayList<>();
 
@@ -40,7 +41,7 @@ public class EC2InstanceTagger implements ResourceTagger {
     }
 
     private void parseJson(List<String> filePaths) {
-        log.info("Parsing json");
+        logger.info("Parsing json");
         String jsonPath = "$..Records[?(@.eventName == 'RunInstances' && @.responseElements != null)]";
         for (String filePath : filePaths) {
             try {
@@ -57,7 +58,7 @@ public class EC2InstanceTagger implements ResourceTagger {
                             .getAsJsonObject().get("userIdentity")
                             .getAsJsonObject().get("arn")
                             .getAsString();
-                    log.info("Event created with Id: " + id + " Owner: " + owner);
+                    logger.info("Event created with Id: {} Owner: {}", id, owner);
                     return new Event(id, owner);
                 };
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);
@@ -66,15 +67,15 @@ public class EC2InstanceTagger implements ResourceTagger {
                 }.getType());
                 events.addAll(runInstancesEvents);
             } catch (IOException e) {
-                log.error("Could not parse json: ", e);
+                logger.error("Could not parse json: ", e);
                 e.printStackTrace();
             }
         }
-        log.info("Done parsing json");
+        logger.info("Done parsing json");
     }
 
     private void filterEventsWithoutTag(String ownerTag) {
-        log.info("Filtering tagged EC2 instances");
+        logger.info("Filtering tagged EC2 instances without: {}", ownerTag);
         List<Event> untaggedInstances = new ArrayList<>();
         List<String> untaggedInstanceIds = ec2Handler.getIdsForInstancesWithoutTag(ownerTag);
         for (Event event : events) {
@@ -83,23 +84,19 @@ public class EC2InstanceTagger implements ResourceTagger {
             }
         }
         this.events = untaggedInstances;
-        log.info("Done filtering tagged EC2 instances");
+        logger.info("Done filtering tagged EC2 instances");
 
     }
 
     private void tag(String ownerTag) {
-        log.info("Tagging EC2 instances");
+        logger.info("Tagging EC2 instances");
         if (events.size() == 0) {
-            log.info("No untagged EC2 instances found in log files");
+            logger.info("No untagged EC2 instances found in log files");
         }
         for (Event event : events) {
             ec2Handler.tagResource(event.getId(), ownerTag, event.getOwner());
         }
         this.events = new ArrayList<>();
-        log.info("Done tagging EC2 instances");
-    }
-
-    public Ec2Handler getEc2Handler() {
-        return ec2Handler;
+        logger.info("Done tagging EC2 instances");
     }
 }
