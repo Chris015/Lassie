@@ -18,7 +18,7 @@ public class ELBHandlerImpl implements ELBHandler {
     private AmazonElasticLoadBalancing elb;
 
     public void instantiateELBClient(String accessKeyId, String secretAccessKey, String region) {
-        logger.info("Instantiating ELB client");
+        logger.info("Instantiating ELB client in region: {}", region);
         BasicAWSCredentials awsCreds = new BasicAWSCredentials(accessKeyId, secretAccessKey);
         AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(awsCreds);
         this.elb = AmazonElasticLoadBalancingClientBuilder.standard()

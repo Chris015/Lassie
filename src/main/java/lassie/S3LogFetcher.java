@@ -128,7 +128,6 @@ public class S3LogFetcher implements LogFetcher {
                         Paths.get(tmpFolderZipped + "/" + filename),
                         StandardCopyOption.REPLACE_EXISTING);
                 fileNames.add(filename);
-
             } catch (IOException e) {
                 logger.error("Could not download file: ", e);
                 e.printStackTrace();

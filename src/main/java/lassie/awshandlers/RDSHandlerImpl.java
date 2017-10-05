@@ -18,7 +18,7 @@ public class RDSHandlerImpl implements RDSHandler {
     private AmazonRDS rds;
 
     public void instantiateRDSClient(String accessKeyId, String secretAccessKey, String region) {
-        logger.info("Instantiating RDS client");
+        logger.info("Instantiating RDS client in region: {}", region);
         BasicAWSCredentials awsCreds = new BasicAWSCredentials(accessKeyId, secretAccessKey);
         AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(awsCreds);
         this.rds = AmazonRDSClientBuilder.standard()
