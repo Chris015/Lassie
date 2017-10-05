@@ -74,7 +74,7 @@ public class SecurityGroupTagger implements ResourceTagger {
     }
 
     private void filterEventsWithoutTag(String ownerTag) {
-        logger.info("Filtering tagged Security groups without: {}", ownerTag);
+        logger.info("Filtering Security groups without: {}", ownerTag);
         List<Event> untaggedSecurityGroups = new ArrayList<>();
         List<String> untaggedSecurityGroupIds = ec2Handler.getIdsForSecurityGroupsWithoutTag(ownerTag);
 
@@ -85,7 +85,7 @@ public class SecurityGroupTagger implements ResourceTagger {
         }
 
         this.events = untaggedSecurityGroups;
-        logger.info("Done filtering tagged Security groups");
+        logger.info("Done filtering Security groups");
     }
 
     private void tag(String ownerTag) {

@@ -78,7 +78,7 @@ public class RedshiftClusterTagger implements ResourceTagger {
     }
 
     private void filterEventsWithoutTag(String ownerTag) {
-        logger.info("Filtering tagged RedShift clusters without: {}", ownerTag);
+        logger.info("Filtering RedShift clusters without: {}", ownerTag);
         List<Event> untaggedRedShiftClusters = new ArrayList<>();
         List<String> untaggedRedshiftClusterIds = redshiftHandler.getIdsForUntaggedRedshiftClustersWithoutTag(ownerTag);
 
@@ -87,7 +87,7 @@ public class RedshiftClusterTagger implements ResourceTagger {
                 untaggedRedShiftClusters.add(event);
             }
         }
-        logger.info("Done filtering tagged RedShift clusters");
+        logger.info("Done filtering RedShift clusters");
         this.events = untaggedRedShiftClusters;
     }
 

@@ -76,7 +76,7 @@ public class LoadBalancerTagger implements ResourceTagger {
     }
 
     private void filterEventsWithoutTag(String ownerTag) {
-        logger.info("Filtering tagged LoadBalancers without: {}", ownerTag);
+        logger.info("Filtering LoadBalancers without: {}", ownerTag);
         List<Event> untaggedLoadBalancers = new ArrayList<>();
         List<String> untaggedLoadBalancerIds = elbHandlerImpl.getIdsForLoadBalancersWithoutTag(ownerTag);
         for (Event event : events) {
@@ -85,7 +85,7 @@ public class LoadBalancerTagger implements ResourceTagger {
             }
         }
         this.events = untaggedLoadBalancers;
-        logger.info("Done filtering tagged LoadBalancers");
+        logger.info("Done filtering LoadBalancers");
     }
 
     private void tag(String ownerTag) {

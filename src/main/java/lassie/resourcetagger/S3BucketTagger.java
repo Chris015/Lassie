@@ -72,14 +72,14 @@ public class S3BucketTagger implements ResourceTagger {
     }
 
     private void filterEventsWithoutTag(String ownerTag) {
-        logger.info("Filtering tagged Buckets without: {}", ownerTag);
+        logger.info("Filtering Buckets without: {}", ownerTag);
         List<Event> untaggedBuckets = new ArrayList<>();
         for (Event event : events) {
             if (!s3Handler.bucketHasTag(event.getId(), ownerTag)) {
                 untaggedBuckets.add(event);
             }
         }
-        logger.info("Done filtering tagged Buckets");
+        logger.info("Done filtering Buckets");
         this.events = untaggedBuckets;
     }
 

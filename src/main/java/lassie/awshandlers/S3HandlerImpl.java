@@ -50,9 +50,8 @@ public class S3HandlerImpl implements S3Handler {
     }
 
     public boolean bucketHasTag(String bucketName, String tag) {
-
         if (s3.getBucketTaggingConfiguration(bucketName) == null) {
-            return false;
+            return true;
         }
 
         BucketTaggingConfiguration configuration = s3.getBucketTaggingConfiguration(bucketName);

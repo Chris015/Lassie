@@ -74,7 +74,7 @@ public class EBSVolumeTagger implements ResourceTagger {
     }
 
     private void filterEventsWithoutTag(String ownerTag) {
-        logger.info("Filtering tagged EBS volumes without: {}", ownerTag);
+        logger.info("Filtering EBS volumes without: {}", ownerTag);
         List<Event> untaggedVolumes = new ArrayList<>();
 
         List<String> untaggedVolumeIds = ec2Handler.getIdsForVolumesWithoutTag(ownerTag);
@@ -107,7 +107,7 @@ public class EBSVolumeTagger implements ResourceTagger {
         }
 
         this.events = untaggedVolumes;
-        logger.info("Done filtering tagged EBS volumes");
+        logger.info("Done filtering EBS volumes");
     }
 
     private List<String> getIdsForUntaggedVolumesWithoutEvents(List<String> untaggedVolumeIds) {
