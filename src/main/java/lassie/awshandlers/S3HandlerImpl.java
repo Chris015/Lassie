@@ -22,7 +22,7 @@ public class S3HandlerImpl implements S3Handler {
     private AmazonS3 s3;
 
     public void instantiateS3Client(String accessKeyId, String secretAccessKey, String region) {
-        logger.info("Instantiating S3 client");
+        logger.info("Instantiating S3 client in region: {}", region);
         BasicAWSCredentials awsCredentials = new BasicAWSCredentials(accessKeyId, secretAccessKey);
         this.s3 = AmazonS3ClientBuilder.standard()
                 .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))

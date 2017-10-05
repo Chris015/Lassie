@@ -18,7 +18,7 @@ public class RedshiftHandlerImpl  implements RedshiftHandler {
     private AmazonRedshift redshift;
 
     public void instantiateRedshiftClient(String accessKeyId, String secretAccessKey, String region) {
-        logger.info("Instantiating RedShift client");
+        logger.info("Instantiating Redshift client in region: {}", region);
         BasicAWSCredentials awsCreds = new BasicAWSCredentials(accessKeyId, secretAccessKey);
         AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(awsCreds);
         this.redshift = AmazonRedshiftClientBuilder.standard()
