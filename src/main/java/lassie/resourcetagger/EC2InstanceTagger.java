@@ -71,7 +71,7 @@ public class EC2InstanceTagger implements ResourceTagger {
     }
 
     private void filterEventsWithoutTag(String ownerTag) {
-        logger.info("Filtering tagged EC2 instances without: {}", ownerTag);
+        logger.info("Filtering EC2 instances without: {}", ownerTag);
         List<Event> untaggedInstances = new ArrayList<>();
         List<String> untaggedInstanceIds = ec2Handler.getIdsForInstancesWithoutTag(ownerTag);
         for (Event event : events) {
@@ -80,7 +80,7 @@ public class EC2InstanceTagger implements ResourceTagger {
             }
         }
         this.events = untaggedInstances;
-        logger.info("Done filtering tagged EC2 instances");
+        logger.info("Done filtering EC2 instances");
 
     }
 

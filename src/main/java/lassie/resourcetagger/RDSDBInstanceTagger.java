@@ -74,7 +74,7 @@ public class RDSDBInstanceTagger implements ResourceTagger {
     }
 
     private void filterEventsWithoutTag(String ownerTag) {
-        logger.info("Filtering tagged DB instances without: {}", ownerTag);
+        logger.info("Filtering DB instances without: {}", ownerTag);
         List<Event> untaggedEvents = new ArrayList<>();
         List<String> untaggedDBInstanceIds = rdsHandler.getIdsForDBInstancesWithoutTag(ownerTag);
         for (Event event : events) {
@@ -82,7 +82,7 @@ public class RDSDBInstanceTagger implements ResourceTagger {
                 untaggedEvents.add(event);
             }
         }
-        logger.info("Done filtering tagged DB instances");
+        logger.info("Done filtering DB instances");
         this.events = untaggedEvents;
     }
 
