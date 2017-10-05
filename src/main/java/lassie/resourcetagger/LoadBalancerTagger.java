@@ -28,16 +28,12 @@ public class LoadBalancerTagger implements ResourceTagger {
 
     @Override
     public void tagResources(Account account) {
-        instantiateClient(account);
         for (Log log : account.getLogs()) {
+            elbHandlerImpl.instantiateELBClient(account.getAccessKeyId(), account.getSecretAccessKey(), log.getRegion());
             parseJson(log.getFilePaths());
             filterEventsWithoutTag(account.getOwnerTag());
             tag(account.getOwnerTag());
         }
-    }
-
-    private void instantiateClient(Account account) {
-        elbHandlerImpl.instantiateELBClient(account.getAccessKeyId(), account.getSecretAccessKey(), account.getRegions().get(0));
     }
 
     private void parseJson(List<String> filePaths) {

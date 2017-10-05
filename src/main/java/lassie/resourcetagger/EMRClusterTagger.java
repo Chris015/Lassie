@@ -28,18 +28,12 @@ public class EMRClusterTagger implements ResourceTagger {
 
     @Override
     public void tagResources(Account account) {
-        instantiateEmrInstance(account);
         for (Log log : account.getLogs()) {
+            emrHandler.instantiateEMRClient(account.getAccessKeyId(), account.getSecretAccessKey(), log.getRegion());
             parseJson(log.getFilePaths());
             filterEventsWithoutTag(account.getOwnerTag());
             tag(account.getOwnerTag());
         }
-    }
-
-    private void instantiateEmrInstance(Account account) {
-        logger.info("Instantiating EMR client");
-        emrHandler.instantiateEMRClient(account.getAccessKeyId(), account.getSecretAccessKey(), account.getRegions().get(0));
-        logger.info("EMR client instantiated");
     }
 
     private void parseJson(List<String> filePaths) {

@@ -18,7 +18,7 @@ public class EC2HandlerImpl implements Ec2Handler {
     private AmazonEC2 ec2;
 
     public void instantiateEC2Client(String accessKeyId, String secretAccessKey, String region) {
-        logger.info("Instantiating EC2 client");
+        logger.info("Instantiating EC2 client in region: {}", region);
         BasicAWSCredentials basicCredentials = new BasicAWSCredentials(accessKeyId, secretAccessKey);
         AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(basicCredentials);
         this.ec2 = AmazonEC2ClientBuilder.standard()
@@ -83,7 +83,7 @@ public class EC2HandlerImpl implements Ec2Handler {
 
 
         logger.info("Found {} instances without: {}", untaggedInstanceIds.size(), tag);
-        untaggedInstanceIds.forEach(id -> logger.info(id));
+        untaggedInstanceIds.forEach(logger::info);
         return untaggedInstanceIds;
     }
 

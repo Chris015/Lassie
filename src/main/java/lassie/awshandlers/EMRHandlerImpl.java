@@ -16,15 +16,18 @@ import static lassie.Application.DRY_RUN;
 
 public class EMRHandlerImpl implements EMRHandler {
     private final static Logger logger = LogManager.getLogger(EMRHandlerImpl.class);
+    private static int count = 0;
     private AmazonElasticMapReduce emr;
 
     public void instantiateEMRClient(String accessKeyId, String secretAccessKey, String region) {
+        logger.info("Instantiating EMR client in region: {}", region);
         AWSCredentials basicCredentials = new BasicAWSCredentials(accessKeyId, secretAccessKey);
         AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(basicCredentials);
         this.emr = AmazonElasticMapReduceClientBuilder.standard()
                 .withCredentials(awsCredentials)
                 .withRegion(region)
                 .build();
+        logger.info("EMR client instantiated");
     }
 
     public void tagResource(String id, String key, String value) {
@@ -45,7 +48,9 @@ public class EMRHandlerImpl implements EMRHandler {
         logger.info("Describing EMR clusters");
         List<String> untaggedClusterIds = new ArrayList<>();
         ListClustersResult listClustersResult = emr.listClusters();
+        logger.info("LIST CLUSTER RESULT: " + listClustersResult.getClusters().size());
         for (ClusterSummary clusterSummary : listClustersResult.getClusters()) {
+        count++;
             DescribeClusterRequest request = new DescribeClusterRequest().withClusterId(clusterSummary.getId());
             DescribeClusterResult result = emr.describeCluster(request);
             if (isClusterActive(result.getCluster())) {
@@ -54,6 +59,8 @@ public class EMRHandlerImpl implements EMRHandler {
                 }
             }
         }
+        logger.info("COUNT: " + count);
+        count = 0;
         logger.info("Found {} clusters without: {}", untaggedClusterIds.size(), tag);
         untaggedClusterIds.forEach(logger::info);
         return untaggedClusterIds;

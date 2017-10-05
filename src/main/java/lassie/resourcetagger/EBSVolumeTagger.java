@@ -24,8 +24,8 @@ public class EBSVolumeTagger implements ResourceTagger {
 
     @Override
     public void tagResources(Account account) {
-        instantiateEc2Client(account);
         for (Log log : account.getLogs()) {
+            ec2Handler.instantiateEC2Client(account.getAccessKeyId(), account.getSecretAccessKey(), log.getRegion());
             parseJson(log.getFilePaths());
             filterEventsWithoutTag(account.getOwnerTag());
             tag(account.getOwnerTag());
@@ -34,10 +34,6 @@ public class EBSVolumeTagger implements ResourceTagger {
 
     public EBSVolumeTagger(Ec2Handler ec2Handler) {
         this.ec2Handler = ec2Handler;
-    }
-
-    private void instantiateEc2Client(Account account) {
-        ec2Handler.instantiateEC2Client(account.getAccessKeyId(), account.getSecretAccessKey(), account.getRegions().get(0));
     }
 
     private void parseJson(List<String> filePaths) {
@@ -56,7 +52,7 @@ public class EBSVolumeTagger implements ResourceTagger {
                             .get("userIdentity")
                             .getAsJsonObject()
                             .get("arn").getAsString();
-                    logger.info("Event created with Id: {} Owner: {}" , id, owner);
+                    logger.info("Event created with Id: {} Owner: {}", id, owner);
                     return new Event(id, owner);
                 };
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);
