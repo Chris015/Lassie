@@ -28,16 +28,12 @@ public class RDSDBInstanceTagger implements ResourceTagger {
 
     @Override
     public void tagResources(Account account) {
-        instantiateRDSClient(account);
         for (Log log : account.getLogs()) {
+            rdsHandler.instantiateRDSClient(account.getAccessKeyId(), account.getSecretAccessKey(), account.getRegions().get(0));
             parseJson(log.getFilePaths());
             filterEventsWithoutTag(account.getOwnerTag());
             tag(account.getOwnerTag());
         }
-    }
-
-    private void instantiateRDSClient(Account account) {
-        rdsHandler.instantiateRDSClient(account.getAccessKeyId(), account.getSecretAccessKey(), account.getRegions().get(0));
     }
 
     private void parseJson(List<String> filePaths) {

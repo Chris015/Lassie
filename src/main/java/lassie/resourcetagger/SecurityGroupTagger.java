@@ -28,16 +28,12 @@ public class SecurityGroupTagger implements ResourceTagger {
 
     @Override
     public void tagResources(Account account) {
-        instantiateEc2Client(account);
         for (Log log : account.getLogs()) {
+            ec2Handler.instantiateEC2Client(account.getAccessKeyId(), account.getSecretAccessKey(), log.getRegion());git s
             parseJson(log.getFilePaths());
             filterEventsWithoutTag(account.getOwnerTag());
             tag(account.getOwnerTag());
         }
-    }
-
-    private void instantiateEc2Client(Account account) {
-        ec2Handler.instantiateEC2Client(account.getAccessKeyId(), account.getSecretAccessKey(), account.getRegions().get(0));
     }
 
     private void parseJson(List<String> filePaths) {
