@@ -56,7 +56,7 @@ public class LassieIT {
     @Test
     public void untaggedInstances_areTagged() throws Exception {
         //given
-        prepareTest("ec2instance", "ec2Instances.json");
+        prepareTest("ec2instance", "ec2instances.json");
 
         HashMap<String, Instance> instances = EC2HandlerMock.instances;
         Instance instance = instances.get("i-07a5bbg4326310341");
