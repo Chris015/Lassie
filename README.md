@@ -71,5 +71,5 @@ Fetch logs and tag resources from the current date and three days back
 
 ## Authors
 
-* **Christopher Olsson**
+* [**Christopher Olsson**](https://github.com/Chris015)
 * [**Markus Averheim**](https://github.com/averheim) 
