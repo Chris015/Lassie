@@ -1,0 +1,20 @@
+dryRun: true # will download the logs and let you know which resources it wants to tag, but doesn't tag them. Change to true when you want to tag your resources
+accounts: # supports multiple accounts.
+  - ownerTag: Owner # your preferred tag key name for the creator of the resource.
+    accessKeyId:
+    secretAccessKey:
+    accountId:
+    cloudTrailRoot: # example: s3://bucketname/prefix
+    bucketRegion:
+    resourceTypes: # uncomment the resources you want to tag
+      #- Ec2Instance
+      #- SecurityGroup
+      #- s3Bucket
+      #- EbsVolume
+      #- S3Bucket
+      #- RdsDbInstance
+      #- RedshiftCluster
+      #- EmrCluster
+      #- LoadBalancer
+    regions: # list the regions where you resources have been created.
+      - ap-south-1
