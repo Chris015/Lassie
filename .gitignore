@@ -27,3 +27,4 @@
 ehthumbs.db
 Thumbs.db
 !/templates/*
+/log4j2.xml
