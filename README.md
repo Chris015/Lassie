@@ -19,6 +19,7 @@ Lassie is an automatic tagging service for AWS resources. It works by downloadin
 1. -jar lassie-1.0-SNAPSHOT-shader.jar **date** (Optional, refer to to the "Installing" section for different versions of date)
 
 **System properties**
+
 1.  **-Dlog4j.configurationFile="log4j2.xml"** -jar ... (Required for logging.)
 2. **-Dmockmode="true"**.
 Optional. This is used for mocking in Integration Tests. If not set, it defaults to false.) 
