@@ -2,20 +2,26 @@
     "Version": "2012-10-17",
     "Statement": [
         {
-            "Sid": "Stmt1505719523000",
+            "Effect": "Allow",
+            "Action": [
+                "s3:GetObject"
+            ],
+            "Resource": [
+                "arn:aws:s3:::<BUCKET-NAME>/*"
+            ]
+        },
+        {
             "Effect": "Allow",
             "Action": [
                 "s3:PutBucketTagging",
                 "s3:GetBucketTagging",
-                "s3:ListBucket",
-                "s3:GetObject"
+                "s3:ListBucket"
             ],
             "Resource": [
                 "*"
             ]
         },
         {
-            "Sid": "Stmt1505719830000",
             "Effect": "Allow",
             "Action": [
                 "redshift:CreateTags",
@@ -26,7 +32,6 @@
             ]
         },
         {
-            "Sid": "Stmt1505719996000",
             "Effect": "Allow",
             "Action": [
                 "ec2:CreateTags",
@@ -39,7 +44,6 @@
             ]
         },
         {
-            "Sid": "Stmt1505720423000",
             "Effect": "Allow",
             "Action": [
                 "elasticmapreduce:AddTags",
@@ -51,7 +55,6 @@
             ]
         },
         {
-            "Sid": "Stmt1505720522000",
             "Effect": "Allow",
             "Action": [
                 "rds:AddTagsToResource",
@@ -63,7 +66,6 @@
             ]
         },
         {
-            "Sid": "Stmt1505721774000",
             "Effect": "Allow",
             "Action": [
                 "elasticloadbalancing:AddTags",
