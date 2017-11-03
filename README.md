@@ -33,7 +33,7 @@ These instructions will get you a copy of the project up and running on your loc
 ### Prerequisites
 The files mentioned in this section can be found in the templates folder.
 
-1. The program requires that you have set up logging in AWS.
+1. The program requires that you have set up cloudtrail-logging in AWS.
 2. An IAM user  with the following policy: see **policy.txt**
 3. A configuration file: see **configuration.yaml**
 4. A logging properties file: see **log4j2.xml**
