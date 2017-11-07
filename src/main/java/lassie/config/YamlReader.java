@@ -5,30 +5,21 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
-public class ConfigReaderImpl implements ConfigReader {
+public class YamlReader implements ConfigReader {
     private ObjectMapper objectMapper;
     private File configurationFile = new File("configuration.yaml");
 
-    public ConfigReaderImpl() {
+    public YamlReader() {
         this.objectMapper = new ObjectMapper(new YAMLFactory());
     }
 
-    public List<Account> getAccounts() {
-        return getAccountConfig().getAccounts();
-    }
-
-    public boolean getDryRun() {
-        return getAccountConfig().isDryRun();
-    }
-
-    private AccountsConfig getAccountConfig() {
+    @Override
+    public Config readConfiguration() {
         try {
             return objectMapper.readValue(
                     configurationFile,
-                    AccountsConfig.class);
+                    Config.class);
         } catch (IOException e) {
             e.printStackTrace();
         }

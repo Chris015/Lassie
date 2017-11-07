@@ -1,33 +1,42 @@
+#  DEFAULT CONFIGURATION
+#  Note: ownerTag, resourceTypes and regions are overridable on account level
+
 dryRun: true # will download the logs and let you know which resources it wants to tag, but doesn't tag them. Change to true when you want to tag your resources
-accounts: # supports multiple accounts.
-  - ownerTag: Owner # your preferred tag key name for the creator of the resource.
-    accessKeyId:
+ownerTag: Owner # your preferred tag key name for the creator of the resource.
+resourceTypes: # uncomment the resources you want to tag
+  #- Ec2Instance
+  #- SecurityGroup
+  #- s3Bucket
+  #- EbsVolume
+  #- S3Bucket
+  #- RdsDbInstance
+  #- RedshiftCluster
+  #- EmrCluster
+  #- LoadBalancer
+
+regions: # uncomment the regions where you resources have been created.
+  #- us-east-2
+  #- us-east-1
+  #- us-west-1
+  #- us-west-2
+  #- ca-central-1
+  #- ap-south-1
+  #- ap-northeast-2
+  #- ap-southeast-1
+  #- ap-southeast-2
+  #- ap-northeast-1
+  #- eu-central-1
+  #- eu-west-1
+  #- eu-west-2
+  #- sa-east-1
+
+
+# ACCOUNT CONFIGURATION
+accounts:
+  - accessKeyId:
     secretAccessKey:
     accountId:
     cloudTrailRoot: # example: s3://bucketname/prefix
-    bucketRegion:
-    resourceTypes: # uncomment the resources you want to tag
-      #- Ec2Instance
-      #- SecurityGroup
-      #- s3Bucket
-      #- EbsVolume
-      #- S3Bucket
-      #- RdsDbInstance
-      #- RedshiftCluster
-      #- EmrCluster
-      #- LoadBalancer
-    regions: # uncomment the regions where you resources have been created.
-      #- us-east-2
-      #- us-east-1
-      #- us-west-1
-      #- us-west-2
-      #- ca-central-1
-      #- ap-south-1
-      #- ap-northeast-2
-      #- ap-southeast-1
-      #- ap-southeast-2
-      #- ap-northeast-1
-      #- eu-central-1
-      #- eu-west-1
-      #- eu-west-2
-      #- sa-east-1
+    bucketRegion: #region for the bucket with the cloudtrail-logs
+
+

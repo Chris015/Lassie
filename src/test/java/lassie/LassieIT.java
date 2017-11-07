@@ -266,7 +266,7 @@ public class LassieIT {
         Account account = createAccount(singletonList(resourceType));
         accounts.add(account);
 
-        ConfigReaderMock.accounts = accounts;
+        ConfigReaderMock.config.getAccounts().addAll(accounts);
 
         List<String> filePaths = new ArrayList<>();
         filePaths.add(ClassLoader.getSystemResource(fileName).getPath());

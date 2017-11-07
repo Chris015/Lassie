@@ -1,8 +1,9 @@
 package lassie;
 
 import lassie.config.Account;
+import lassie.config.Config;
 import lassie.config.ConfigReader;
-import lassie.config.ConfigReaderImpl;
+import lassie.config.YamlReader;
 import lassie.mocks.ConfigReaderMock;
 import lassie.mocks.LogFetcherMock;
 import lassie.resourcetagger.ResourceTagger;
@@ -19,24 +20,26 @@ public class Application {
     public static boolean mockMode = false;
     public static boolean DRY_RUN;
     private final DateInterpreter dateInterpreter;
-    private ConfigReader configReader;
     private LogFetcher logFetcher;
     private ResourceTaggerFactory resourceTaggerFactory;
+    private Config config;
 
     public Application() {
         logger.info("Application started");
         String mockModeProperty = System.getProperties().getProperty("mockmode");
         if (mockModeProperty != null)
             mockMode = System.getProperties().getProperty("mockmode").equals("true");
-        this.configReader = mockMode ? new ConfigReaderMock() : new ConfigReaderImpl();
-        DRY_RUN = configReader.getDryRun();
+        ConfigReader configReader = mockMode ? new ConfigReaderMock() : new YamlReader();
+        this.config = configReader.readConfiguration();
+        DRY_RUN = config.isDryRun();
         this.logFetcher = mockMode ? new LogFetcherMock() : new S3LogFetcher();
         this.resourceTaggerFactory = !mockMode ? new ResourceTaggerFactory() : null;
         this.dateInterpreter = new DateInterpreter();
     }
 
     public void run(String[] args) {
-        List<Account> accounts = configReader.getAccounts();
+        List<Account> accounts = config.getAccounts();
+        setDefaultConfigIfNotOverridden(accounts);
         logFetcher.createTmpFolders();
         String fromDate = dateInterpreter.interpret(args);
         logFetcher.addLogsToAccount(fromDate, accounts);
@@ -45,9 +48,25 @@ public class Application {
         logger.info("Application completed");
     }
 
+    private void setDefaultConfigIfNotOverridden(List<Account> accounts) {
+        for (Account account : accounts) {
+            if (account.getOwnerTag() == null) {
+                account.setOwnerTag(config.getOwnerTag());
+            }
+            if (account.getResourceTypes() == null) {
+                account.setResourceTypes(config.getResourceTypes());
+            }
+            if (account.getRegions() == null) {
+                account.setRegions(config.getRegions());
+            }
+        }
+    }
+
     private void tagResources(List<Account> accounts) {
         for (Account account : accounts) {
             List<String> resourceTypes = account.getResourceTypes();
+            resourceTypes = (resourceTypes == null) ? config.getResourceTypes() : resourceTypes;
+
             List<ResourceTagger> resourceTaggers = createResourceTaggers(resourceTypes);
 
             for (ResourceTagger resourceTagger : resourceTaggers) {
