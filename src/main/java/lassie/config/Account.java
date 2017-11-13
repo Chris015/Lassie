@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Account {
+    private String name;
     private String ownerTag;
     private String accessKeyId;
     private String secretAccessKey;
@@ -21,7 +22,8 @@ public class Account {
     public Account() {
     }
 
-    public Account(String ownerTag, String accessKeyId, String secretAccessKey, String accountId, S3Url s3Url, String bucketRegion, List<String> resourceTypes, List<String> regions) {
+    public Account(String name, String ownerTag, String accessKeyId, String secretAccessKey, String accountId, S3Url s3Url, String bucketRegion, List<String> resourceTypes, List<String> regions) {
+        this.name = name;
         this.ownerTag = ownerTag;
         this.accessKeyId = accessKeyId;
         this.secretAccessKey = secretAccessKey;
@@ -30,6 +32,14 @@ public class Account {
         this.bucketRegion = bucketRegion;
         this.resourceTypes = resourceTypes;
         this.regions = regions;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public void addLog(Log log) {

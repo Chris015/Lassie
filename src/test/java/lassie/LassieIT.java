@@ -277,6 +277,7 @@ public class LassieIT {
 
     private Account createAccount(List<String> resourceTypes) {
         Account account = new Account();
+        account.setName("TA");
         account.setSecretAccessKey("");
         account.setAccessKeyId("");
         account.setAccountId("12345");

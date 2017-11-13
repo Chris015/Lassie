@@ -33,7 +33,8 @@ regions: # uncomment the regions where you resources have been created.
 
 # ACCOUNT CONFIGURATION
 accounts:
-  - accessKeyId:
+  - name:
+    accessKeyId:
     secretAccessKey:
     accountId:
     cloudTrailRoot: # example: s3://bucketname/prefix

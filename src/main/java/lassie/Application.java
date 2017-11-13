@@ -11,6 +11,7 @@ import lassie.resourcetagger.ResourceTaggerFactory;
 import lassie.resourcetagger.UnsupportedResourceTypeException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,6 +65,7 @@ public class Application {
 
     private void tagResources(List<Account> accounts) {
         for (Account account : accounts) {
+            ThreadContext.put("accountName", account.getName());
             List<String> resourceTypes = account.getResourceTypes();
             resourceTypes = (resourceTypes == null) ? config.getResourceTypes() : resourceTypes;
 
