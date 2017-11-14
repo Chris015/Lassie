@@ -18,14 +18,14 @@ public class RDSHandlerImpl implements RDSHandler {
     private AmazonRDS rds;
 
     public void instantiateRDSClient(String accessKeyId, String secretAccessKey, String region) {
-        logger.info("Instantiating RDS client in region: {}", region);
+        logger.trace("Instantiating RDS client in region: {}", region);
         BasicAWSCredentials awsCreds = new BasicAWSCredentials(accessKeyId, secretAccessKey);
         AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(awsCreds);
         this.rds = AmazonRDSClientBuilder.standard()
                 .withCredentials(awsCredentials)
                 .withRegion(region)
                 .build();
-        logger.info("RDS client instantiated");
+        logger.trace("RDS client instantiated");
     }
 
     public void tagResource(String id, String key, String value) {
@@ -44,7 +44,7 @@ public class RDSHandlerImpl implements RDSHandler {
     }
 
     public List<String> getIdsForDBInstancesWithoutTag(String tag) {
-        logger.info("Describing DB instances");
+        logger.trace("Describing DB instances");
         List<String> untaggedDbInstanceIds = new ArrayList<>();
         DescribeDBInstancesResult describeDBInstancesResult = rds.describeDBInstances(new DescribeDBInstancesRequest());
         for (DBInstance dbInstance : describeDBInstancesResult.getDBInstances()) {
@@ -55,7 +55,7 @@ public class RDSHandlerImpl implements RDSHandler {
                 untaggedDbInstanceIds.add(dbInstance.getDBInstanceArn());
             }
         }
-        logger.info("Found {} DB instances without {}", untaggedDbInstanceIds.size(), tag);
+        logger.info("Found {} DB instances without {} on AWS", untaggedDbInstanceIds.size(), tag);
         untaggedDbInstanceIds.forEach(logger::info);
         return untaggedDbInstanceIds;
     }

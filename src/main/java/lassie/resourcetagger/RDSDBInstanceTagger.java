@@ -29,6 +29,7 @@ public class RDSDBInstanceTagger implements ResourceTagger {
     @Override
     public void tagResources(Account account) {
         for (Log log : account.getLogs()) {
+            logger.info("Trying to tag RDSDB instances in region {} for date: {}", log.getRegion(), log.getDate());
             rdsHandler.instantiateRDSClient(account.getAccessKeyId(), account.getSecretAccessKey(), account.getRegions().get(0));
             parseJson(log.getFilePaths());
             filterEventsWithoutTag(account.getOwnerTag());
@@ -37,7 +38,7 @@ public class RDSDBInstanceTagger implements ResourceTagger {
     }
 
     private void parseJson(List<String> filePaths) {
-        logger.info("Parsing json");
+        logger.trace("Parsing json");
         String jsonPath = "$..Records[?(@.eventName == 'CreateDBInstance' && @.responseElements != null)]";
         for (String filePath : filePaths) {
             try {
@@ -52,7 +53,6 @@ public class RDSDBInstanceTagger implements ResourceTagger {
                             .getAsJsonObject().get("userIdentity")
                             .getAsJsonObject().get("arn")
                             .getAsString();
-                    logger.info("Event created with Id: {} Owner: {}", id, owner);
                     return new Event(id, owner);
                 };
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);
@@ -62,15 +62,17 @@ public class RDSDBInstanceTagger implements ResourceTagger {
                         }.getType());
                 events.addAll(createDBInstanceEvents);
             } catch (IOException e) {
-                logger.error("Could not parse json: ", e);
+                logger.error("Could not parse json: {} \nError: {}", filePath, e);
                 e.printStackTrace();
             }
         }
-        logger.info("Done parsing json");
+        logger.info("Found: {} events in cloud-trail logs", events.size());
+        events.forEach(event -> logger.info("Id: {} Owner: {}", event.getId(), event.getOwner()));
+        logger.trace("Done parsing json");
     }
 
     private void filterEventsWithoutTag(String ownerTag) {
-        logger.info("Filtering DB instances without: {}", ownerTag);
+        logger.trace("Filtering DB instances without: {}", ownerTag);
         List<Event> untaggedEvents = new ArrayList<>();
         List<String> untaggedDBInstanceIds = rdsHandler.getIdsForDBInstancesWithoutTag(ownerTag);
         for (Event event : events) {
@@ -78,19 +80,19 @@ public class RDSDBInstanceTagger implements ResourceTagger {
                 untaggedEvents.add(event);
             }
         }
-        logger.info("Done filtering DB instances");
         this.events = untaggedEvents;
+        logger.trace("Done filtering DB instances");
     }
 
     private void tag(String ownerTag) {
-        logger.info("Tagging DB instances");
+        logger.trace("Tagging DB instances");
         if (events.size() == 0) {
-            logger.info("No untagged DB instances found in log files");
+            logger.info("No untagged DB instances found in cloud-trail logs");
         }
         for (Event event : events) {
             rdsHandler.tagResource(event.getId(), ownerTag, event.getOwner());
         }
         this.events = new ArrayList<>();
-        logger.info("Done tagging DB instances");
+        logger.trace("Done tagging DB instances");
     }
 }

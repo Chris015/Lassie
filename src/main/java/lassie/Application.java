@@ -79,10 +79,12 @@ public class Application {
     }
 
     private List<ResourceTagger> createResourceTaggers(List<String> resourceTypes) {
-        if (resourceTypes == null)
-            throw new IllegalArgumentException("No resource types found in config file");
-
-        logger.info("Creating resource taggers");
+        if (resourceTypes == null) {
+            String message = "No resource types found in config file";
+            logger.error(message);
+            throw new IllegalArgumentException(message);
+        }
+        logger.trace("Creating resource taggers");
         List<ResourceTagger> resourceTaggers = new ArrayList<>();
         for (String resourceType : resourceTypes) {
             try {
@@ -92,7 +94,7 @@ public class Application {
                 e.printStackTrace();
             }
         }
-        logger.info("Resource taggers created");
+        logger.trace("Resource taggers created");
         return resourceTaggers;
     }
 

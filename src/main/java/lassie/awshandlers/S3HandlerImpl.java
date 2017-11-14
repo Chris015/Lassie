@@ -22,13 +22,13 @@ public class S3HandlerImpl implements S3Handler {
     private AmazonS3 s3;
 
     public void instantiateS3Client(String accessKeyId, String secretAccessKey, String region) {
-        logger.info("Instantiating S3 client in region: {}", region);
+        logger.trace("Instantiating S3 client in region: {}", region);
         BasicAWSCredentials awsCredentials = new BasicAWSCredentials(accessKeyId, secretAccessKey);
         this.s3 = AmazonS3ClientBuilder.standard()
                 .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
                 .withRegion(Regions.fromName(region))
                 .build();
-        logger.info("S3 client instantiated");
+        logger.trace("S3 client instantiated");
     }
 
     public void tagBucket(String bucketName, String key, String value) {

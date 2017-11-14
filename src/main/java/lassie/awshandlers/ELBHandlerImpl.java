@@ -18,14 +18,14 @@ public class ELBHandlerImpl implements ELBHandler {
     private AmazonElasticLoadBalancing elb;
 
     public void instantiateELBClient(String accessKeyId, String secretAccessKey, String region) {
-        logger.info("Instantiating ELB client in region: {}", region);
+        logger.trace("Instantiating ELB client in region: {}", region);
         BasicAWSCredentials awsCreds = new BasicAWSCredentials(accessKeyId, secretAccessKey);
         AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(awsCreds);
         this.elb = AmazonElasticLoadBalancingClientBuilder.standard()
                 .withCredentials(awsCredentials)
                 .withRegion(region)
                 .build();
-        logger.info("ELB client instantiated");
+        logger.trace("ELB client instantiated");
     }
 
     public void tagResource(String id, String key, String value) {
@@ -44,7 +44,7 @@ public class ELBHandlerImpl implements ELBHandler {
     }
 
     public List<String> getIdsForLoadBalancersWithoutTag(String tag) {
-        logger.info("Describing Load Balancers");
+        logger.trace("Describing Load Balancers");
         List<String> untaggedLoadBalancerIds = new ArrayList<>();
         DescribeLoadBalancersResult result = elb.describeLoadBalancers(new DescribeLoadBalancersRequest());
         for (LoadBalancer loadBalancer : result.getLoadBalancers()) {
@@ -57,7 +57,7 @@ public class ELBHandlerImpl implements ELBHandler {
                 }
             }
         }
-        logger.info("Found {} LoadBalancers without: {}", untaggedLoadBalancerIds.size(), tag);
+        logger.info("Found {} LoadBalancers without: {} on AWS", untaggedLoadBalancerIds.size(), tag);
         untaggedLoadBalancerIds.forEach(logger::info);
         return untaggedLoadBalancerIds;
     }

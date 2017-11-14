@@ -19,14 +19,14 @@ public class EMRHandlerImpl implements EMRHandler {
     private AmazonElasticMapReduce emr;
 
     public void instantiateEMRClient(String accessKeyId, String secretAccessKey, String region) {
-        logger.info("Instantiating EMR client in region: {}", region);
+        logger.trace("Instantiating EMR client in region: {}", region);
         AWSCredentials basicCredentials = new BasicAWSCredentials(accessKeyId, secretAccessKey);
         AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(basicCredentials);
         this.emr = AmazonElasticMapReduceClientBuilder.standard()
                 .withCredentials(awsCredentials)
                 .withRegion(region)
                 .build();
-        logger.info("EMR client instantiated");
+        logger.trace("EMR client instantiated");
     }
 
     public void tagResource(String id, String key, String value) {
@@ -44,7 +44,7 @@ public class EMRHandlerImpl implements EMRHandler {
     }
 
     public List<String> getIdsForClustersWithoutTag(String tag) {
-        logger.info("Describing EMR clusters");
+        logger.trace("Describing EMR clusters");
         List<String> untaggedClusterIds = new ArrayList<>();
         ListClustersResult listClustersResult = emr.listClusters();
         for (ClusterSummary clusterSummary : listClustersResult.getClusters()) {
@@ -56,7 +56,7 @@ public class EMRHandlerImpl implements EMRHandler {
                 }
             }
         }
-        logger.info("Found {} clusters without: {}", untaggedClusterIds.size(), tag);
+        logger.info("Found {} clusters without: {} on AWS", untaggedClusterIds.size(), tag);
         untaggedClusterIds.forEach(logger::info);
         return untaggedClusterIds;
     }

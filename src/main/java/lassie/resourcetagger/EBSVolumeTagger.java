@@ -25,6 +25,7 @@ public class EBSVolumeTagger implements ResourceTagger {
     @Override
     public void tagResources(Account account) {
         for (Log log : account.getLogs()) {
+            logger.info("Trying to tag EBS volumes in region {} for date: {}", log.getRegion(), log.getDate());
             ec2Handler.instantiateEC2Client(account.getAccessKeyId(), account.getSecretAccessKey(), log.getRegion());
             parseJson(log.getFilePaths());
             filterEventsWithoutTag(account.getOwnerTag());
@@ -37,7 +38,7 @@ public class EBSVolumeTagger implements ResourceTagger {
     }
 
     private void parseJson(List<String> filePaths) {
-        logger.info("Parsing json");
+        logger.trace("Parsing {} json files");
         String jsonPath = "$..Records[?(@.eventName == 'CreateVolume' && @.responseElements != null)]";
         for (String filePath : filePaths) {
             try {
@@ -52,7 +53,6 @@ public class EBSVolumeTagger implements ResourceTagger {
                             .get("userIdentity")
                             .getAsJsonObject()
                             .get("arn").getAsString();
-                    logger.info("Event created with Id: {} Owner: {}", id, owner);
                     return new Event(id, owner);
                 };
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);
@@ -62,15 +62,17 @@ public class EBSVolumeTagger implements ResourceTagger {
                         }.getType());
                 events.addAll(createVolumeEvents);
             } catch (IOException e) {
-                logger.error("Could nog parse json: ", e);
+                logger.error("Could not parse json: {} \nError: {}", filePath, e);
                 e.printStackTrace();
             }
         }
-        logger.info("Done parsing json");
+        logger.info("Found: {} events in cloud-trail logs", events.size());
+        events.forEach(event -> logger.info("Id: {} Owner: {}", event.getId(), event.getOwner()));
+        logger.trace("Done parsing json");
     }
 
     private void filterEventsWithoutTag(String ownerTag) {
-        logger.info("Filtering EBS volumes without: {}", ownerTag);
+        logger.trace("Filtering EBS volumes without: {}", ownerTag);
         List<Event> untaggedVolumes = new ArrayList<>();
 
         List<String> untaggedVolumeIds = ec2Handler.getIdsForVolumesWithoutTag(ownerTag);
@@ -85,7 +87,7 @@ public class EBSVolumeTagger implements ResourceTagger {
         volumesWithoutEvents.addAll(getIdsForUntaggedVolumesWithoutEvents(untaggedVolumeIds));
         try {
             for (String id : volumesWithoutEvents) {
-                logger.info("Can't find {} in the log files. Checking if it's attached to an instance", id);
+                logger.info("Can't find {} in the cloud-trail logs. Checking if it's attached to an instance", id);
                 if (ec2Handler.volumeIsAttachedToInstance(id)) {
                     String instanceId = ec2Handler.getIdForInstanceVolumeIsAttachedTo(id);
                     logger.info("Volume {} is attached to instance: {}. Trying to fetch the {} of the instance",
@@ -103,7 +105,7 @@ public class EBSVolumeTagger implements ResourceTagger {
         }
 
         this.events = untaggedVolumes;
-        logger.info("Done filtering EBS volumes");
+        logger.trace("Done filtering EBS volumes");
     }
 
     private List<String> getIdsForUntaggedVolumesWithoutEvents(List<String> untaggedVolumeIds) {
@@ -118,14 +120,14 @@ public class EBSVolumeTagger implements ResourceTagger {
     }
 
     private void tag(String ownerTag) {
-        logger.info("Tagging volumes");
+        logger.trace("Tagging EBS volumes");
         if (events.size() == 0) {
-            logger.info("No untagged Volumes found in log files");
+            logger.info("No untagged Volumes found in cloud-trail logs");
         }
         for (Event event : events) {
             ec2Handler.tagResource(event.getId(), ownerTag, event.getOwner());
         }
         this.events = new ArrayList<>();
-        logger.info("Tagging volumes complete");
+        logger.trace("Done tagging EBS volumes");
     }
 }

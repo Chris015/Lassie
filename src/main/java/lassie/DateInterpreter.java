@@ -18,9 +18,9 @@ public class DateInterpreter {
      * @return a date
      */
     public String interpret(String[] programArguments) {
-        logger.info("Interpreting program arguments");
+        logger.info("Interpreting program arguments: {}", programArguments);
         if (programArguments.length == 0) {
-            logger.debug("No arguments found. Returned current date");
+            logger.info("No arguments found. Returned current date");
             return LocalDate.now().toString();
         }
 
@@ -41,11 +41,12 @@ public class DateInterpreter {
         }
 
         if (argument.matches(validDate)) {
-            logger.debug("Argument is a valid date. Returned the argument");
+            logger.info("{} is a valid date. Returned the argument", argument);
             return argument;
         }
-        logger.debug("Argument is a valid number. Returned the current date minus the amount of days specified");
-        logger.info("Done interpreting program arguments");
-        return LocalDate.now().minusDays(Integer.parseInt(argument)).toString();
+
+        String date = LocalDate.now().minusDays(Integer.parseInt(argument)).toString();
+        logger.info("{} is a valid number. Returned current date minus days specified: {}", argument, date);
+        return date;
     }
 }

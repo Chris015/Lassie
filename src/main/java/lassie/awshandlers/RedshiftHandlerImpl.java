@@ -18,14 +18,14 @@ public class RedshiftHandlerImpl  implements RedshiftHandler {
     private AmazonRedshift redshift;
 
     public void instantiateRedshiftClient(String accessKeyId, String secretAccessKey, String region) {
-        logger.info("Instantiating Redshift client in region: {}", region);
+        logger.trace("Instantiating Redshift client in region: {}", region);
         BasicAWSCredentials awsCreds = new BasicAWSCredentials(accessKeyId, secretAccessKey);
         AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(awsCreds);
         this.redshift = AmazonRedshiftClientBuilder.standard()
                 .withCredentials(awsCredentials)
                 .withRegion(region)
                 .build();
-        logger.info("RedShift client instantiated");
+        logger.trace("RedShift client instantiated");
     }
 
     public void tagResource(String id, String key, String value) {
@@ -44,7 +44,7 @@ public class RedshiftHandlerImpl  implements RedshiftHandler {
     }
 
     public List<String> getIdsForUntaggedRedshiftClustersWithoutTag(String tag) {
-        logger.info("Describing RedShift clusters");
+        logger.trace("Describing RedShift clusters");
         List<String> untaggedCluserIds = new ArrayList<>();
         DescribeClustersRequest request = new DescribeClustersRequest();
         DescribeClustersResult response = redshift.describeClusters(request);
@@ -53,7 +53,7 @@ public class RedshiftHandlerImpl  implements RedshiftHandler {
                 untaggedCluserIds.add(cluster.getClusterIdentifier());
             }
         }
-        logger.info("Found {} RedShift clusters without {}", untaggedCluserIds.size(), tag);
+        logger.info("Found {} RedShift clusters without {} on AWS", untaggedCluserIds.size(), tag);
         untaggedCluserIds.forEach(logger::info);
         return untaggedCluserIds;
     }

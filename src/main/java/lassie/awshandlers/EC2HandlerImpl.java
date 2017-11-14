@@ -18,14 +18,14 @@ public class EC2HandlerImpl implements Ec2Handler {
     private AmazonEC2 ec2;
 
     public void instantiateEC2Client(String accessKeyId, String secretAccessKey, String region) {
-        logger.info("Instantiating EC2 client in region: {}", region);
+        logger.trace("Instantiating EC2 client in region: {}", region);
         BasicAWSCredentials basicCredentials = new BasicAWSCredentials(accessKeyId, secretAccessKey);
         AWSStaticCredentialsProvider awsCredentials = new AWSStaticCredentialsProvider(basicCredentials);
         this.ec2 = AmazonEC2ClientBuilder.standard()
                 .withCredentials(awsCredentials)
                 .withRegion(region)
                 .build();
-        logger.info("EC2 client instantiated");
+        logger.trace("EC2 client instantiated");
     }
 
     public void tagResource(String id, String key, String value) {
@@ -70,8 +70,7 @@ public class EC2HandlerImpl implements Ec2Handler {
     }
 
     public List<String> getIdsForInstancesWithoutTag(String tag) {
-        logger.info("Getting instances without tags");
-
+        logger.trace("Getting instances without tags");
         List<String> untaggedInstanceIds = new ArrayList<>();
         List<Instance> instances = getInstances();
 
@@ -82,7 +81,7 @@ public class EC2HandlerImpl implements Ec2Handler {
         }
 
 
-        logger.info("Found {} instances without: {}", untaggedInstanceIds.size(), tag);
+        logger.info("Found {} instances without: {} on AWS", untaggedInstanceIds.size(), tag);
         untaggedInstanceIds.forEach(logger::info);
         return untaggedInstanceIds;
     }
@@ -106,7 +105,7 @@ public class EC2HandlerImpl implements Ec2Handler {
     }
 
     public List<String> getIdsForSecurityGroupsWithoutTag(String tag) {
-        logger.info("Describing Security groups");
+        logger.trace("Describing Security groups");
         List<String> untaggedSecurityGroupIds = new ArrayList<>();
         DescribeSecurityGroupsRequest request = new DescribeSecurityGroupsRequest();
         DescribeSecurityGroupsResult response = ec2.describeSecurityGroups(request);
@@ -115,13 +114,13 @@ public class EC2HandlerImpl implements Ec2Handler {
                 untaggedSecurityGroupIds.add(securityGroup.getGroupId());
             }
         }
-        logger.info("Found {} Security groups without: {}", untaggedSecurityGroupIds.size(), tag);
+        logger.info("Found {} Security groups without: {} on AWS", untaggedSecurityGroupIds.size(), tag);
         untaggedSecurityGroupIds.forEach(logger::info);
         return untaggedSecurityGroupIds;
     }
 
     public List<String> getIdsForVolumesWithoutTag(String tag) {
-        logger.info("Describing volumes");
+        logger.trace("Describing volumes");
         List<String> untaggedVolumesIds = new ArrayList<>();
         boolean done = false;
         while (!done) {
@@ -137,7 +136,7 @@ public class EC2HandlerImpl implements Ec2Handler {
                 done = true;
             }
         }
-        logger.info("Found {} EBS volumes without: {}", untaggedVolumesIds.size(), tag);
+        logger.info("Found {} EBS volumes without: {} on AWS", untaggedVolumesIds.size(), tag);
         untaggedVolumesIds.forEach(logger::info);
         return untaggedVolumesIds;
     }

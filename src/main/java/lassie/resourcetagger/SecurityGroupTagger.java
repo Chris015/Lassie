@@ -29,6 +29,7 @@ public class SecurityGroupTagger implements ResourceTagger {
     @Override
     public void tagResources(Account account) {
         for (Log log : account.getLogs()) {
+            logger.info("Trying to tag Security groups in region {} for date: {}", log.getRegion(), log.getDate());
             ec2Handler.instantiateEC2Client(account.getAccessKeyId(), account.getSecretAccessKey(), log.getRegion());
             parseJson(log.getFilePaths());
             filterEventsWithoutTag(account.getOwnerTag());
@@ -37,7 +38,7 @@ public class SecurityGroupTagger implements ResourceTagger {
     }
 
     private void parseJson(List<String> filePaths) {
-        logger.info("Parsing json");
+        logger.trace("Parsing json");
         String jsonPath = "$..Records[?(@.eventName == 'CreateSecurityGroup' && @.responseElements != null)]";
         for (String filePath : filePaths) {
             try {
@@ -62,15 +63,17 @@ public class SecurityGroupTagger implements ResourceTagger {
                         }.getType());
                 events.addAll(createSecurityGroupEvents);
             } catch (IOException e) {
-                logger.error("Could not parse json: ", e);
+                logger.error("Could not parse json: {} \nError: {}", filePath, e);
                 e.printStackTrace();
             }
         }
-        logger.info("Done parsing json");
+        logger.info("Found: {} events in cloud-trail logs", events.size());
+        events.forEach(event -> logger.info("Id: {} Owner: {}", event.getId(), event.getOwner()));
+        logger.trace("Done parsing json");
     }
 
     private void filterEventsWithoutTag(String ownerTag) {
-        logger.info("Filtering Security groups without: {}", ownerTag);
+        logger.trace("Filtering Security groups without: {}", ownerTag);
         List<Event> untaggedSecurityGroups = new ArrayList<>();
         List<String> untaggedSecurityGroupIds = ec2Handler.getIdsForSecurityGroupsWithoutTag(ownerTag);
 
@@ -81,18 +84,18 @@ public class SecurityGroupTagger implements ResourceTagger {
         }
 
         this.events = untaggedSecurityGroups;
-        logger.info("Done filtering Security groups");
+        logger.trace("Done filtering Security groups");
     }
 
     private void tag(String ownerTag) {
-        logger.info("Tagging Security groups");
+        logger.trace("Tagging Security groups");
         if (events.size() == 0) {
-            logger.info("No untagged Security groups found in log files");
+            logger.info("No untagged Security groups found in cloud-trail logs");
         }
         for (Event event : events) {
             ec2Handler.tagResource(event.getId(), ownerTag, event.getOwner());
         }
         this.events = new ArrayList<>();
-        logger.info("Done tagging Security groups");
+        logger.trace("Done tagging Security groups");
     }
 }

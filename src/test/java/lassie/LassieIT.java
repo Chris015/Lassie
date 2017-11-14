@@ -271,7 +271,7 @@ public class LassieIT {
         List<String> filePaths = new ArrayList<>();
         filePaths.add(ClassLoader.getSystemResource(fileName).getPath());
 
-        Log log = new Log(account.getRegions().get(0), filePaths);
+        Log log = new Log(account.getRegions().get(0), filePaths, "2017/11/14");
         account.addLog(log);
     }
 

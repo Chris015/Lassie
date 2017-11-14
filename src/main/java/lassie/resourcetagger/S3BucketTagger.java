@@ -29,6 +29,7 @@ public class S3BucketTagger implements ResourceTagger {
     @Override
     public void tagResources(Account account) {
         for (Log log : account.getLogs()) {
+            logger.info("Trying to tag S3 buckets in region {} for date: {}", log.getRegion(), log.getDate());
             s3Handler.instantiateS3Client(account.getAccessKeyId(), account.getSecretAccessKey(), log.getRegion());
             parseJson(log.getFilePaths());
             filterEventsWithoutTag(account.getOwnerTag());
@@ -37,7 +38,7 @@ public class S3BucketTagger implements ResourceTagger {
     }
 
     private void parseJson(List<String> filePaths) {
-        logger.info("Parsing json");
+        logger.trace("Parsing json");
         String jsonPath = "$..Records[?(@.eventName == 'CreateBucket' && @.requestParameters != null)]";
         for (String filePath : filePaths) {
             try {
@@ -51,7 +52,6 @@ public class S3BucketTagger implements ResourceTagger {
                     String owner = jsonElement.getAsJsonObject().get("userIdentity")
                             .getAsJsonObject().get("arn")
                             .getAsString();
-                    logger.info("Event created with Id: {} Owner: {}", id, owner);
                     return new Event(id, owner);
                 };
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);
@@ -60,34 +60,36 @@ public class S3BucketTagger implements ResourceTagger {
                 }.getType());
                 events.addAll(runInstancesEvents);
             } catch (IOException e) {
-                logger.error("Could not parse json: ", e);
+                logger.error("Could not parse json: {} \nError: {}", filePath, e);
                 e.printStackTrace();
             }
         }
-        logger.info("Done parsing json");
+        logger.info("Found: {} events in cloud-trail logs", events.size());
+        events.forEach(event -> logger.info("Id: {} Owner: {}", event.getId(), event.getOwner()));
+        logger.trace("Done parsing json");
     }
 
     private void filterEventsWithoutTag(String ownerTag) {
-        logger.info("Filtering Buckets without: {}", ownerTag);
+        logger.trace("Filtering Buckets without: {}", ownerTag);
         List<Event> untaggedBuckets = new ArrayList<>();
         for (Event event : events) {
             if (!s3Handler.bucketHasTag(event.getId(), ownerTag)) {
                 untaggedBuckets.add(event);
             }
         }
-        logger.info("Done filtering Buckets");
+        logger.trace("Done filtering Buckets");
         this.events = untaggedBuckets;
     }
 
     private void tag(String ownerTag) {
-        logger.info("Tagging Buckets");
+        logger.trace("Tagging Buckets");
         if (events.size() == 0) {
-            logger.info("No untagged Buckets found in log files");
+            logger.info("No untagged Buckets found in cloud-trail logs");
         }
         for (Event event : events) {
             s3Handler.tagBucket(event.getId(), ownerTag, event.getOwner());
         }
         this.events = new ArrayList<>();
-        logger.info("Done tagging Buckets");
+        logger.trace("Done tagging Buckets");
     }
 }

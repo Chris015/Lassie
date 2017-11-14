@@ -29,6 +29,7 @@ public class EMRClusterTagger implements ResourceTagger {
     @Override
     public void tagResources(Account account) {
         for (Log log : account.getLogs()) {
+            logger.info("Trying to tag EMR clusters in region {} for date: {}", log.getRegion(), log.getDate());
             emrHandler.instantiateEMRClient(account.getAccessKeyId(), account.getSecretAccessKey(), log.getRegion());
             parseJson(log.getFilePaths());
             filterEventsWithoutTag(account.getOwnerTag());
@@ -37,7 +38,7 @@ public class EMRClusterTagger implements ResourceTagger {
     }
 
     private void parseJson(List<String> filePaths) {
-        logger.info("Parsing json");
+        logger.trace("Parsing json");
         String jsonPath = "$..Records[?(@.eventName == 'RunJobFlow' && @.responseElements != null)]";
         for (String filePath : filePaths) {
             try {
@@ -53,7 +54,6 @@ public class EMRClusterTagger implements ResourceTagger {
                     String owner = jsonElement.getAsJsonObject().get("userIdentity")
                             .getAsJsonObject().get("arn")
                             .getAsString();
-                    logger.info("Event created with Id: {} Owner: {}", id, owner);
                     return new Event(id, owner);
                 };
                 gsonBuilder.registerTypeAdapter(Event.class, deserializer);
@@ -63,15 +63,17 @@ public class EMRClusterTagger implements ResourceTagger {
                         }.getType());
                 events.addAll(createDBInstanceEvents);
             } catch (IOException e) {
-                logger.error("Could not parse json: ", e);
+                logger.error("Could not parse json: {} \nError: {}", filePath, e);
                 e.printStackTrace();
             }
         }
-        logger.info("Done parsing json");
+        logger.info("Found: {} events in cloud-trail logs", events.size());
+        events.forEach(event -> logger.info("Id: {} Owner: {}", event.getId(), event.getOwner()));
+        logger.trace("Done parsing json");
     }
 
     private void filterEventsWithoutTag(String ownerTag) {
-        logger.info("Filtering EMR-clusters without: {}", ownerTag);
+        logger.trace("Filtering EMR clusters without: {}", ownerTag);
         List<Event> untaggedClusters = new ArrayList<>();
 
         List<String> untaggedClusterIds = emrHandler.getIdsForClustersWithoutTag(ownerTag);
@@ -82,19 +84,19 @@ public class EMRClusterTagger implements ResourceTagger {
         }
 
         this.events = untaggedClusters;
-        logger.info("Done filtering EMR-clusters");
+        logger.trace("Done filtering EMR clusters");
     }
 
     private void tag(String ownerTag) {
-        logger.info("Tagging EMR clusters");
+        logger.trace("Tagging EMR clusters");
         if (events.size() == 0) {
-            logger.info("No untagged EMRClusters found in log files");
+            logger.info("No untagged EMR clusters found in cloud-trail logs");
         }
         for (Event event : events) {
             emrHandler.tagResource(event.getId(), ownerTag, event.getOwner());
         }
         this.events = new ArrayList<>();
-        logger.info("Done tagging EMR clusters");
+        logger.trace("Done tagging EMR clusters");
     }
 }
 
