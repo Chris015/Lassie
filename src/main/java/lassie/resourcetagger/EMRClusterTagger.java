@@ -21,7 +21,7 @@ public class EMRClusterTagger implements ResourceTagger {
     private static final Logger logger = LogManager.getLogger(EMRClusterTagger.class);
     private EMRHandler emrHandler;
     private List<Event> events = new ArrayList<>();
-    private static final  int MAX_RETRIES = 3;
+    private static final int MAX_RETRIES = 3;
     private int secondsToSleep = 5;
     private int retries = 0;
 
@@ -133,4 +133,3 @@ public class EMRClusterTagger implements ResourceTagger {
         logger.trace("Done tagging EMR clusters");
     }
 }
-
