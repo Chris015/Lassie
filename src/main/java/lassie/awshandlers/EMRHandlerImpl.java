@@ -43,10 +43,12 @@ public class EMRHandlerImpl implements EMRHandler {
         logger.info("Tagged: {} with key: {} value: {}", id, key, value);
     }
 
-    public List<String> getIdsForClustersWithoutTag(String tag) {
+    public List<String> getIdsForClustersWithoutTag(String tag) throws AmazonElasticMapReduceException {
         logger.trace("Describing EMR clusters");
         List<String> untaggedClusterIds = new ArrayList<>();
+
         ListClustersResult listClustersResult = emr.listClusters();
+
         for (ClusterSummary clusterSummary : listClustersResult.getClusters()) {
             DescribeClusterRequest request = new DescribeClusterRequest().withClusterId(clusterSummary.getId());
             DescribeClusterResult result = emr.describeCluster(request);

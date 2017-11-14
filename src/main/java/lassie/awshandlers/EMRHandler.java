@@ -1,5 +1,7 @@
 package lassie.awshandlers;
 
+import com.amazonaws.services.elasticmapreduce.model.AmazonElasticMapReduceException;
+
 import java.util.List;
 
 public interface EMRHandler {
@@ -7,5 +9,5 @@ public interface EMRHandler {
 
     void tagResource(String id, String key, String value);
 
-    List<String> getIdsForClustersWithoutTag(String tag);
+    List<String> getIdsForClustersWithoutTag(String tag) throws AmazonElasticMapReduceException;
 }

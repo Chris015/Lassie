@@ -1,5 +1,6 @@
 package lassie.mocks;
 
+import com.amazonaws.services.elasticmapreduce.model.AmazonElasticMapReduceException;
 import com.amazonaws.services.elasticmapreduce.model.Cluster;
 import com.amazonaws.services.elasticmapreduce.model.Tag;
 import org.apache.logging.log4j.LogManager;
@@ -12,6 +13,7 @@ import java.util.List;
 public class EMRHandlerMock implements lassie.awshandlers.EMRHandler {
     private static final Logger logger = LogManager.getLogger(EMRHandlerMock.class);
     public static HashMap<String,Cluster> clusters = new HashMap<>();
+    public static boolean throwEMRExeption = false;
 
     public EMRHandlerMock() {
         // tagged cluster, and an event is created
@@ -48,7 +50,8 @@ public class EMRHandlerMock implements lassie.awshandlers.EMRHandler {
     }
 
     @Override
-    public List<String> getIdsForClustersWithoutTag(String tag) {
+    public List<String> getIdsForClustersWithoutTag(String tag) throws AmazonElasticMapReduceException {
+        if (throwEMRExeption) throw new AmazonElasticMapReduceException("Throttle error");
         List<String> clustersWithoutTag = new ArrayList<>();
         for (Cluster cluster : clusters.values()) {
             List<Tag> tags = cluster.getTags();
