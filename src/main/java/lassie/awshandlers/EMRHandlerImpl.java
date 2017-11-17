@@ -16,6 +16,7 @@ import static lassie.Application.DRY_RUN;
 
 public class EMRHandlerImpl implements EMRHandler {
     private final static Logger logger = LogManager.getLogger(EMRHandlerImpl.class);
+    private final static int MAX_RETRIES = 3;
     private AmazonElasticMapReduce emr;
 
     public void instantiateEMRClient(String accessKeyId, String secretAccessKey, String region) {
@@ -43,15 +44,34 @@ public class EMRHandlerImpl implements EMRHandler {
         logger.info("Tagged: {} with key: {} value: {}", id, key, value);
     }
 
-    public List<String> getIdsForClustersWithoutTag(String tag) throws AmazonElasticMapReduceException {
+    public List<String> getIdsForClustersWithoutTag(String tag) {
         logger.trace("Describing EMR clusters");
         List<String> untaggedClusterIds = new ArrayList<>();
-
         ListClustersResult listClustersResult = emr.listClusters();
 
         for (ClusterSummary clusterSummary : listClustersResult.getClusters()) {
             DescribeClusterRequest request = new DescribeClusterRequest().withClusterId(clusterSummary.getId());
-            DescribeClusterResult result = emr.describeCluster(request);
+            DescribeClusterResult result = null;
+
+            int secondsToSleep = 5;
+            int retries = 0;
+            while (retries < MAX_RETRIES)
+            try {
+                result = emr.describeCluster(request);
+            } catch (AmazonElasticMapReduceException e) {
+                logger.info("here was an issue while listing EMR clusters. The application will sleep for {} seconds\n"
+                        + "and try again\nError: {}", secondsToSleep, e);
+                try {
+                    Thread.sleep(1_000 * secondsToSleep);
+                    secondsToSleep += secondsToSleep;
+                    retries++;
+                } catch (InterruptedException e1) {
+                    e1.printStackTrace();
+                }
+            }
+
+
+            if (result == null) continue;
             if (isClusterActive(result.getCluster())) {
                 if (!hasTag(result.getCluster(), tag)) {
                     untaggedClusterIds.add(result.getCluster().getId());
