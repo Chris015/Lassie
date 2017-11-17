@@ -55,21 +55,22 @@ public class EMRHandlerImpl implements EMRHandler {
 
             int secondsToSleep = 5;
             int retries = 0;
-            while (retries < MAX_RETRIES)
-            try {
-                result = emr.describeCluster(request);
-            } catch (AmazonElasticMapReduceException e) {
-                logger.info("here was an issue while listing EMR clusters. The application will sleep for {} seconds\n"
-                        + "and try again\nError: {}", secondsToSleep, e);
+            while (retries < MAX_RETRIES) {
                 try {
-                    Thread.sleep(1_000 * secondsToSleep);
-                    secondsToSleep += secondsToSleep;
-                    retries++;
-                } catch (InterruptedException e1) {
-                    e1.printStackTrace();
+                    result = emr.describeCluster(request);
+                    if (result != null) break;
+                } catch (AmazonElasticMapReduceException e) {
+                    logger.info("here was an issue while listing EMR clusters. The application will sleep for {} seconds\n"
+                            + "and try again\nError: {}", secondsToSleep, e);
+                    try {
+                        Thread.sleep(1_000 * secondsToSleep);
+                        secondsToSleep += secondsToSleep;
+                        retries++;
+                    } catch (InterruptedException e1) {
+                        e1.printStackTrace();
+                    }
                 }
             }
-
 
             if (result == null) continue;
             if (isClusterActive(result.getCluster())) {
