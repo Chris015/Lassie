@@ -13,7 +13,7 @@ import java.util.List;
 public class EMRHandlerMock implements lassie.awshandlers.EMRHandler {
     private static final Logger logger = LogManager.getLogger(EMRHandlerMock.class);
     public static HashMap<String,Cluster> clusters = new HashMap<>();
-    public static boolean throwEMRExeption = false;
+    public static boolean throwEMRException = false;
 
     public EMRHandlerMock() {
         // tagged cluster, and an event is created
@@ -51,7 +51,7 @@ public class EMRHandlerMock implements lassie.awshandlers.EMRHandler {
 
     @Override
     public List<String> getIdsForClustersWithoutTag(String tag) throws AmazonElasticMapReduceException {
-        if (throwEMRExeption) throw new AmazonElasticMapReduceException("Throttle error");
+        if (throwEMRException) throw new AmazonElasticMapReduceException("Throttle error");
         List<String> clustersWithoutTag = new ArrayList<>();
         for (Cluster cluster : clusters.values()) {
             List<Tag> tags = cluster.getTags();
