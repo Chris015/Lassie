@@ -1,6 +1,6 @@
 # Lassie
 
-Lassie is an automatic tagging service for AWS resources. It works by downloading log the files from your s3 bucket and extracting the user name of the account which started the resource. Lassie is intended to be run from the terminal or as a cronjob.
+Lassie is an automatic tagging service for AWS resources. It works by downloading CloudTrail-logs from your S3 bucket and extracting the username from the account which started the resource. Lassie is intended to be run from the terminal or as a cronjob.
 
 **The following resources are currently supported:**
 
@@ -33,7 +33,7 @@ These instructions will get you a copy of the project up and running on your loc
 ### Prerequisites
 The files mentioned in this section can be found in the templates folder.
 
-1. The program requires that you have set up cloudtrail-logging in AWS.
+1. The program requires that you have set up CloudTrail-logging in AWS.
 2. An IAM user  with the following policy: see **policy.txt**
 3. A configuration file: see **configuration.yaml**
 4. A logging properties file: see **log4j2.xml**
