@@ -11,6 +11,7 @@ import lassie.model.Event;
 import lassie.model.Log;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.ThreadContext;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,6 +30,7 @@ public class RedshiftClusterTagger implements ResourceTagger {
     @Override
     public void tagResources(Account account) {
         for (Log log : account.getLogs()) {
+            ThreadContext.put("region", log.getRegion());
             logger.info("Trying to tag Redshift clusters in region {} for date: {}", log.getRegion(), log.getDate());
             redshiftHandler.instantiateRedshiftClient(account.getAccessKeyId(), account.getSecretAccessKey(), log.getRegion());
             parseJson(account, log.getFilePaths());

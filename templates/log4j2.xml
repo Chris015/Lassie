@@ -2,15 +2,15 @@
 <Configuration status="INFO">
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout pattern="%d{HH:mm:ss.SSS} %-5level %-17c{1} Account: %X{accountName} - %msg%n"/>
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} %-5level %-17c{1} Account: %X{accountName} Region: %X{region} - %msg%n" />
         </Console>
         <File name="log" fileName="log.log" immediateFlush="true" append="true">
-            <PatternLayout pattern="%d{yyy-MM-dd HH:mm:ss.SSS} %-5level %-17c{1} Account: %X{accountName} - %msg%n"/>
+            <PatternLayout pattern="%d{yyy-MM-dd HH:mm:ss.SSS} %-5level %-17c{1} Account: %X{accountName} Region: %X{region} - %msg%n"/>
         </File>
     </Appenders>
     <Loggers>
         <Root level="info">
-            <AppenderRef ref="Console"/>
+            <AppenderRef ref="Console" />
             <AppenderRef ref="log"/>
         </Root>
     </Loggers>
