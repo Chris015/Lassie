@@ -60,7 +60,7 @@ public class EMRHandlerImpl implements EMRHandler {
                     result = emr.describeCluster(request);
                     if (result != null) break;
                 } catch (AmazonElasticMapReduceException e) {
-                    logger.info("here was an issue while listing EMR clusters. The application will sleep for {} seconds\n"
+                    logger.info("There was an issue while listing EMR clusters. The application will sleep for {} seconds\n"
                             + "and try again\nError: {}", secondsToSleep, e);
                     try {
                         Thread.sleep(1_000 * secondsToSleep);
